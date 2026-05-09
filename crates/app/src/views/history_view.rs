@@ -3,7 +3,7 @@ use gpui_component::button::Button;
 use gpui_component::{Sizable, StyledExt};
 
 use crate::app::AppState;
-use crate::git::Commit;
+use ogit::Commit;
 
 pub fn render_history_view(
     history: &[Commit],

@@ -8,7 +8,6 @@ use gpui_component::*;
 use std::path::PathBuf;
 
 mod app;
-mod git;
 mod views;
 
 use app::{AppState, ViewType};

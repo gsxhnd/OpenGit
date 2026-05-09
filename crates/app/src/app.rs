@@ -1,7 +1,7 @@
 /// Application state and entities
 
-use crate::git::operations::GitOps;
-use crate::git::{Commit, FileDiff, Repository, RepositoryStatus};
+use ogit::GitOps;
+use ogit::{Commit, FileDiff, Repository, RepositoryStatus};
 use gpui::Task;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;

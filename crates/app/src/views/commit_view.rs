@@ -4,7 +4,7 @@ use gpui_component::input::{Input, InputState};
 use gpui_component::{Sizable, StyledExt};
 
 use crate::app::{AppState, ViewType};
-use crate::git::model::{FileEntry, FileStatus};
+use ogit::{FileEntry, FileStatus};
 
 pub enum FileRowAction {
     Stage,

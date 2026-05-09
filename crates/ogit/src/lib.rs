@@ -5,5 +5,5 @@ pub mod operations;
 pub mod repository;
 
 pub use model::*;
-pub use operations::ResetMode;
+pub use operations::{GitError, GitOps, ResetMode};
 pub use repository::Repository;

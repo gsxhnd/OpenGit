@@ -2,7 +2,7 @@ use gpui::prelude::FluentBuilder as _;
 use gpui::*;
 use gpui_component::StyledExt;
 
-use crate::git::model::{DiffLine, FileDiff};
+use ogit::{DiffLine, FileDiff};
 
 pub fn render_diff_lines(diff: &FileDiff) -> impl IntoElement {
     div()
@@ -36,7 +36,7 @@ pub fn render_diff_view(
             Some(p) => format!("Diff: {}", p.display()),
             None => "Select a file from Commit view (click row)".to_string(),
         }))
-        .when_some(diff_preview, |col, d: &crate::git::model::FileDiff| {
+        .when_some(diff_preview, |col, d: &ogit::FileDiff| {
             col.flex_1().min_h_0().child(render_diff_lines(d))
         })
         .into_any_element()

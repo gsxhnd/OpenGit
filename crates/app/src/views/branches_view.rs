@@ -4,7 +4,7 @@ use gpui_component::input::{Input, InputState};
 use gpui_component::{Sizable, StyledExt};
 
 use crate::app::AppState;
-use crate::git::Branch;
+use ogit::Branch;
 
 pub fn render_branches_view(
     branches: &[Branch],

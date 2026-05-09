@@ -1,5 +1,5 @@
 /// High-level Git operations
-use crate::git::model::*;
+use crate::model::*;
 use anyhow::Result;
 use std::path::PathBuf;
 

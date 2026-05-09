@@ -1,6 +1,6 @@
 /// Repository abstraction over git2
-use crate::git::model::*;
-use crate::git::operations::{GitError, GitOps, ResetMode};
+use crate::model::*;
+use crate::operations::{GitError, GitOps, ResetMode};
 use chrono::{TimeZone, Utc};
 use git2::{
     AnnotatedCommit, BranchType, DiffFlags, DiffLineType, DiffOptions, ObjectType,
@@ -980,7 +980,7 @@ fn delta_file_status(d: git2::Delta) -> FileStatus {
 }
 
 fn parse_diff_to_model(diff: &git2::Diff) -> Result<Vec<FileDiff>, GitError> {
-    use crate::git::model::{DiffHunk as HunkModel, DiffLine as LineModel};
+    use crate::model::{DiffHunk as HunkModel, DiffLine as LineModel};
 
     let files: RefCell<Vec<FileDiff>> = RefCell::new(Vec::new());
     let cur_file: RefCell<Option<FileDiff>> = RefCell::new(None);
