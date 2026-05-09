@@ -6,8 +6,6 @@ use gpui_component::button::Button;
 use gpui_component::menu::AppMenuBar;
 use gpui_component::*;
 
-use crate::app::AppState;
-
 pub const CHROME_BAR_H: Pixels = px(40.);
 
 #[derive(Clone, Copy)]
@@ -30,32 +28,47 @@ struct ChromeDragState {
 pub struct TitleBar {
     repo_name: String,
     has_repo: bool,
-    current_branch: String,
     menu_bar: Entity<AppMenuBar>,
-    weak_state: WeakEntity<AppState>,
     on_open_repo: Option<Rc<dyn Fn(&mut Window, &mut App)>>,
+    on_fetch: Option<Rc<dyn Fn(&mut Window, &mut App)>>,
+    on_pull: Option<Rc<dyn Fn(&mut Window, &mut App)>>,
+    on_push: Option<Rc<dyn Fn(&mut Window, &mut App)>>,
 }
 
 impl TitleBar {
     pub fn new(
         repo_name: impl Into<String>,
         has_repo: bool,
-        current_branch: impl Into<String>,
         menu_bar: Entity<AppMenuBar>,
-        weak_state: WeakEntity<AppState>,
     ) -> Self {
         Self {
             repo_name: repo_name.into(),
             has_repo,
-            current_branch: current_branch.into(),
             menu_bar,
-            weak_state,
             on_open_repo: None,
+            on_fetch: None,
+            on_pull: None,
+            on_push: None,
         }
     }
 
     pub fn on_open_repo(mut self, f: impl Fn(&mut Window, &mut App) + 'static) -> Self {
         self.on_open_repo = Some(Rc::new(f));
+        self
+    }
+
+    pub fn on_fetch(mut self, f: impl Fn(&mut Window, &mut App) + 'static) -> Self {
+        self.on_fetch = Some(Rc::new(f));
+        self
+    }
+
+    pub fn on_pull(mut self, f: impl Fn(&mut Window, &mut App) + 'static) -> Self {
+        self.on_pull = Some(Rc::new(f));
+        self
+    }
+
+    pub fn on_push(mut self, f: impl Fn(&mut Window, &mut App) + 'static) -> Self {
+        self.on_push = Some(Rc::new(f));
         self
     }
 }
@@ -138,8 +151,9 @@ impl RenderOnce for TitleBar {
         let chrome_drag = window.use_state(cx, |_, _| ChromeDragState { should_move: false });
 
         let has_repo = self.has_repo;
-        let current_branch = self.current_branch;
-        let weak_state = self.weak_state;
+        let on_fetch = self.on_fetch;
+        let on_pull = self.on_pull;
+        let on_push = self.on_push;
         let _on_open_repo = self.on_open_repo;
 
         div()
@@ -216,67 +230,44 @@ impl RenderOnce for TitleBar {
                     .items_center()
                     .gap_2()
                     .when(has_repo, |row| {
-                        let ws = weak_state.clone();
+                        let on_fetch = on_fetch.clone();
                         row.child(
                             Button::new("fetch")
                                 .label("Fetch")
                                 .small()
-                                .on_click(move |_, _, cx| {
-                                    let _ = ws.update(cx, |s, cx| {
-                                        if let Err(e) = s.fetch_origin() {
-                                            s.set_error(e.to_string());
-                                        }
-                                        cx.notify();
-                                    });
+                                .on_click(move |_, window, cx| {
+                                    if let Some(f) = &on_fetch {
+                                        f(window, cx);
+                                    }
                                 }),
                         )
                     })
                     .when(has_repo, |row| {
-                        let ws = weak_state.clone();
-                        let branch = current_branch.clone();
+                        let on_pull = on_pull.clone();
                         row.child(
                             Button::new("pull")
                                 .label("Pull")
                                 .small()
-                                .on_click(move |_, _, cx| {
-                                    let b = branch.clone();
-                                    let _ = ws.update(cx, |s, cx| {
-                                        if let Err(e) = s.pull_origin(&b) {
-                                            s.set_error(e.to_string());
-                                        }
-                                        cx.notify();
-                                    });
+                                .on_click(move |_, window, cx| {
+                                    if let Some(f) = &on_pull {
+                                        f(window, cx);
+                                    }
                                 }),
                         )
                     })
                     .when(has_repo, |row| {
-                        let ws = weak_state.clone();
-                        let branch = current_branch.clone();
+                        let on_push = on_push.clone();
                         row.child(
                             Button::new("push")
                                 .label("Push")
                                 .small()
-                                .on_click(move |_, _, cx| {
-                                    let b = branch.clone();
-                                    let _ = ws.update(cx, |s, cx| {
-                                        if let Err(e) = s.push_origin(&b) {
-                                            s.set_error(e.to_string());
-                                        }
-                                        cx.notify();
-                                    });
+                                .on_click(move |_, window, cx| {
+                                    if let Some(f) = &on_push {
+                                        f(window, cx);
+                                    }
                                 }),
                         )
                     })
-                    // .child({
-                    //     Button::new("open-repo")
-                    //         .label("Open Repository")
-                    //         .primary()
-                    //         .on_click(move |_, window, cx| {
-                    //             if let Some(f) = &on_open_repo {
-                    //                 f(window, cx);
-                    //             }
-                    //         })
-                    // })
                     .child(
                         h_flex()
                             .id("opengit-window-controls")
