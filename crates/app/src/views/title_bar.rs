@@ -1,3 +1,12 @@
+//! 自定义标题栏 —— Custom title bar (chrome)
+//!
+//! 渲染应用的自定义窗口装饰，替代系统默认标题栏。
+//! 包含：应用菜单栏、仓库名、Fetch/Pull/Push 按钮和平台窗口控制按钮。
+//! 支持窗口拖拽（通过自定义 ChromeDragState）。
+//!
+//! Renders custom window chrome: menu bar, repo name, action buttons, window controls.
+//! Supports window dragging via ChromeDragState.
+
 use std::rc::Rc;
 
 use gpui::prelude::FluentBuilder as _;
@@ -6,8 +15,10 @@ use gpui_component::button::Button;
 use gpui_component::menu::AppMenuBar;
 use gpui_component::*;
 
+/// 标题栏高度 (px) —— Title bar height in pixels
 pub const CHROME_BAR_H: Pixels = px(40.);
 
+/// 窗口控制操作类型 —— Window control operation type
 #[derive(Clone, Copy)]
 enum ChromeWindowOp {
     Minimize,
@@ -15,15 +26,20 @@ enum ChromeWindowOp {
     Close,
 }
 
+/// 拖拽状态 —— Drag state for window movement
 #[derive(Default)]
 struct ChromeDragState {
     should_move: bool,
 }
 
-/// Custom title bar / chrome for the main window.
+/// 自定义标题栏组件 —— Custom title bar component
 ///
-/// Renders the app menu, repo name, action buttons (Fetch / Pull / Push / Open),
-/// and platform window controls (minimize / zoom / close).
+/// 使用 `IntoElement` derive 实现 `RenderOnce`。
+/// 通过 Builder 模式注入回调（Fetch/Pull/Push/OpenRepo）。
+/// 未来计划改为 GPUI Entity 以支持响应式状态更新。
+///
+/// Uses `IntoElement` derive with Builder pattern for callback injection.
+/// Planned to migrate to GPUI Entity for reactive state updates.
 #[derive(IntoElement)]
 pub struct TitleBar {
     repo_name: String,
@@ -36,6 +52,7 @@ pub struct TitleBar {
 }
 
 impl TitleBar {
+    /// 创建标题栏 —— Create title bar
     pub fn new(
         repo_name: impl Into<String>,
         has_repo: bool,
@@ -73,6 +90,14 @@ impl TitleBar {
     }
 }
 
+/// 渲染窗口控制按钮 —— Render window control button
+///
+/// 根据平台处理窗口控制按钮：
+/// - Windows: 使用原生 `window_control_area`
+/// - macOS/Linux/FreeBSD: 手动处理点击事件
+/// - 关闭按钮使用危险色主题（红色）
+///
+/// Platform-aware: native area on Windows, manual clicks elsewhere. Close button uses danger colors.
 fn window_control_btn(
     id: &'static str,
     icon: IconName,
@@ -102,7 +127,10 @@ fn window_control_btn(
     if is_close {
         d = d
             .hover(|s| s.bg(cx.theme().danger).text_color(cx.theme().danger_foreground))
-            .active(|s| s.bg(cx.theme().danger_active).text_color(cx.theme().danger_foreground));
+            .active(|s| {
+                s.bg(cx.theme().danger_active)
+                    .text_color(cx.theme().danger_foreground)
+            });
     } else {
         d = d
             .hover(|s| {

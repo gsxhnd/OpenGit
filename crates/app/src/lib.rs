@@ -1,0 +1,24 @@
+//! OpenGit 桌面应用 —— OpenGit Desktop Application
+//!
+//! 基于 GPUI 框架构建的 Git GUI 客户端。
+//! 采用 Entity-Component 架构，通过 `AppState` 集中管理仓库状态，
+//! 视图层通过 `WeakEntity<AppState>` 进行响应式通信。
+//!
+//! ## 模块结构 —— Module Structure
+//!
+//! | 模块 | 功能 |
+//! |------|------|
+//! | `app` | 核心状态实体（AppState、ViewType、Project、Workspace） |
+//! | `menu` | 菜单栏构造（应用菜单、仓库操作菜单） |
+//! | `app_component` | 主应用组件（OpenGitApp Entity 及其 Render 实现） |
+//! | `views` | 视图组件（提交视图、历史视图、分支视图、差异视图、标题栏、状态栏） |
+//!
+//! GPUI-based Git GUI client using Entity-Component architecture.
+
+mod app;
+mod app_component;
+mod menu;
+pub mod views;
+
+pub use app::{AppState, ViewType};
+pub use app_component::OpenGitApp;

@@ -1,3 +1,12 @@
+//! 分支管理视图 —— Branch management view
+//!
+//! 提供分支的创建和切换功能。
+//! 列表显示所有本地分支，高亮当前 HEAD 分支，
+//! 每个分支旁边有"Checkout"按钮用于切换。
+//!
+//! Provides branch creation and checkout. Lists local branches with HEAD highlighting
+//! and "Checkout" buttons for switching.
+
 use gpui::*;
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{Input, InputState};
@@ -6,6 +15,13 @@ use gpui_component::{Sizable, StyledExt};
 use crate::app::AppState;
 use ogit::Branch;
 
+/// 渲染分支管理视图 —— Render branch management view
+///
+/// 布局：
+/// 1. 输入框 + "Create branch" 按钮
+/// 2. 分支列表（HEAD 标记 + Checkout 按钮）
+///
+/// Layout: input + create button → branch list (HEAD marker + checkout button).
 pub fn render_branches_view(
     branches: &[Branch],
     branch_name_input: &Entity<InputState>,
@@ -16,6 +32,7 @@ pub fn render_branches_view(
         .min_h_0()
         .v_flex()
         .gap_3()
+        // ---- 创建分支区域 —— Branch creation area ---- //
         .child(
             div()
                 .flex()
@@ -41,6 +58,7 @@ pub fn render_branches_view(
                         })
                 }),
         )
+        // ---- 分支列表 —— Branch list ---- //
         .child(
             div()
                 .flex_1()
@@ -62,6 +80,7 @@ pub fn render_branches_view(
                             div()
                                 .flex()
                                 .gap_2()
+                                // HEAD 标记（青色标签） —— HEAD marker (cyan label)
                                 .child(if cur {
                                     div()
                                         .text_xs()
@@ -72,19 +91,23 @@ pub fn render_branches_view(
                                 })
                                 .child(b.name.clone()),
                         )
+                        // Checkout 按钮 —— Checkout button
                         .child(
-                            Button::new(gpui::SharedString::from(format!("sw-{}", b.name)))
-                                .label("Checkout")
-                                .small()
-                                .on_click(move |_, _, cx| {
-                                    let name = nm.clone();
-                                    let _ = ws.update(cx, |s, cx| {
-                                        if let Err(e) = s.checkout_branch(&name) {
-                                            s.set_error(e.to_string());
-                                        }
-                                        cx.notify();
-                                    });
-                                }),
+                            Button::new(gpui::SharedString::from(format!(
+                                "sw-{}",
+                                b.name
+                            )))
+                            .label("Checkout")
+                            .small()
+                            .on_click(move |_, _, cx| {
+                                let name = nm.clone();
+                                let _ = ws.update(cx, |s, cx| {
+                                    if let Err(e) = s.checkout_branch(&name) {
+                                        s.set_error(e.to_string());
+                                    }
+                                    cx.notify();
+                                });
+                            }),
                         )
                 })),
         )

@@ -1,6 +1,18 @@
+//! 底部状态栏 —— Bottom status bar
+//!
+//! 显示当前分支名称和变更统计信息：
+//! - 左侧：当前分支名（`Branch: main`）
+//! - 右侧：变更计数（`↑A ↓B · unstaged X · staged Y`）
+//!
+//! Displays current branch name and change statistics (ahead/behind counts, unstaged/staged).
+
 use gpui::*;
 
-/// Bottom status bar showing branch info and change counts.
+/// 底部状态栏组件 —— Bottom status bar component
+///
+/// 显示仓库的当前状态信息，使用小号文字和灰色调。
+///
+/// Shows current repo status with small text in gray tones.
 #[derive(IntoElement)]
 pub struct StatusBar {
     current_branch: String,
@@ -11,6 +23,7 @@ pub struct StatusBar {
 }
 
 impl StatusBar {
+    /// 创建状态栏 —— Create status bar
     pub fn new(
         current_branch: impl Into<String>,
         ahead: usize,
@@ -29,6 +42,11 @@ impl StatusBar {
 }
 
 impl RenderOnce for StatusBar {
+    /// 渲染状态栏 —— Render status bar
+    ///
+    /// 左侧显示分支名，右侧显示 ↑A ↓B · unstaged X · staged Y 统计信息。
+    ///
+    /// Left: branch name, Right: ↑ahead ↓behind · unstaged count · staged count
     fn render(self, _: &mut Window, _: &mut App) -> impl IntoElement {
         div()
             .w_full()

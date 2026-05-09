@@ -1,3 +1,11 @@
+//! 提交视图 —— Commit view
+//!
+//! 显示工作区文件变更列表（unstaged / untracked / staged），
+//! 提供 Stage/Unstage/Diff 操作按钮，以及提交消息输入和 amend 切换。
+//!
+//! Displays working tree file changes with stage/unstage/diff actions,
+//! commit message input, and amend toggle.
+
 use gpui::*;
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{Input, InputState};
@@ -6,11 +14,29 @@ use gpui_component::{Sizable, StyledExt};
 use crate::app::{AppState, ViewType};
 use ogit::{FileEntry, FileStatus};
 
+/// 文件行操作类型 —— File row action types
+///
+/// 定义对文件行可执行的操作：暂存（Stage）或取消暂存（Unstage）。
+///
+/// Defines the two actions available on file rows.
 pub enum FileRowAction {
+    /// 暂存文件 —— Stage file
     Stage,
+    /// 取消暂存文件 —— Unstage file
     Unstage,
 }
 
+/// 文件状态缩写标签 —— File status abbreviation label
+///
+/// 将 `FileStatus` 枚举映射为单字符缩写：
+/// - M: 已修改 (Modified)
+/// - A: 已添加 (Added)
+/// - D: 已删除 (Deleted)
+/// - R: 已重命名 (Renamed)
+/// - ?: 未跟踪 (Untracked)
+/// - !: 冲突 (Conflicted)
+///
+/// Maps FileStatus to a single-character abbreviation for display.
 pub fn file_status_label(s: FileStatus) -> &'static str {
     match s {
         FileStatus::Modified => "M",
@@ -23,6 +49,12 @@ pub fn file_status_label(s: FileStatus) -> &'static str {
     }
 }
 
+/// 渲染单个文件行 —— Render a single file row
+///
+/// 显示文件状态标签、路径和操作按钮。
+/// 点击按钮通过 `WeakEntity<AppState>` 触发 stage/unstage 操作。
+///
+/// Shows status label, path, and action button. Click triggers stage/unstage via WeakEntity.
 pub fn render_file_row(
     id: impl Into<String>,
     entry: &FileEntry,
@@ -71,6 +103,15 @@ pub fn render_file_row(
         )
 }
 
+/// 渲染提交视图 —— Render the full commit view
+///
+/// 布局结构：
+/// 1. Unstaged 区域（未暂存文件 + 未跟踪文件）
+/// 2. Staged 区域（已暂存文件）
+/// 3. 提交消息输入区域
+/// 4. 提交按钮 + Amend 切换
+///
+/// Layout: unstaged files → staged files → commit message → commit button + amend toggle.
 pub fn render_commit_view(
     unstaged: &[FileEntry],
     untracked: &[FileEntry],
@@ -86,18 +127,21 @@ pub fn render_commit_view(
         .min_h_0()
         .v_flex()
         .gap_3()
+        // ---- Unstaged 标签 ---- //
         .child(
             div()
                 .text_xs()
                 .text_color(gpui::rgb(0xcccccc))
                 .child("Unstaged"),
         )
+        // ---- Unstaged + Untracked 文件列表 ---- //
         .child(
             div()
                 .flex_1()
                 .min_h_0()
                 .v_flex()
                 .gap_1()
+                // 未暂存文件 —— Unstaged files
                 .children(unstaged.iter().map(|e| {
                     let ws = weak_state.clone();
                     let wo = weak_self.clone();
@@ -113,6 +157,7 @@ pub fn render_commit_view(
                             ws.clone(),
                             FileRowAction::Stage,
                         ))
+                        // Diff 按钮：加载文件差异并切换到 Diff 视图 —— Diff button: load diff and switch to Diff view
                         .child(
                             Button::new(gpui::SharedString::from(format!(
                                 "diff-u-{}",
@@ -133,6 +178,7 @@ pub fn render_commit_view(
                             }),
                         )
                 }))
+                // 未跟踪文件 —— Untracked files
                 .children(untracked.iter().map(|e| {
                     let ws = weak_state.clone();
                     let wo = weak_self.clone();
@@ -169,12 +215,14 @@ pub fn render_commit_view(
                         )
                 })),
         )
+        // ---- Staged 标签 ---- //
         .child(
             div()
                 .text_xs()
                 .text_color(gpui::rgb(0xcccccc))
                 .child("Staged"),
         )
+        // ---- Staged 文件列表 ---- //
         .child(
             div()
                 .flex_1()
@@ -192,6 +240,7 @@ pub fn render_commit_view(
                     )
                 })),
         )
+        // ---- 提交消息输入 ---- //
         .child(
             div()
                 .text_xs()
@@ -199,11 +248,13 @@ pub fn render_commit_view(
                 .child("Message"),
         )
         .child(Input::new(commit_message).w_full().h(px(100.)))
+        // ---- 提交按钮 + Amend 切换 ---- //
         .child(
             div()
                 .flex()
                 .gap_2()
                 .child({
+                    // 提交按钮：读取消息和 amend 状态，执行 commit —— Commit button
                     let app_e = app_entity.clone();
                     let msg_e = commit_message.clone();
                     Button::new("commit-btn")
@@ -219,12 +270,14 @@ pub fn render_commit_view(
                                 }
                                 cx.notify();
                             });
+                            // 提交后清空消息输入 —— Clear message after commit
                             let _ = msg_e.update(cx, |inp, cx| {
                                 inp.set_value("", window, cx);
                             });
                         })
                 })
                 .child({
+                    // Amend 切换按钮 —— Amend toggle button
                     let ws = weak_state.clone();
                     Button::new("amend-toggle")
                         .label(if amend { "Amend: on" } else { "Amend: off" })
