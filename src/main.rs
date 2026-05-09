@@ -13,11 +13,10 @@ mod views;
 
 use app::{AppState, ViewType};
 use git::model::{DiffLine, FileDiff, FileEntry, FileStatus};
+use views::{StatusBar, TitleBar};
 
 actions!(open_git, [OpenRepository, QuitApp, MenuFetch, MenuPull, MenuPush]);
 
-/// Transparent title bar without gpui-component `TitleBar` positioning of native traffic lights.
-/// On macOS, native buttons are moved far off-screen so the in-app chrome is fully custom.
 fn opengit_titlebar_options() -> TitlebarOptions {
     TitlebarOptions {
         title: Some("OpenGit".into()),
@@ -27,126 +26,6 @@ fn opengit_titlebar_options() -> TitlebarOptions {
         #[cfg(not(target_os = "macos"))]
         traffic_light_position: None,
     }
-}
-
-const CHROME_BAR_H: Pixels = px(40.);
-
-#[derive(Clone, Copy)]
-enum ChromeWindowOp {
-    Minimize,
-    Zoom,
-    Close,
-}
-
-#[derive(Default)]
-struct ChromeDragState {
-    should_move: bool,
-}
-
-/// Custom window controls (minimize / zoom / close) for all platforms, including macOS where
-/// `TitleBar` would otherwise omit drawn buttons.
-fn opengit_window_controls(window: &mut Window, cx: &App) -> impl IntoElement {
-    let is_windows = cfg!(target_os = "windows");
-    let use_manual_click = cfg!(any(
-        target_os = "linux",
-        target_os = "freebsd",
-        target_os = "macos"
-    ));
-    let maximized = window.is_maximized();
-
-    let chrome_btn = |id: &'static str,
-                      icon: IconName,
-                      area: WindowControlArea,
-                      close: bool,
-                      op: Option<ChromeWindowOp>| {
-        let mut d = div()
-            .id(id)
-            .flex()
-            .w(CHROME_BAR_H)
-            .h_full()
-            .flex_shrink_0()
-            .justify_center()
-            .content_center()
-            .items_center()
-            .text_color(cx.theme().foreground);
-        if close {
-            d = d
-                .hover(|s| {
-                    s.bg(cx.theme().danger)
-                        .text_color(cx.theme().danger_foreground)
-                })
-                .active(|s| {
-                    s.bg(cx.theme().danger_active)
-                        .text_color(cx.theme().danger_foreground)
-                });
-        } else {
-            d = d
-                .hover(|s| {
-                    s.bg(cx.theme().secondary_hover)
-                        .text_color(cx.theme().secondary_foreground)
-                })
-                .active(|s| {
-                    s.bg(cx.theme().secondary_active)
-                        .text_color(cx.theme().secondary_foreground)
-                });
-        }
-        if is_windows {
-            d = d.window_control_area(area);
-        }
-        if use_manual_click {
-            if let Some(op) = op {
-                d = d
-                    .on_mouse_down(MouseButton::Left, |_, window, cx| {
-                        window.prevent_default();
-                        cx.stop_propagation();
-                    })
-                    .on_click(move |_, window, cx| {
-                        cx.stop_propagation();
-                        match op {
-                            ChromeWindowOp::Minimize => window.minimize_window(),
-                            ChromeWindowOp::Zoom => window.zoom_window(),
-                            ChromeWindowOp::Close => window.remove_window(),
-                        }
-                    });
-            }
-        }
-        d.child(Icon::new(icon).small())
-    };
-
-    h_flex()
-        .id("opengit-window-controls")
-        .items_center()
-        .flex_shrink_0()
-        .h_full()
-        .child(chrome_btn(
-            "win-min",
-            IconName::WindowMinimize,
-            WindowControlArea::Min,
-            false,
-            use_manual_click.then_some(ChromeWindowOp::Minimize),
-        ))
-        .child(chrome_btn(
-            if maximized {
-                "win-restore"
-            } else {
-                "win-max"
-            },
-            if maximized {
-                IconName::WindowRestore
-            } else {
-                IconName::WindowMaximize
-            },
-            WindowControlArea::Max,
-            false,
-            use_manual_click.then_some(ChromeWindowOp::Zoom),
-        ))
-        .child(chrome_btn(
-            "win-close",
-            IconName::WindowClose,
-            WindowControlArea::Close,
-            true,
-            use_manual_click.then_some(ChromeWindowOp::Close),
-        ))
 }
 
 fn build_open_git_menus(has_repo: bool) -> Vec<Menu> {
@@ -186,9 +65,8 @@ impl OpenGitApp {
                 .placeholder("Commit message…")
                 .multi_line(true)
         });
-        let branch_name_input = cx.new(|cx| {
-            InputState::new(window, cx).placeholder("New branch name…")
-        });
+        let branch_name_input =
+            cx.new(|cx| InputState::new(window, cx).placeholder("New branch name…"));
         cx.bind_keys([
             KeyBinding::new("cmd-o", OpenRepository, None),
             KeyBinding::new("ctrl-o", OpenRepository, None),
@@ -356,25 +234,22 @@ fn render_file_row(
         .items_center()
         .py_1()
         .child(
-            Button::new(SharedString::from(format!(
-                "act-{}",
-                path.display()
-            )))
-            .label(action_label)
-            .small()
-            .on_click(move |_, _, cx| {
-                let p = path.clone();
-                let _ = weak.update(cx, |state, cx| {
-                    let r = match action {
-                        FileRowAction::Stage => state.stage_path(&p),
-                        FileRowAction::Unstage => state.unstage_path(&p),
-                    };
-                    if let Err(e) = r {
-                        state.set_error(e.to_string());
-                    }
-                    cx.notify();
-                });
-            }),
+            Button::new(SharedString::from(format!("act-{}", path.display())))
+                .label(action_label)
+                .small()
+                .on_click(move |_, _, cx| {
+                    let p = path.clone();
+                    let _ = weak.update(cx, |state, cx| {
+                        let r = match action {
+                            FileRowAction::Stage => state.stage_path(&p),
+                            FileRowAction::Unstage => state.unstage_path(&p),
+                        };
+                        if let Err(e) = r {
+                            state.set_error(e.to_string());
+                        }
+                        cx.notify();
+                    });
+                }),
         )
         .child(
             div()
@@ -404,8 +279,35 @@ fn render_diff_lines(diff: &FileDiff) -> impl IntoElement {
         }))
 }
 
+fn render_tab_button(
+    id: &'static str,
+    label: &'static str,
+    view_type: ViewType,
+    current_view: ViewType,
+    cx: &mut Context<OpenGitApp>,
+) -> impl IntoElement {
+    use gpui::Styled as _;
+    use gpui_component::button::Button;
+
+    let is_active = current_view == view_type;
+    let weak_self = cx.entity().downgrade();
+
+    let button = Button::new(id).label(label).on_click(move |_, _, cx| {
+        let _ = weak_self.update(cx, |app, cx| {
+            app.active_view = view_type;
+            cx.notify();
+        });
+    });
+
+    if is_active {
+        button.primary().w_full()
+    } else {
+        button.secondary().w_full()
+    }
+}
+
 impl Render for OpenGitApp {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let state = self.app_state.read(cx);
         let repo_name = state
             .repo_path
@@ -414,7 +316,6 @@ impl Render for OpenGitApp {
             .and_then(|n| n.to_str())
             .map(|s| s.to_string())
             .unwrap_or_else(|| "Repository".to_string());
-
         let current_branch = state
             .repo_status
             .status
@@ -443,10 +344,30 @@ impl Render for OpenGitApp {
         let weak_state = self.app_state.downgrade();
         let weak_self = cx.entity().downgrade();
         let app_entity = self.app_state.clone();
-        let menu_bar = self.app_menu_bar.clone();
-        let chrome_drag = window.use_state(cx, |_, _| ChromeDragState {
-            should_move: false,
-        });
+
+        let title_bar = {
+            let ws = weak_self.clone();
+            TitleBar::new(
+                repo_name,
+                has_repo,
+                current_branch.clone(),
+                self.app_menu_bar.clone(),
+                weak_state.clone(),
+            )
+            .on_open_repo(move |window, cx| {
+                let _ = ws.update(cx, |app, cx| {
+                    app.prompt_open_repository(window, cx);
+                });
+            })
+        };
+
+        let status_bar = StatusBar::new(
+            current_branch.clone(),
+            ahead,
+            behind,
+            changed_count,
+            staged_count,
+        );
 
         div()
             .v_flex()
@@ -458,146 +379,7 @@ impl Render for OpenGitApp {
             .on_action(cx.listener(Self::on_menu_push))
             .bg(gpui::rgb(0x121212))
             .text_color(gpui::rgb(0xffffff))
-            .child(
-                div()
-                    .id("opengit-chrome")
-                    .flex_shrink_0()
-                    .flex()
-                    .flex_row()
-                    .items_center()
-                    .justify_between()
-                    .h(CHROME_BAR_H)
-                    .border_b(px(1.))
-                    .border_color(gpui::rgb(0x333333))
-                    .bg(gpui::rgb(0x1e1e1e))
-                    .when(cfg!(target_os = "linux"), |this| {
-                        this.on_double_click(|_, window, _| window.zoom_window())
-                    })
-                    .when(cfg!(target_os = "macos"), |this| {
-                        this.on_double_click(|_, window, _| window.titlebar_double_click())
-                    })
-                    .on_mouse_down_out(window.listener_for(&chrome_drag, |state, _, _, _| {
-                        state.should_move = false;
-                    }))
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        window.listener_for(&chrome_drag, |state, _, _, _| {
-                            state.should_move = true;
-                        }),
-                    )
-                    .on_mouse_up(
-                        MouseButton::Left,
-                        window.listener_for(&chrome_drag, |state, _, _, _| {
-                            state.should_move = false;
-                        }),
-                    )
-                    .on_mouse_move(window.listener_for(&chrome_drag, |state, _, window, _| {
-                        if state.should_move {
-                            state.should_move = false;
-                            window.start_window_move();
-                        }
-                    }))
-                    .relative()
-                    .child(
-                        h_flex()
-                            .h_full()
-                            .min_w_0()
-                            .flex_1()
-                            .items_center()
-                            .gap_2()
-                            .child(menu_bar)
-                            .child(
-                                div()
-                                    .text_sm()
-                                    .font_weight(gpui::FontWeight::BOLD)
-                                    .child("OpenGit"),
-                            )
-                            .child(
-                                div()
-                                    .text_xs()
-                                    .text_color(gpui::rgb(0x888888))
-                                    .truncate()
-                                    .child(repo_name),
-                            )
-                            .child(
-                                div()
-                                    .flex_1()
-                                    .h_full()
-                                    .min_w(px(48.))
-                                    .window_control_area(WindowControlArea::Drag),
-                            ),
-                    )
-                    .child(
-                        h_flex()
-                            .h_full()
-                            .items_center()
-                            .gap_2()
-                            .when(has_repo, |row| {
-                                let ws = weak_state.clone();
-                                row.child(
-                                    Button::new("fetch")
-                                        .label("Fetch")
-                                        .small()
-                                        .on_click(move |_, _, cx| {
-                                            let _ = ws.update(cx, |s, cx| {
-                                                if let Err(e) = s.fetch_origin() {
-                                                    s.set_error(e.to_string());
-                                                }
-                                                cx.notify();
-                                            });
-                                        }),
-                                )
-                            })
-                            .when(has_repo, |row| {
-                                let ws = weak_state.clone();
-                                let branch = current_branch.clone();
-                                row.child(
-                                    Button::new("pull")
-                                        .label("Pull")
-                                        .small()
-                                        .on_click(move |_, _, cx| {
-                                            let b = branch.clone();
-                                            let _ = ws.update(cx, |s, cx| {
-                                                if let Err(e) = s.pull_origin(&b) {
-                                                    s.set_error(e.to_string());
-                                                }
-                                                cx.notify();
-                                            });
-                                        }),
-                                )
-                            })
-                            .when(has_repo, |row| {
-                                let ws = weak_state.clone();
-                                let branch = current_branch.clone();
-                                row.child(
-                                    Button::new("push")
-                                        .label("Push")
-                                        .small()
-                                        .on_click(move |_, _, cx| {
-                                            let b = branch.clone();
-                                            let _ = ws.update(cx, |s, cx| {
-                                                if let Err(e) = s.push_origin(&b) {
-                                                    s.set_error(e.to_string());
-                                                }
-                                                cx.notify();
-                                            });
-                                        }),
-                                )
-                            })
-                            .child({
-                                let ws = weak_self.clone();
-                                Button::new("open-repo")
-                                    .label("Open Repository")
-                                    .primary()
-                                    .on_click(move |_, window, cx| {
-                                        let _ = ws.update(cx, |app, cx| {
-                                            app.prompt_open_repository(window, cx);
-                                        });
-                                    })
-                            })
-                            .child(opengit_window_controls(window, cx)),
-                    ),
-            )
+            .child(title_bar)
             .when_some(err, |col, e| {
                 col.child(
                     div()
@@ -609,540 +391,496 @@ impl Render for OpenGitApp {
                         .child(e),
                 )
             })
-            .child(
-                if has_repo {
+            .child(if has_repo {
+                div()
+                    .flex_1()
+                    .flex()
+                    .min_h_0()
+                    .min_w_0()
+                    .child(
+                        div()
+                            .flex_1()
+                            .min_w_0()
+                            .min_h_0()
+                            .child(
+                                h_resizable("opengit-main-split")
+                                    .child(
+                                        resizable_panel()
+                                            .size(px(250.))
+                                            .size_range(px(160.)..px(560.))
+                                            .flex_none()
+                                            .child(
+                                                div()
+                                                    .h_full()
+                                                    .min_w_0()
+                                                    .bg(gpui::rgb(0x1e1e1e))
+                                                    .border_r(px(1.))
+                                                    .border_color(gpui::rgb(0x333333))
+                                                    .p_2()
+                                                    .v_flex()
+                                                    .gap_1()
+                                                    .child(render_tab_button(
+                                                        "commit",
+                                                        "Commit",
+                                                        ViewType::Commit,
+                                                        active_view,
+                                                        cx,
+                                                    ))
+                                                    .child(render_tab_button(
+                                                        "history",
+                                                        "History",
+                                                        ViewType::History,
+                                                        active_view,
+                                                        cx,
+                                                    ))
+                                                    .child(render_tab_button(
+                                                        "branches",
+                                                        "Branches",
+                                                        ViewType::Branches,
+                                                        active_view,
+                                                        cx,
+                                                    ))
+                                                    .child(render_tab_button(
+                                                        "diff",
+                                                        "Diff",
+                                                        ViewType::Diff,
+                                                        active_view,
+                                                        cx,
+                                                    )),
+                                            ),
+                                    )
+                                    .child(resizable_panel().child(
+                                        div()
+                                            .flex_1()
+                                            .min_h_0()
+                                            .min_w_0()
+                                            .p_4()
+                                            .v_flex()
+                                            .gap_3()
+                                            .child(match active_view {
+                                                ViewType::Commit => render_commit_view(
+                                                    &unstaged,
+                                                    &untracked,
+                                                    &staged,
+                                                    amend,
+                                                    &self.commit_message,
+                                                    app_entity.clone(),
+                                                    weak_state.clone(),
+                                                    weak_self.clone(),
+                                                ),
+                                                ViewType::History => render_history_view(
+                                                    &history,
+                                                    selected_hist,
+                                                    weak_state.clone(),
+                                                ),
+                                                ViewType::Branches => render_branches_view(
+                                                    &branches,
+                                                    &self.branch_name_input,
+                                                    weak_state.clone(),
+                                                ),
+                                                ViewType::Diff => render_diff_view(
+                                                    diff_path.as_ref(),
+                                                    diff_preview.as_ref(),
+                                                ),
+                                                _ => div()
+                                                    .child("Not implemented")
+                                                    .into_any_element(),
+                                            }),
+                                    )),
+                            ),
+                    )
+                    .into_any_element()
+            } else {
+                div()
+                    .flex_1()
+                    .v_flex()
+                    .gap_6()
+                    .size_full()
+                    .items_center()
+                    .justify_center()
+                    .p_4()
+                    .child(
+                        div()
+                            .flex()
+                            .flex_col()
+                            .items_center()
+                            .gap_4()
+                            .child(div().text_lg().child("Welcome to OpenGit"))
+                            .child(
+                                div()
+                                    .text_color(gpui::rgb(0xcccccc))
+                                    .child("A modern Git client built with Rust and GPUI"),
+                            )
+                            .child(
+                                div()
+                                    .mt_8()
+                                    .text_color(gpui::rgb(0xaaaaaa))
+                                    .child("Open a Git repository to get started"),
+                            ),
+                    )
+                    .into_any_element()
+            })
+            .child(status_bar)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Per-view render helpers
+// ---------------------------------------------------------------------------
+
+fn render_commit_view(
+    unstaged: &[FileEntry],
+    untracked: &[FileEntry],
+    staged: &[FileEntry],
+    amend: bool,
+    commit_message: &Entity<InputState>,
+    app_entity: Entity<AppState>,
+    weak_state: WeakEntity<AppState>,
+    weak_self: WeakEntity<OpenGitApp>,
+) -> AnyElement {
+    div()
+        .flex_1()
+        .min_h_0()
+        .v_flex()
+        .gap_3()
+        .child(
+            div()
+                .text_xs()
+                .text_color(gpui::rgb(0xcccccc))
+                .child("Unstaged"),
+        )
+        .child(
+            div()
+                .flex_1()
+                .min_h_0()
+                .v_flex()
+                .gap_1()
+                .children(unstaged.iter().map(|e| {
+                    let ws = weak_state.clone();
+                    let wo = weak_self.clone();
+                    let path = e.path.clone();
                     div()
-                        .flex_1()
                         .flex()
-                        .min_h_0()
-                        .min_w_0()
-                        .child(
-                            div()
-                                .flex_1()
-                                .min_w_0()
-                                .min_h_0()
-                                .child(
-                            h_resizable("opengit-main-split")
-                                .child(
-                                    resizable_panel()
-                                        .size(px(250.))
-                                        .size_range(px(160.)..px(560.))
-                                        .flex_none()
-                                        .child(
-                            div()
-                                .h_full()
-                                .min_w_0()
-                                .bg(gpui::rgb(0x1e1e1e))
-                                .border_r(px(1.))
-                                .border_color(gpui::rgb(0x333333))
-                                .p_2()
-                                .v_flex()
-                                .gap_1()
-                                .child(render_tab_button(
-                                    "commit",
-                                    "Commit",
-                                    ViewType::Commit,
-                                    active_view,
-                                    cx,
-                                ))
-                                .child(render_tab_button(
-                                    "history",
-                                    "History",
-                                    ViewType::History,
-                                    active_view,
-                                    cx,
-                                ))
-                                .child(render_tab_button(
-                                    "branches",
-                                    "Branches",
-                                    ViewType::Branches,
-                                    active_view,
-                                    cx,
-                                ))
-                                .child(render_tab_button(
-                                    "diff",
-                                    "Diff",
-                                    ViewType::Diff,
-                                    active_view,
-                                    cx,
-                                )),
-                                        )
-                                )
-                                .child(
-                                    resizable_panel().child(
-                            div()
-                                .flex_1()
-                                .min_h_0()
-                                .min_w_0()
-                                .p_4()
-                                .v_flex()
-                                .gap_3()
-                                .child(match active_view {
-                                    ViewType::Commit => div()
-                                        .flex_1()
-                                        .min_h_0()
-                                        .v_flex()
-                                        .gap_3()
-                                        .child(
-                                            div()
-                                                .text_xs()
-                                                .text_color(gpui::rgb(0xcccccc))
-                                                .child("Unstaged"),
-                                        )
-                                        .child(
-                                            div()
-                                                .flex_1()
-                                                .min_h_0()
-                                                .v_flex()
-                                                .gap_1()
-                                                .children(unstaged.iter().map(|e| {
-                                                    let ws = weak_state.clone();
-                                                    let wo = weak_self.clone();
-                                                    let path = e.path.clone();
-                                                    div()
-                                                        .flex()
-                                                        .gap_1()
-                                                        .items_center()
-                                                        .child(render_file_row(
-                                                            format!("u-{}", e.path.display()),
-                                                            e,
-                                                            "Stage",
-                                                            ws.clone(),
-                                                            FileRowAction::Stage,
-                                                        ))
-                                                        .child(
-                                                            Button::new(SharedString::from(
-                                                                format!("diff-u-{}", path.display()),
-                                                            ))
-                                                            .label("Diff")
-                                                            .small()
-                                                            .on_click(move |_, _, cx| {
-                                                                let p = path.clone();
-                                                                let _ = ws.update(cx, |s, cx| {
-                                                                    let _ = s.set_diff_path(Some(p));
-                                                                    cx.notify();
-                                                                });
-                                                                let _ = wo.update(cx, |a, cx| {
-                                                                    a.active_view = ViewType::Diff;
-                                                                    cx.notify();
-                                                                });
-                                                            }),
-                                                        )
-                                                }))
-                                                .children(untracked.iter().map(|e| {
-                                                    let ws = weak_state.clone();
-                                                    let wo = weak_self.clone();
-                                                    let path = e.path.clone();
-                                                    div()
-                                                        .flex()
-                                                        .gap_1()
-                                                        .items_center()
-                                                        .child(render_file_row(
-                                                            format!("n-{}", e.path.display()),
-                                                            e,
-                                                            "Stage",
-                                                            ws.clone(),
-                                                            FileRowAction::Stage,
-                                                        ))
-                                                        .child(
-                                                            Button::new(SharedString::from(
-                                                                format!("diff-n-{}", path.display()),
-                                                            ))
-                                                            .label("Diff")
-                                                            .small()
-                                                            .on_click(move |_, _, cx| {
-                                                                let p = path.clone();
-                                                                let _ = ws.update(cx, |s, cx| {
-                                                                    let _ = s.set_diff_path(Some(p));
-                                                                    cx.notify();
-                                                                });
-                                                                let _ = wo.update(cx, |a, cx| {
-                                                                    a.active_view = ViewType::Diff;
-                                                                    cx.notify();
-                                                                });
-                                                            }),
-                                                        )
-                                                })),
-                                        )
-                                        .child(
-                                            div()
-                                                .text_xs()
-                                                .text_color(gpui::rgb(0xcccccc))
-                                                .child("Staged"),
-                                        )
-                                        .child(
-                                            div()
-                                                .flex_1()
-                                                .min_h_0()
-                                                .v_flex()
-                                                .gap_1()
-                                                .children(staged.iter().map(|e| {
-                                                    let ws = weak_state.clone();
-                                                    render_file_row(
-                                                        format!("s-{}", e.path.display()),
-                                                        e,
-                                                        "Unstage",
-                                                        ws,
-                                                        FileRowAction::Unstage,
-                                                    )
-                                                })),
-                                        )
-                                        .child(
-                                            div()
-                                                .text_xs()
-                                                .text_color(gpui::rgb(0xcccccc))
-                                                .child("Message"),
-                                        )
-                                        .child(
-                                            Input::new(&self.commit_message)
-                                                .w_full()
-                                                .h(px(100.)),
-                                        )
-                                        .child(
-                                            div()
-                                                .flex()
-                                                .gap_2()
-                                                .child({
-                                                    let app_e = app_entity.clone();
-                                                    let msg_e = self.commit_message.clone();
-                                                    Button::new("commit-btn")
-                                                        .label("Commit")
-                                                        .primary()
-                                                        .on_click(move |_, window, cx| {
-                                                            let msg = cx.read_entity(
-                                                                &msg_e,
-                                                                |i, _| i.value().to_string(),
-                                                            );
-                                                            let amend =
-                                                                cx.read_entity(&app_e, |s, _| {
-                                                                    s.commit_amend
-                                                                });
-                                                            let _ = app_e.update(cx, |s, cx| {
-                                                                if let Err(e) =
-                                                                    s.commit_staged(&msg, amend)
-                                                                {
-                                                                    s.set_error(e.to_string());
-                                                                }
-                                                                cx.notify();
-                                                            });
-                                                            let _ = msg_e.update(cx, |inp, cx| {
-                                                                inp.set_value("", window, cx);
-                                                            });
-                                                        })
-                                                })
-                                                .child({
-                                                    let ws = weak_state.clone();
-                                                    Button::new("amend-toggle")
-                                                        .label(if amend {
-                                                            "Amend: on"
-                                                        } else {
-                                                            "Amend: off"
-                                                        })
-                                                        .small()
-                                                        .on_click(move |_, _, cx| {
-                                                            let _ = ws.update(cx, |s, cx| {
-                                                                s.commit_amend = !s.commit_amend;
-                                                                cx.notify();
-                                                            });
-                                                        })
-                                                }),
-                                        )
-                                        .into_any_element(),
-                                    ViewType::History => div()
-                                        .flex_1()
-                                        .min_h_0()
-                                        .v_flex()
-                                        .gap_2()
-                                        .child(
-                                            div()
-                                                .flex()
-                                                .justify_between()
-                                                .items_center()
-                                                .child(format!(
-                                                    "Commits ({})",
-                                                    history.len()
-                                                ))
-                                                .child({
-                                                    let ws = weak_state.clone();
-                                                    Button::new("hist-more")
-                                                        .label("Load more")
-                                                        .small()
-                                                        .on_click(move |_, _, cx| {
-                                                            let _ = ws.update(cx, |s, cx| {
-                                                                if let Err(e) = s.load_more_history()
-                                                                {
-                                                                    s.set_error(e.to_string());
-                                                                }
-                                                                cx.notify();
-                                                            });
-                                                        })
-                                                }),
-                                        )
-                                        .child(
-                                            div()
-                                                .flex_1()
-                                                .min_h_0()
-                                                .v_flex()
-                                                .gap_1()
-                                                .children(history.iter().enumerate().map(
-                                                    |(idx, c)| {
-                                                        let sel = selected_hist == Some(idx);
-                                                        let ws = weak_state.clone();
-                                                        let hash = c.hash.clone();
-                                                        let summary = c.summary.clone();
-                                                        let author = c.author.clone();
-                                                        let time_str =
-                                                            c.time.format("%Y-%m-%d").to_string();
-                                                        div()
-                                                            .id(hash.clone())
-                                                            .cursor_pointer()
-                                                            .bg(if sel {
-                                                                gpui::rgb(0x3e3e3e)
-                                                            } else {
-                                                                gpui::rgb(0x1e1e1e)
-                                                            })
-                                                            .rounded(px(2.))
-                                                            .p_2()
-                                                            .on_click(move |_, _, cx| {
-                                                                let _ = ws.update(cx, |s, cx| {
-                                                                    s.selected_history = Some(idx);
-                                                                    cx.notify();
-                                                                });
-                                                            })
-                                                            .child(
-                                                                div()
-                                                                    .flex()
-                                                                    .flex_col()
-                                                                    .gap_1()
-                                                                    .child(
-                                                                        div()
-                                                                            .text_sm()
-                                                                            .child(summary),
-                                                                    )
-                                                                    .child(
-                                                                        div()
-                                                                            .flex()
-                                                                            .gap_4()
-                                                                            .text_xs()
-                                                                            .text_color(gpui::rgb(
-                                                                                0x888888,
-                                                                            ))
-                                                                            .child(author)
-                                                                            .child(time_str)
-                                                                            .child(
-                                                                                hash.chars()
-                                                                                    .take(7)
-                                                                                    .collect::<String>(),
-                                                                            ),
-                                                                    ),
-                                                            )
-                                                    },
-                                                )),
-                                        )
-                                        .into_any_element(),
-                                    ViewType::Branches => div()
-                                        .flex_1()
-                                        .min_h_0()
-                                        .v_flex()
-                                        .gap_3()
-                                        .child(
-                                            div()
-                                                .flex()
-                                                .gap_2()
-                                                .child(Input::new(&self.branch_name_input).flex_1())
-                                                .child({
-                                                    let ws = weak_state.clone();
-                                                    let inp = self.branch_name_input.clone();
-                                                    Button::new("new-branch")
-                                                        .label("Create branch")
-                                                        .primary()
-                                                        .on_click(move |_, _, cx| {
-                                                            let name = cx.read_entity(
-                                                                &inp,
-                                                                |i, _| i.value().to_string(),
-                                                            );
-                                                            let _ = ws.update(cx, |s, cx| {
-                                                                if name.trim().is_empty() {
-                                                                    s.set_error(
-                                                                        "Branch name is empty"
-                                                                            .into(),
-                                                                    );
-                                                                } else if let Err(e) = s
-                                                                    .create_branch(name.trim())
-                                                                {
-                                                                    s.set_error(e.to_string());
-                                                                }
-                                                                cx.notify();
-                                                            });
-                                                        })
-                                                }),
-                                        )
-                                        .child(
-                                            div()
-                                                .flex_1()
-                                                .min_h_0()
-                                                .v_flex()
-                                                .gap_1()
-                                                .children(branches.iter().map(|b| {
-                                                    let ws = weak_state.clone();
-                                                    let nm = b.name.clone();
-                                                    let cur = b.is_head;
-                                                    div()
-                                                        .flex()
-                                                        .justify_between()
-                                                        .items_center()
-                                                        .p_2()
-                                                        .rounded(px(2.))
-                                                        .bg(gpui::rgb(0x1e1e1e))
-                                                        .child(
-                                                            div()
-                                                                .flex()
-                                                                .gap_2()
-                                                                .child(
-                                                                    if cur {
-                                                                        div()
-                                                                            .text_xs()
-                                                                            .text_color(
-                                                                                gpui::rgb(0x4dd0e1),
-                                                                            )
-                                                                            .child("HEAD")
-                                                                    } else {
-                                                                        div().text_xs().child(" ")
-                                                                    },
-                                                                )
-                                                                .child(b.name.clone()),
-                                                        )
-                                                        .child(
-                                                            Button::new(SharedString::from(
-                                                                format!("sw-{}", b.name),
-                                                            ))
-                                                            .label("Checkout")
-                                                            .small()
-                                                            .on_click(move |_, _, cx| {
-                                                                let name = nm.clone();
-                                                                let _ = ws.update(cx, |s, cx| {
-                                                                    if let Err(e) =
-                                                                        s.checkout_branch(&name)
-                                                                    {
-                                                                        s.set_error(e.to_string());
-                                                                    }
-                                                                    cx.notify();
-                                                                });
-                                                            }),
-                                                        )
-                                                })),
-                                        )
-                                        .into_any_element(),
-                                    ViewType::Diff => div()
-                                        .flex_1()
-                                        .min_h_0()
-                                        .v_flex()
-                                        .gap_2()
-                                        .child(
-                                            div()
-                                                .text_sm()
-                                                .child(match &diff_path {
-                                                    Some(p) => format!("Diff: {}", p.display()),
-                                                    None => "Select a file from Commit view (click row)"
-                                                        .to_string(),
-                                                }),
-                                        )
-                                        .when_some(diff_preview, |col, d| {
-                                            col.flex_1().min_h_0().child(render_diff_lines(&d))
-                                        })
-                                        .into_any_element(),
-                                    _ => div().child("Not implemented").into_any_element(),
-                                })
-                        ))))
-                        .into_any_element()
-                } else {
-                    div()
-                        .flex_1()
-                        .v_flex()
-                        .gap_6()
-                        .size_full()
+                        .gap_1()
                         .items_center()
-                        .justify_center()
-                        .p_4()
+                        .child(render_file_row(
+                            format!("u-{}", e.path.display()),
+                            e,
+                            "Stage",
+                            ws.clone(),
+                            FileRowAction::Stage,
+                        ))
+                        .child(
+                            Button::new(SharedString::from(format!(
+                                "diff-u-{}",
+                                path.display()
+                            )))
+                            .label("Diff")
+                            .small()
+                            .on_click(move |_, _, cx| {
+                                let p = path.clone();
+                                let _ = ws.update(cx, |s, cx| {
+                                    let _ = s.set_diff_path(Some(p));
+                                    cx.notify();
+                                });
+                                let _ = wo.update(cx, |a, cx| {
+                                    a.active_view = ViewType::Diff;
+                                    cx.notify();
+                                });
+                            }),
+                        )
+                }))
+                .children(untracked.iter().map(|e| {
+                    let ws = weak_state.clone();
+                    let wo = weak_self.clone();
+                    let path = e.path.clone();
+                    div()
+                        .flex()
+                        .gap_1()
+                        .items_center()
+                        .child(render_file_row(
+                            format!("n-{}", e.path.display()),
+                            e,
+                            "Stage",
+                            ws.clone(),
+                            FileRowAction::Stage,
+                        ))
+                        .child(
+                            Button::new(SharedString::from(format!(
+                                "diff-n-{}",
+                                path.display()
+                            )))
+                            .label("Diff")
+                            .small()
+                            .on_click(move |_, _, cx| {
+                                let p = path.clone();
+                                let _ = ws.update(cx, |s, cx| {
+                                    let _ = s.set_diff_path(Some(p));
+                                    cx.notify();
+                                });
+                                let _ = wo.update(cx, |a, cx| {
+                                    a.active_view = ViewType::Diff;
+                                    cx.notify();
+                                });
+                            }),
+                        )
+                })),
+        )
+        .child(
+            div()
+                .text_xs()
+                .text_color(gpui::rgb(0xcccccc))
+                .child("Staged"),
+        )
+        .child(
+            div()
+                .flex_1()
+                .min_h_0()
+                .v_flex()
+                .gap_1()
+                .children(staged.iter().map(|e| {
+                    let ws = weak_state.clone();
+                    render_file_row(
+                        format!("s-{}", e.path.display()),
+                        e,
+                        "Unstage",
+                        ws,
+                        FileRowAction::Unstage,
+                    )
+                })),
+        )
+        .child(
+            div()
+                .text_xs()
+                .text_color(gpui::rgb(0xcccccc))
+                .child("Message"),
+        )
+        .child(Input::new(commit_message).w_full().h(px(100.)))
+        .child(
+            div()
+                .flex()
+                .gap_2()
+                .child({
+                    let app_e = app_entity.clone();
+                    let msg_e = commit_message.clone();
+                    Button::new("commit-btn")
+                        .label("Commit")
+                        .primary()
+                        .on_click(move |_, window, cx| {
+                            let msg =
+                                cx.read_entity(&msg_e, |i, _| i.value().to_string());
+                            let amend = cx.read_entity(&app_e, |s, _| s.commit_amend);
+                            let _ = app_e.update(cx, |s, cx| {
+                                if let Err(e) = s.commit_staged(&msg, amend) {
+                                    s.set_error(e.to_string());
+                                }
+                                cx.notify();
+                            });
+                            let _ = msg_e.update(cx, |inp, cx| {
+                                inp.set_value("", window, cx);
+                            });
+                        })
+                })
+                .child({
+                    let ws = weak_state.clone();
+                    Button::new("amend-toggle")
+                        .label(if amend { "Amend: on" } else { "Amend: off" })
+                        .small()
+                        .on_click(move |_, _, cx| {
+                            let _ = ws.update(cx, |s, cx| {
+                                s.commit_amend = !s.commit_amend;
+                                cx.notify();
+                            });
+                        })
+                }),
+        )
+        .into_any_element()
+}
+
+fn render_history_view(
+    history: &[crate::git::Commit],
+    selected_hist: Option<usize>,
+    weak_state: WeakEntity<AppState>,
+) -> AnyElement {
+    div()
+        .flex_1()
+        .min_h_0()
+        .v_flex()
+        .gap_2()
+        .child(
+            div()
+                .flex()
+                .justify_between()
+                .items_center()
+                .child(format!("Commits ({})", history.len()))
+                .child({
+                    let ws = weak_state.clone();
+                    Button::new("hist-more")
+                        .label("Load more")
+                        .small()
+                        .on_click(move |_, _, cx| {
+                            let _ = ws.update(cx, |s, cx| {
+                                if let Err(e) = s.load_more_history() {
+                                    s.set_error(e.to_string());
+                                }
+                                cx.notify();
+                            });
+                        })
+                }),
+        )
+        .child(
+            div()
+                .flex_1()
+                .min_h_0()
+                .v_flex()
+                .gap_1()
+                .children(history.iter().enumerate().map(|(idx, c)| {
+                    let sel = selected_hist == Some(idx);
+                    let ws = weak_state.clone();
+                    let hash = c.hash.clone();
+                    let summary = c.summary.clone();
+                    let author = c.author.clone();
+                    let time_str = c.time.format("%Y-%m-%d").to_string();
+                    div()
+                        .id(hash.clone())
+                        .cursor_pointer()
+                        .bg(if sel {
+                            gpui::rgb(0x3e3e3e)
+                        } else {
+                            gpui::rgb(0x1e1e1e)
+                        })
+                        .rounded(px(2.))
+                        .p_2()
+                        .on_click(move |_, _, cx| {
+                            let _ = ws.update(cx, |s, cx| {
+                                s.selected_history = Some(idx);
+                                cx.notify();
+                            });
+                        })
                         .child(
                             div()
                                 .flex()
                                 .flex_col()
-                                .items_center()
-                                .gap_4()
-                                .child(div().text_lg().child("Welcome to OpenGit"))
+                                .gap_1()
+                                .child(div().text_sm().child(summary))
                                 .child(
                                     div()
-                                        .text_color(gpui::rgb(0xcccccc))
-                                        .child("A modern Git client built with Rust and GPUI"),
-                                )
-                                .child(
-                                    div()
-                                        .mt_8()
-                                        .text_color(gpui::rgb(0xaaaaaa))
-                                        .child("Open a Git repository to get started"),
+                                        .flex()
+                                        .gap_4()
+                                        .text_xs()
+                                        .text_color(gpui::rgb(0x888888))
+                                        .child(author)
+                                        .child(time_str)
+                                        .child(hash.chars().take(7).collect::<String>()),
                                 ),
                         )
-                        .into_any_element()
-                }
-            )
-            .child(
-                div()
-                    .w_full()
-                    .h(px(40.))
-                    .bg(gpui::rgb(0x1e1e1e))
-                    .border_t(px(1.))
-                    .border_color(gpui::rgb(0x333333))
-                    .flex()
-                    .items_center()
-                    .px_4()
-                    .justify_between()
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(gpui::rgb(0x888888))
-                            .child(format!("Branch: {}", current_branch)),
-                    )
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(gpui::rgb(0x888888))
-                            .child(format!(
-                                "↑{} ↓{} · unstaged {} · staged {}",
-                                ahead, behind, changed_count, staged_count
-                            )),
-                    ),
-            )
-    }
+                })),
+        )
+        .into_any_element()
 }
 
-fn render_tab_button(
-    id: &'static str,
-    label: &'static str,
-    view_type: ViewType,
-    current_view: ViewType,
-    cx: &mut Context<OpenGitApp>,
-) -> impl IntoElement {
-    use gpui_component::button::Button;
-    use gpui::Styled as _;
+fn render_branches_view(
+    branches: &[crate::git::Branch],
+    branch_name_input: &Entity<InputState>,
+    weak_state: WeakEntity<AppState>,
+) -> AnyElement {
+    div()
+        .flex_1()
+        .min_h_0()
+        .v_flex()
+        .gap_3()
+        .child(
+            div()
+                .flex()
+                .gap_2()
+                .child(Input::new(branch_name_input).flex_1())
+                .child({
+                    let ws = weak_state.clone();
+                    let inp = branch_name_input.clone();
+                    Button::new("new-branch")
+                        .label("Create branch")
+                        .primary()
+                        .on_click(move |_, _, cx| {
+                            let name =
+                                cx.read_entity(&inp, |i, _| i.value().to_string());
+                            let _ = ws.update(cx, |s, cx| {
+                                if name.trim().is_empty() {
+                                    s.set_error("Branch name is empty".into());
+                                } else if let Err(e) = s.create_branch(name.trim()) {
+                                    s.set_error(e.to_string());
+                                }
+                                cx.notify();
+                            });
+                        })
+                }),
+        )
+        .child(
+            div()
+                .flex_1()
+                .min_h_0()
+                .v_flex()
+                .gap_1()
+                .children(branches.iter().map(|b| {
+                    let ws = weak_state.clone();
+                    let nm = b.name.clone();
+                    let cur = b.is_head;
+                    div()
+                        .flex()
+                        .justify_between()
+                        .items_center()
+                        .p_2()
+                        .rounded(px(2.))
+                        .bg(gpui::rgb(0x1e1e1e))
+                        .child(
+                            div()
+                                .flex()
+                                .gap_2()
+                                .child(if cur {
+                                    div()
+                                        .text_xs()
+                                        .text_color(gpui::rgb(0x4dd0e1))
+                                        .child("HEAD")
+                                } else {
+                                    div().text_xs().child(" ")
+                                })
+                                .child(b.name.clone()),
+                        )
+                        .child(
+                            Button::new(SharedString::from(format!("sw-{}", b.name)))
+                                .label("Checkout")
+                                .small()
+                                .on_click(move |_, _, cx| {
+                                    let name = nm.clone();
+                                    let _ = ws.update(cx, |s, cx| {
+                                        if let Err(e) = s.checkout_branch(&name) {
+                                            s.set_error(e.to_string());
+                                        }
+                                        cx.notify();
+                                    });
+                                }),
+                        )
+                })),
+        )
+        .into_any_element()
+}
 
-    let is_active = current_view == view_type;
-    let weak_self = cx.entity().downgrade();
-
-    let button = Button::new(id)
-        .label(label)
-        .on_click(move |_, _, cx| {
-            let _ = weak_self.update(cx, |app, cx| {
-                app.active_view = view_type;
-                cx.notify();
-            });
-        });
-
-    if is_active {
-        button.primary().w_full()
-    } else {
-        button.secondary().w_full()
-    }
+fn render_diff_view(
+    diff_path: Option<&std::path::PathBuf>,
+    diff_preview: Option<&FileDiff>,
+) -> AnyElement {
+    div()
+        .flex_1()
+        .min_h_0()
+        .v_flex()
+        .gap_2()
+        .child(div().text_sm().child(match diff_path {
+            Some(p) => format!("Diff: {}", p.display()),
+            None => "Select a file from Commit view (click row)".to_string(),
+        }))
+        .when_some(diff_preview, |col, d| {
+            col.flex_1().min_h_0().child(render_diff_lines(d))
+        })
+        .into_any_element()
 }
 
 fn main() {
@@ -1163,10 +901,7 @@ fn main() {
 
         cx.spawn(async move |cx| {
             let window_bounds = cx.update(|app| {
-                WindowBounds::centered(
-                    size(px(1100.), px(720.)),
-                    app,
-                )
+                WindowBounds::centered(size(px(1100.), px(720.)), app)
             });
             let window_options = WindowOptions {
                 window_bounds: Some(window_bounds),
