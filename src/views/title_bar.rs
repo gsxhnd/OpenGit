@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use gpui::prelude::FluentBuilder as _;
 use gpui::*;
-use gpui_component::button::{Button, ButtonVariants as _};
+use gpui_component::button::Button;
 use gpui_component::menu::AppMenuBar;
 use gpui_component::*;
 
@@ -140,7 +140,7 @@ impl RenderOnce for TitleBar {
         let has_repo = self.has_repo;
         let current_branch = self.current_branch;
         let weak_state = self.weak_state;
-        let on_open_repo = self.on_open_repo;
+        let _on_open_repo = self.on_open_repo;
 
         div()
             .id("opengit-chrome")

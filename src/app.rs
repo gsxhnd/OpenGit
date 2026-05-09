@@ -15,6 +15,7 @@ pub struct AppState {
     /// Repository status
     pub repo_status: RepositoryStatus,
     /// Loading state
+    #[allow(dead_code)]
     pub is_loading: bool,
     /// Error message (if any)
     pub error: Option<String>,
@@ -67,6 +68,23 @@ impl AppState {
         let repo = Arc::new(
             Repository::open(&path).map_err(|e| anyhow::anyhow!("{}", e))?,
         );
+        self.init_with_repo(repo, path)
+    }
+
+    /// Clone a repository from URL
+    pub fn clone_repository(&mut self, url: &str, into: PathBuf) -> anyhow::Result<()> {
+        let repo = Arc::new(
+            Repository::clone(url, &into)
+                .map_err(|e| anyhow::anyhow!("{}", e))?,
+        );
+        self.init_with_repo(repo, into)
+    }
+
+    fn init_with_repo(
+        &mut self,
+        repo: Arc<Repository>,
+        path: PathBuf,
+    ) -> anyhow::Result<()> {
         let status = repo
             .get_status()
             .map_err(|e| anyhow::anyhow!("{}", e))?;
@@ -86,6 +104,7 @@ impl AppState {
     }
 
     /// Close current repository
+    #[allow(dead_code)]
     pub fn close_repository(&mut self) {
         self.repository = None;
         self.repo_path = None;
@@ -117,6 +136,7 @@ impl AppState {
     }
 
     /// Clear error message
+    #[allow(dead_code)]
     pub fn clear_error(&mut self) {
         self.error = None;
     }
@@ -277,14 +297,18 @@ pub enum ViewType {
     /// Diff view
     Diff,
     /// Stash management view
+    #[allow(dead_code)]
     Stash,
     /// Tag management view
+    #[allow(dead_code)]
     Tags,
     /// Welcome/empty state
+    #[allow(dead_code)]
     Welcome,
 }
 
 /// Project entity (single repository project)
+#[allow(dead_code)]
 pub struct Project {
     /// Project path
     pub path: PathBuf,
@@ -296,6 +320,7 @@ pub struct Project {
     pub status: RepositoryStatus,
 }
 
+#[allow(dead_code)]
 impl Project {
     /// Create new project
     pub fn new(path: PathBuf) -> anyhow::Result<Self> {
@@ -328,6 +353,7 @@ impl Project {
 }
 
 /// Workspace manages multiple projects
+#[allow(dead_code)]
 pub struct Workspace {
     /// Active project
     pub active_project: Option<usize>,
@@ -344,6 +370,7 @@ impl Default for Workspace {
     }
 }
 
+#[allow(dead_code)]
 impl Workspace {
     /// Add project to workspace
     pub fn add_project(&mut self, project: Project) {
@@ -389,6 +416,7 @@ impl Workspace {
 }
 
 /// Commit message editor state
+#[allow(dead_code)]
 pub struct CommitEditor {
     /// Message text
     pub message: String,
@@ -408,6 +436,7 @@ impl Default for CommitEditor {
     }
 }
 
+#[allow(dead_code)]
 impl CommitEditor {
     /// Create new editor
     pub fn new() -> Self {

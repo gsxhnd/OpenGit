@@ -15,7 +15,7 @@ use app::{AppState, ViewType};
 use git::model::{DiffLine, FileDiff, FileEntry, FileStatus};
 use views::{StatusBar, TitleBar};
 
-actions!(open_git, [OpenRepository, QuitApp, MenuFetch, MenuPull, MenuPush]);
+actions!(open_git, [OpenRepository, CloneRepository, QuitApp, MenuFetch, MenuPull, MenuPush]);
 
 fn opengit_titlebar_options() -> TitlebarOptions {
     TitlebarOptions {
@@ -32,6 +32,7 @@ fn build_open_git_menus(has_repo: bool) -> Vec<Menu> {
     vec![
         Menu::new("OpenGit").items([
             MenuItem::action("Open Repository…", OpenRepository),
+            MenuItem::action("Clone Repository…", CloneRepository),
             MenuItem::separator(),
             MenuItem::action("Quit", QuitApp),
         ]),
@@ -49,6 +50,7 @@ pub struct OpenGitApp {
     active_view: ViewType,
     commit_message: Entity<InputState>,
     branch_name_input: Entity<InputState>,
+    clone_url_input: Entity<InputState>,
     app_menu_bar: Entity<AppMenuBar>,
     _menu_sync: Subscription,
 }
@@ -67,6 +69,8 @@ impl OpenGitApp {
         });
         let branch_name_input =
             cx.new(|cx| InputState::new(window, cx).placeholder("New branch name…"));
+        let clone_url_input =
+            cx.new(|cx| InputState::new(window, cx).placeholder("https://github.com/user/repo.git"));
         cx.bind_keys([
             KeyBinding::new("cmd-o", OpenRepository, None),
             KeyBinding::new("ctrl-o", OpenRepository, None),
@@ -76,6 +80,7 @@ impl OpenGitApp {
             active_view: ViewType::Commit,
             commit_message,
             branch_name_input,
+            clone_url_input,
             app_menu_bar,
             _menu_sync,
         };
@@ -137,6 +142,65 @@ impl OpenGitApp {
         cx: &mut Context<Self>,
     ) {
         self.prompt_open_repository(window, cx);
+    }
+
+    fn on_menu_clone_repository(
+        &mut self,
+        _: &CloneRepository,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.prompt_clone_repository(window, cx);
+    }
+
+    fn prompt_clone_repository(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let url = self.clone_url_input.read(cx).value().to_string();
+        if url.trim().is_empty() {
+            let _ = self.app_state.update(cx, |s, cx| {
+                s.set_error("Please enter a repository URL to clone".into());
+                cx.notify();
+            });
+            return;
+        }
+        let url = url.trim().to_string();
+        let ws = self.app_state.clone();
+        let wo = cx.entity().downgrade();
+        let paths = cx.prompt_for_paths(PathPromptOptions {
+            files: false,
+            directories: true,
+            multiple: false,
+            prompt: Some(format!("Select parent directory to clone {} into", url).into()),
+        });
+        window
+            .spawn(cx, async move |async_cx| {
+                let picked = paths
+                    .await
+                    .ok()
+                    .and_then(|r| r.ok())
+                    .flatten()
+                    .and_then(|v| v.into_iter().next());
+                if let Some(parent_dir) = picked {
+                    let repo_name = url
+                        .rsplit('/')
+                        .next()
+                        .unwrap_or(&url)
+                        .trim_end_matches(".git");
+                    let target = parent_dir.join(repo_name);
+                    let _ = async_cx.update(|_w, app| {
+                        let _ = ws.update(app, |st, cx| {
+                            if let Err(e) = st.clone_repository(&url, target) {
+                                st.set_error(e.to_string());
+                            }
+                            cx.notify();
+                        });
+                        let _ = wo.update(app, |_o, cx| {
+                            cx.notify();
+                        });
+                    });
+                }
+                None::<()>
+            })
+            .detach();
     }
 
     fn on_menu_quit(&mut self, _: &QuitApp, _: &mut Window, cx: &mut Context<Self>) {
@@ -339,12 +403,12 @@ impl Render for OpenGitApp {
         let diff_preview = state.diff_preview.clone();
         let diff_path = state.selected_diff_path.clone();
         let amend = state.commit_amend;
+        let clone_url_input = self.clone_url_input.clone();
         let _ = state;
 
         let weak_state = self.app_state.downgrade();
         let weak_self = cx.entity().downgrade();
         let app_entity = self.app_state.clone();
-
         let title_bar = {
             let ws = weak_self.clone();
             TitleBar::new(
@@ -373,6 +437,7 @@ impl Render for OpenGitApp {
             .v_flex()
             .size_full()
             .on_action(cx.listener(Self::on_menu_open_repository))
+            .on_action(cx.listener(Self::on_menu_clone_repository))
             .on_action(cx.listener(Self::on_menu_quit))
             .on_action(cx.listener(Self::on_menu_fetch))
             .on_action(cx.listener(Self::on_menu_pull))
@@ -491,6 +556,7 @@ impl Render for OpenGitApp {
                     )
                     .into_any_element()
             } else {
+                let wo = weak_self.clone();
                 div()
                     .flex_1()
                     .v_flex()
@@ -513,9 +579,50 @@ impl Render for OpenGitApp {
                             )
                             .child(
                                 div()
-                                    .mt_8()
                                     .text_color(gpui::rgb(0xaaaaaa))
                                     .child("Open a Git repository to get started"),
+                            )
+                            .child({
+                                let wo_open = wo.clone();
+                                Button::new("open-repo-welcome")
+                                    .label("Open Repository")
+                                    .primary()
+                                    .on_click(move |_, window, cx| {
+                                        let _ = wo_open.update(cx, |app, cx| {
+                                            app.prompt_open_repository(window, cx);
+                                        });
+                                    })
+                            })
+                            .child(
+                                div()
+                                    .mt_4()
+                                    .flex()
+                                    .flex_col()
+                                    .gap_2()
+                                    .w(px(400.))
+                                    .child(
+                                        div()
+                                            .text_sm()
+                                            .text_color(gpui::rgb(0xcccccc))
+                                            .child("Clone a remote repository"),
+                                    )
+                                    .child(
+                                        div()
+                                            .flex()
+                                            .gap_2()
+                                            .child(Input::new(&clone_url_input).flex_1())
+                                            .child({
+                                                let wo_clone = wo.clone();
+                                                Button::new("clone-repo-btn")
+                                                    .label("Clone")
+                                                    .primary()
+                                                    .on_click(move |_, window, cx| {
+                                                        let _ = wo_clone.update(cx, |app, cx| {
+                                                            app.prompt_clone_repository(window, cx);
+                                                        });
+                                                    })
+                                            }),
+                                    ),
                             ),
                     )
                     .into_any_element()

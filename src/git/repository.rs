@@ -29,6 +29,18 @@ impl Repository {
         })
     }
 
+    /// Clone a repository from a URL to the given path
+    pub fn clone(url: &str, into: impl Into<PathBuf>) -> Result<Self, GitError> {
+        let path = into.into();
+        let repo = git2::build::RepoBuilder::new()
+            .clone(url, &path)
+            .map_err(|e| GitError::WriteError(format!("Failed to clone {}: {}", url, e)))?;
+        Ok(Self {
+            repo: Mutex::new(repo),
+            path,
+        })
+    }
+
     /// Create a new repository at the given path
     pub fn init(path: impl Into<PathBuf>) -> Result<Self, GitError> {
         let path = path.into();
