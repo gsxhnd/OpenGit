@@ -1,15 +1,16 @@
 //! 应用状态管理 —— Application state management
 //!
-//! 定义核心状态实体和辅助数据结构：
+//! 定义核心状态实体：
 //! - `AppState`：GPUI Entity，持有当前仓库、状态和视图相关的所有数据
 //! - `ViewType`：视图标签枚举
-//! - `Project`：单个项目实体
-//! - `Workspace`：多项目工作空间
-//! - `CommitEditor`：提交消息编辑器状态
+//!
+//! 辅助类型已拆分到独立模块：`Project` → project.rs, `Workspace` → workspace.rs,
+//! `CommitEditor` → commit_editor.rs
 //!
 //! `AppState` 是 UI 层与 `ogit` 库之间的桥梁，所有 Git 操作都通过它代理。
 //!
-//! Defines core entities: AppState (main GPUI Entity), ViewType, Project, Workspace, CommitEditor.
+//! Defines core entities: AppState (main GPUI Entity) and ViewType.
+//! Auxiliary types extracted: Project, Workspace, CommitEditor.
 
 use ogit::GitOps;
 use ogit::{Commit, FileDiff, Repository, RepositoryStatus};
@@ -28,6 +29,7 @@ use std::sync::Arc;
 ///
 /// Central state holder for the current repository. Bridges UI views and `ogit` library.
 /// GPUI views interact with it via `WeakEntity<AppState>`.
+#[derive(Default)]
 pub struct AppState {
     /// 当前打开的仓库（Arc 包装以支持跨线程共享） —— Currently open repository
     pub repository: Option<Arc<Repository>>,
@@ -56,24 +58,6 @@ pub struct AppState {
     pub _pending_tasks: Vec<Task<()>>,
 }
 
-impl Default for AppState {
-    fn default() -> Self {
-        Self {
-            repository: None,
-            repo_path: None,
-            repo_status: RepositoryStatus::default(),
-            is_loading: false,
-            error: None,
-            history_commits: Vec::new(),
-            history_skip: 0,
-            selected_history: None,
-            selected_diff_path: None,
-            diff_preview: None,
-            commit_amend: false,
-            _pending_tasks: Vec::new(),
-        }
-    }
-}
 
 /// 历史分页大小 —— History page size for pagination
 pub const HISTORY_PAGE_SIZE: usize = 50;
@@ -393,191 +377,6 @@ pub enum ViewType {
     Welcome,
 }
 
-// ============================================================================
-// Project —— 项目实体
-// ============================================================================
-
-/// 项目实体（单个仓库项目） —— Project entity (single repository project)
-///
-/// 封装了项目路径、名称和关联的仓库实例。
-/// 预留用于未来的多项目工作空间支持。
-///
-/// Wraps project path, name, and associated repository. Reserved for multi-project workspace support.
-#[allow(dead_code)]
-pub struct Project {
-    /// 项目路径 —— Project path
-    pub path: PathBuf,
-    /// 项目名称 —— Project name
-    pub name: String,
-    /// 关联的仓库 —— Associated repository
-    pub repository: Option<Arc<Repository>>,
-    /// 项目状态 —— Project status
-    pub status: RepositoryStatus,
-}
-
-#[allow(dead_code)]
-impl Project {
-    /// 创建新项目 —— Create new project
-    pub fn new(path: PathBuf) -> anyhow::Result<Self> {
-        let name = path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| "Project".to_string());
-
-        let repo = Arc::new(Repository::open(&path)?);
-        let status = repo.get_status()?;
-
-        Ok(Self {
-            path,
-            name,
-            repository: Some(repo),
-            status,
-        })
-    }
-
-    /// 刷新项目状态 —— Refresh project status
-    pub fn refresh(&mut self) -> anyhow::Result<()> {
-        if let Some(repo) = &self.repository {
-            self.status = repo.get_status()?;
-            Ok(())
-        } else {
-            Err(anyhow::anyhow!("No repository"))
-        }
-    }
-}
-
-// ============================================================================
-// Workspace —— 工作空间
-// ============================================================================
-
-/// 工作空间（管理多个项目） —— Workspace managing multiple projects
-///
-/// 预留用于未来支持同时打开多个 Git 仓库。
-///
-/// Reserved for future multi-repo support.
-#[allow(dead_code)]
-pub struct Workspace {
-    /// 当前活跃的项目索引 —— Active project index
-    pub active_project: Option<usize>,
-    /// 所有项目列表 —— List of projects
-    pub projects: Vec<Project>,
-}
-
-impl Default for Workspace {
-    fn default() -> Self {
-        Self {
-            active_project: None,
-            projects: Vec::new(),
-        }
-    }
-}
-
-#[allow(dead_code)]
-impl Workspace {
-    /// 添加项目到工作空间 —— Add project to workspace
-    pub fn add_project(&mut self, project: Project) {
-        if self.active_project.is_none() {
-            self.active_project = Some(0);
-        }
-        self.projects.push(project);
-    }
-
-    /// 从工作空间移除项目 —— Remove project from workspace
-    pub fn remove_project(&mut self, index: usize) {
-        if index < self.projects.len() {
-            self.projects.remove(index);
-            if let Some(active) = self.active_project {
-                if active >= self.projects.len() {
-                    self.active_project = if self.projects.is_empty() {
-                        None
-                    } else {
-                        Some(self.projects.len() - 1)
-                    };
-                }
-            }
-        }
-    }
-
-    /// 获取活跃项目 —— Get active project
-    pub fn active(&self) -> Option<&Project> {
-        self.active_project.and_then(|idx| self.projects.get(idx))
-    }
-
-    /// 获取可变活跃项目 —— Get mutable active project
-    pub fn active_mut(&mut self) -> Option<&mut Project> {
-        let idx = self.active_project?;
-        self.projects.get_mut(idx)
-    }
-
-    /// 切换到指定项目 —— Switch to project by index
-    pub fn switch_to(&mut self, index: usize) {
-        if index < self.projects.len() {
-            self.active_project = Some(index);
-        }
-    }
-}
-
-// ============================================================================
-// CommitEditor —— 提交消息编辑器
-// ============================================================================
-
-/// 提交消息编辑器状态 —— Commit message editor state
-///
-/// 管理提交消息文本、作者信息和 --amend 模式。
-///
-/// Manages commit message text, author info, and --amend mode.
-#[allow(dead_code)]
-pub struct CommitEditor {
-    /// 提交消息文本 —— Commit message text
-    pub message: String,
-    /// 作者名（可选，使用全局配置时为空） —— Author name (optional, uses global config if empty)
-    pub author: Option<String>,
-    /// 是否使用 amend 模式 —— Whether --amend mode is active
-    pub is_amend: bool,
-}
-
-impl Default for CommitEditor {
-    fn default() -> Self {
-        Self {
-            message: String::new(),
-            author: None,
-            is_amend: false,
-        }
-    }
-}
-
-#[allow(dead_code)]
-impl CommitEditor {
-    /// 创建新编辑器 —— Create new editor
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// 重置编辑器状态 —— Reset editor state
-    pub fn reset(&mut self) {
-        self.message.clear();
-        self.author = None;
-        self.is_amend = false;
-    }
-
-    /// 设置提交消息 —— Set commit message
-    pub fn set_message(&mut self, msg: String) {
-        self.message = msg;
-    }
-
-    /// 设置作者 —— Set author
-    pub fn set_author(&mut self, author: String) {
-        self.author = Some(author);
-    }
-
-    /// 切换 amend 模式 —— Toggle amend mode
-    pub fn toggle_amend(&mut self) {
-        self.is_amend = !self.is_amend;
-    }
-
-    /// 检查消息是否有效 —— Check if message is valid for commit
-    pub fn is_valid(&self) -> bool {
-        !self.message.trim().is_empty()
-    }
-}
+// The Project, Workspace, and CommitEditor types have been extracted
+// to their own modules: project.rs, workspace.rs, commit_editor.rs
+// Re-exported via lib.rs for backward compatibility.

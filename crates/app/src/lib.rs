@@ -17,8 +17,14 @@
 
 mod app;
 pub mod app_component;
+mod commit_editor;
 mod menu;
+mod project;
 pub mod views;
+mod workspace;
 
 pub use app::{AppState, ViewType};
 pub use app_component::OpenGitApp;
+pub use commit_editor::CommitEditor;
+pub use project::Project;
+pub use workspace::Workspace;

@@ -36,10 +36,10 @@ struct ChromeDragState {
 ///
 /// 使用 `IntoElement` derive 实现 `RenderOnce`。
 /// 通过 Builder 模式注入回调（Fetch/Pull/Push/OpenRepo）。
-/// 未来计划改为 GPUI Entity 以支持响应式状态更新。
+///
+/// - macOS/Linux/Windows: renders full chrome (menu bar + window controls + drag)
 ///
 /// Uses `IntoElement` derive with Builder pattern for callback injection.
-/// Planned to migrate to GPUI Entity for reactive state updates.
 #[derive(IntoElement)]
 pub struct TitleBar {
     repo_name: String,
@@ -52,7 +52,6 @@ pub struct TitleBar {
 }
 
 impl TitleBar {
-    /// 创建标题栏 —— Create title bar
     pub fn new(
         repo_name: impl Into<String>,
         has_repo: bool,
@@ -92,7 +91,6 @@ impl TitleBar {
 
 /// 渲染窗口控制按钮 —— Render window control button
 ///
-/// 根据平台处理窗口控制按钮：
 /// - Windows: 使用原生 `window_control_area`
 /// - macOS/Linux/FreeBSD: 手动处理点击事件
 /// - 关闭按钮使用危险色主题（红色）
@@ -146,8 +144,8 @@ fn window_control_btn(
     if is_windows {
         d = d.window_control_area(area);
     }
-    if use_manual_click {
-        if let Some(op) = op {
+    if use_manual_click
+        && let Some(op) = op {
             d = d
                 .on_mouse_down(MouseButton::Left, |_, window, cx| {
                     window.prevent_default();
@@ -162,7 +160,6 @@ fn window_control_btn(
                     }
                 });
         }
-    }
 
     d.child(Icon::new(icon).small())
 }
@@ -170,6 +167,7 @@ fn window_control_btn(
 impl RenderOnce for TitleBar {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let is_maximized = window.is_maximized();
+        let is_windows = cfg!(target_os = "windows");
         let use_manual_click = cfg!(any(
             target_os = "linux",
             target_os = "freebsd",
@@ -195,33 +193,42 @@ impl RenderOnce for TitleBar {
             .border_b(px(1.))
             .border_color(gpui::rgb(0x333333))
             .bg(gpui::rgb(0x1e1e1e))
+            // Windows: entire titlebar is a native drag zone via WindowControlArea::Drag
+            // This lets the OS handle drag natively without GPUI mouse event interference
+            .when(is_windows, |this| {
+                this.window_control_area(WindowControlArea::Drag)
+            })
             .when(cfg!(target_os = "linux"), |this| {
                 this.on_double_click(|_, window, _| window.zoom_window())
             })
             .when(cfg!(target_os = "macos"), |this| {
                 this.on_double_click(|_, window, _| window.titlebar_double_click())
             })
-            .on_mouse_down_out(window.listener_for(&chrome_drag, |state, _, _, _| {
-                state.should_move = false;
-            }))
-            .on_mouse_down(
-                MouseButton::Left,
-                window.listener_for(&chrome_drag, |state, _, _, _| {
-                    state.should_move = true;
-                }),
-            )
-            .on_mouse_up(
-                MouseButton::Left,
-                window.listener_for(&chrome_drag, |state, _, _, _| {
+            // macOS/Linux: manual drag via on_mouse handlers + start_window_move
+            // (WindowControlArea::Drag doesn't trigger drag on these platforms)
+            .when(!is_windows, |this| {
+                this.on_mouse_down_out(window.listener_for(&chrome_drag, |state, _, _, _| {
                     state.should_move = false;
-                }),
-            )
-            .on_mouse_move(window.listener_for(&chrome_drag, |state, _, window, _| {
-                if state.should_move {
-                    state.should_move = false;
-                    window.start_window_move();
-                }
-            }))
+                }))
+                .on_mouse_down(
+                    MouseButton::Left,
+                    window.listener_for(&chrome_drag, |state, _, _, _| {
+                        state.should_move = true;
+                    }),
+                )
+                .on_mouse_up(
+                    MouseButton::Left,
+                    window.listener_for(&chrome_drag, |state, _, _, _| {
+                        state.should_move = false;
+                    }),
+                )
+                .on_mouse_move(window.listener_for(&chrome_drag, |state, _, window, _| {
+                    if state.should_move {
+                        state.should_move = false;
+                        window.start_window_move();
+                    }
+                }))
+            })
             .relative()
             .child(
                 h_flex()
@@ -244,13 +251,15 @@ impl RenderOnce for TitleBar {
                             .truncate()
                             .child(self.repo_name),
                     )
-                    .child(
-                        div()
-                            .flex_1()
-                            .h_full()
-                            .min_w(px(48.))
-                            .window_control_area(WindowControlArea::Drag),
-                    ),
+                    // macOS/Linux: flexible spacer for manual drag
+                    .when(!is_windows, |this| {
+                        this.child(
+                            div()
+                                .flex_1()
+                                .h_full()
+                                .min_w(px(48.)),
+                        )
+                    }),
             )
             .child(
                 h_flex()

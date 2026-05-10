@@ -5,7 +5,7 @@
 //! Starts GPUI, loads themes, creates main window with `OpenGitApp`.
 
 use gpui::*;
-use gpui_component::{Theme, ThemeRegistry, Root};
+use gpui_component::{Root, Theme, ThemeRegistry};
 
 use app::app_component::opengit_titlebar_options;
 use app::OpenGitApp;
@@ -54,7 +54,6 @@ fn main() {
             };
             let window = cx
                 .open_window(window_options, |window, cx| {
-                    // 创建 AppState → OpenGitApp → Root —— Create state, app component, and root view
                     let app_view = cx.new(|cx| OpenGitApp::new(window, cx));
                     cx.new(|cx| Root::new(app_view, window, cx))
                 })

@@ -103,7 +103,49 @@ pub fn render_file_row(
         )
 }
 
-/// 渲染提交视图 —— Render the full commit view
+/// 渲染包含 Diff 按钮的文件行（用于 unstaged/untracked 文件） —— Render file row with diff button
+fn render_unstaged_file_row(
+    id_prefix: &str,
+    entry: &FileEntry,
+    weak_state: WeakEntity<AppState>,
+    weak_self: WeakEntity<crate::OpenGitApp>,
+) -> impl IntoElement {
+    let ws = weak_state;
+    let wo = weak_self;
+    let path = entry.path.clone();
+
+    div()
+        .flex()
+        .gap_1()
+        .items_center()
+        .child(render_file_row(
+            format!("{}-{}", id_prefix, entry.path.display()),
+            entry,
+            "Stage",
+            ws.clone(),
+            FileRowAction::Stage,
+        ))
+        .child(
+            Button::new(gpui::SharedString::from(format!(
+                "diff-{}-{}",
+                id_prefix,
+                path.display()
+            )))
+            .label("Diff")
+            .small()
+            .on_click(move |_, _, cx| {
+                let p = path.clone();
+                let _ = ws.update(cx, |s, cx| {
+                    let _ = s.set_diff_path(Some(p));
+                    cx.notify();
+                });
+                let _ = wo.update(cx, |a, cx| {
+                    a.active_view = ViewType::Diff;
+                    cx.notify();
+                });
+            }),
+        )
+}
 ///
 /// 布局结构：
 /// 1. Unstaged 区域（未暂存文件 + 未跟踪文件）
@@ -143,76 +185,11 @@ pub fn render_commit_view(
                 .gap_1()
                 // 未暂存文件 —— Unstaged files
                 .children(unstaged.iter().map(|e| {
-                    let ws = weak_state.clone();
-                    let wo = weak_self.clone();
-                    let path = e.path.clone();
-                    div()
-                        .flex()
-                        .gap_1()
-                        .items_center()
-                        .child(render_file_row(
-                            format!("u-{}", e.path.display()),
-                            e,
-                            "Stage",
-                            ws.clone(),
-                            FileRowAction::Stage,
-                        ))
-                        // Diff 按钮：加载文件差异并切换到 Diff 视图 —— Diff button: load diff and switch to Diff view
-                        .child(
-                            Button::new(gpui::SharedString::from(format!(
-                                "diff-u-{}",
-                                path.display()
-                            )))
-                            .label("Diff")
-                            .small()
-                            .on_click(move |_, _, cx| {
-                                let p = path.clone();
-                                let _ = ws.update(cx, |s, cx| {
-                                    let _ = s.set_diff_path(Some(p));
-                                    cx.notify();
-                                });
-                                let _ = wo.update(cx, |a, cx| {
-                                    a.active_view = ViewType::Diff;
-                                    cx.notify();
-                                });
-                            }),
-                        )
+                    render_unstaged_file_row("u", e, weak_state.clone(), weak_self.clone())
                 }))
                 // 未跟踪文件 —— Untracked files
                 .children(untracked.iter().map(|e| {
-                    let ws = weak_state.clone();
-                    let wo = weak_self.clone();
-                    let path = e.path.clone();
-                    div()
-                        .flex()
-                        .gap_1()
-                        .items_center()
-                        .child(render_file_row(
-                            format!("n-{}", e.path.display()),
-                            e,
-                            "Stage",
-                            ws.clone(),
-                            FileRowAction::Stage,
-                        ))
-                        .child(
-                            Button::new(gpui::SharedString::from(format!(
-                                "diff-n-{}",
-                                path.display()
-                            )))
-                            .label("Diff")
-                            .small()
-                            .on_click(move |_, _, cx| {
-                                let p = path.clone();
-                                let _ = ws.update(cx, |s, cx| {
-                                    let _ = s.set_diff_path(Some(p));
-                                    cx.notify();
-                                });
-                                let _ = wo.update(cx, |a, cx| {
-                                    a.active_view = ViewType::Diff;
-                                    cx.notify();
-                                });
-                            }),
-                        )
+                    render_unstaged_file_row("n", e, weak_state.clone(), weak_self.clone())
                 })),
         )
         // ---- Staged 标签 ---- //
@@ -264,14 +241,14 @@ pub fn render_commit_view(
                             let msg =
                                 cx.read_entity(&msg_e, |i, _| i.value().to_string());
                             let amend = cx.read_entity(&app_e, |s, _| s.commit_amend);
-                            let _ = app_e.update(cx, |s, cx| {
+                            app_e.update(cx, |s, cx| {
                                 if let Err(e) = s.commit_staged(&msg, amend) {
                                     s.set_error(e.to_string());
                                 }
                                 cx.notify();
                             });
                             // 提交后清空消息输入 —— Clear message after commit
-                            let _ = msg_e.update(cx, |inp, cx| {
+                            msg_e.update(cx, |inp, cx| {
                                 inp.set_value("", window, cx);
                             });
                         })
