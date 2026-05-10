@@ -15,7 +15,6 @@ pub struct Workspace {
     pub projects: Vec<Project>,
 }
 
-
 #[allow(dead_code)]
 impl Workspace {
     pub fn add_project(&mut self, project: Project) {
@@ -29,13 +28,14 @@ impl Workspace {
         if index < self.projects.len() {
             self.projects.remove(index);
             if let Some(active) = self.active_project
-                && active >= self.projects.len() {
-                    self.active_project = if self.projects.is_empty() {
-                        None
-                    } else {
-                        Some(self.projects.len() - 1)
-                    };
-                }
+                && active >= self.projects.len()
+            {
+                self.active_project = if self.projects.is_empty() {
+                    None
+                } else {
+                    Some(self.projects.len() - 1)
+                };
+            }
         }
     }
 

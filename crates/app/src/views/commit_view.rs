@@ -63,11 +63,7 @@ pub fn render_file_row(
     action: FileRowAction,
 ) -> impl IntoElement {
     let path = entry.path.clone();
-    let label = format!(
-        "[{}] {}",
-        file_status_label(entry.status),
-        path.display()
-    );
+    let label = format!("[{}] {}", file_status_label(entry.status), path.display());
     let weak = weak_state;
 
     div()
@@ -154,6 +150,7 @@ fn render_unstaged_file_row(
 /// 4. 提交按钮 + Amend 切换
 ///
 /// Layout: unstaged files → staged files → commit message → commit button + amend toggle.
+#[allow(clippy::too_many_arguments)]
 pub fn render_commit_view(
     unstaged: &[FileEntry],
     untracked: &[FileEntry],
@@ -238,8 +235,7 @@ pub fn render_commit_view(
                         .label("Commit")
                         .primary()
                         .on_click(move |_, window, cx| {
-                            let msg =
-                                cx.read_entity(&msg_e, |i, _| i.value().to_string());
+                            let msg = cx.read_entity(&msg_e, |i, _| i.value().to_string());
                             let amend = cx.read_entity(&app_e, |s, _| s.commit_amend);
                             app_e.update(cx, |s, cx| {
                                 if let Err(e) = s.commit_staged(&msg, amend) {

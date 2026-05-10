@@ -122,11 +122,15 @@ impl Repository {
 pub(crate) fn git_status_to_model(status: git2::Status) -> FileStatus {
     if status.contains(git2::Status::WT_DELETED) || status.contains(git2::Status::INDEX_DELETED) {
         FileStatus::Deleted
-    } else if status.contains(git2::Status::WT_RENAMED) || status.contains(git2::Status::INDEX_RENAMED) {
+    } else if status.contains(git2::Status::WT_RENAMED)
+        || status.contains(git2::Status::INDEX_RENAMED)
+    {
         FileStatus::Renamed
     } else if status.contains(git2::Status::CONFLICTED) {
         FileStatus::Conflicted
-    } else if status.contains(git2::Status::WT_MODIFIED) || status.contains(git2::Status::INDEX_MODIFIED) {
+    } else if status.contains(git2::Status::WT_MODIFIED)
+        || status.contains(git2::Status::INDEX_MODIFIED)
+    {
         FileStatus::Modified
     } else if status.contains(git2::Status::WT_NEW) {
         FileStatus::Untracked

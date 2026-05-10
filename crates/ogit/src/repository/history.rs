@@ -11,7 +11,7 @@
 
 use crate::model::Commit;
 use crate::operations::GitError;
-use crate::repository::{git_commit_to_model, Repository};
+use crate::repository::{Repository, git_commit_to_model};
 
 impl Repository {
     /// 分页获取提交历史 —— Get commit history with pagination

@@ -171,7 +171,8 @@ pub trait GitOps {
     fn commit(&self, message: &str, author: Option<&str>) -> Result<Commit, GitError>;
 
     /// 修补上一次提交 —— Amend the last commit
-    fn amend_commit(&self, message: Option<&str>, author: Option<&str>) -> Result<Commit, GitError>;
+    fn amend_commit(&self, message: Option<&str>, author: Option<&str>)
+    -> Result<Commit, GitError>;
 
     /// 从远程仓库获取更新 —— Fetch from remote
     fn fetch(&self, remote: &str) -> Result<(), GitError>;

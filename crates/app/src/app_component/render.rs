@@ -15,8 +15,8 @@ use gpui_component::*;
 
 use crate::app::ViewType;
 use crate::views::{
-    render_branches_view, render_commit_view, render_diff_view, render_history_view, StatusBar,
-    TitleBar,
+    StatusBar, TitleBar, render_branches_view, render_commit_view, render_diff_view,
+    render_history_view,
 };
 
 use super::OpenGitApp;
@@ -175,50 +175,55 @@ impl Render for OpenGitApp {
                     .min_h_0()
                     .min_w_0()
                     .child(
-                        div()
-                            .flex_1()
-                            .min_w_0()
-                            .min_h_0()
-                            .child(
-                                h_resizable("opengit-main-split")
-                                    .child(
-                                        resizable_panel()
-                                            .size(px(250.))
-                                            .size_range(px(160.)..px(560.))
-                                            .flex_none()
-                                            .child(
-                                                div()
-                                                    .h_full()
-                                                    .min_w_0()
-                                                    .bg(gpui::rgb(0x1e1e1e))
-                                                    .border_r(px(1.))
-                                                    .border_color(gpui::rgb(0x333333))
-                                                    .p_2()
-                                                    .v_flex()
-                                                    .gap_1()
-                                                    .child(render_tab_button(
-                                                        "commit", "Commit",
-                                                        ViewType::Commit,
-                                                        active_view, cx,
-                                                    ))
-                                                    .child(render_tab_button(
-                                                        "history", "History",
-                                                        ViewType::History,
-                                                        active_view, cx,
-                                                    ))
-                                                    .child(render_tab_button(
-                                                        "branches", "Branches",
-                                                        ViewType::Branches,
-                                                        active_view, cx,
-                                                    ))
-                                                    .child(render_tab_button(
-                                                        "diff", "Diff",
-                                                        ViewType::Diff,
-                                                        active_view, cx,
-                                                    )),
-                                            ),
-                                    )
-                                    .child(resizable_panel().child(
+                        div().flex_1().min_w_0().min_h_0().child(
+                            h_resizable("opengit-main-split")
+                                .child(
+                                    resizable_panel()
+                                        .size(px(250.))
+                                        .size_range(px(160.)..px(560.))
+                                        .flex_none()
+                                        .child(
+                                            div()
+                                                .h_full()
+                                                .min_w_0()
+                                                .bg(gpui::rgb(0x1e1e1e))
+                                                .border_r(px(1.))
+                                                .border_color(gpui::rgb(0x333333))
+                                                .p_2()
+                                                .v_flex()
+                                                .gap_1()
+                                                .child(render_tab_button(
+                                                    "commit",
+                                                    "Commit",
+                                                    ViewType::Commit,
+                                                    active_view,
+                                                    cx,
+                                                ))
+                                                .child(render_tab_button(
+                                                    "history",
+                                                    "History",
+                                                    ViewType::History,
+                                                    active_view,
+                                                    cx,
+                                                ))
+                                                .child(render_tab_button(
+                                                    "branches",
+                                                    "Branches",
+                                                    ViewType::Branches,
+                                                    active_view,
+                                                    cx,
+                                                ))
+                                                .child(render_tab_button(
+                                                    "diff",
+                                                    "Diff",
+                                                    ViewType::Diff,
+                                                    active_view,
+                                                    cx,
+                                                )),
+                                        ),
+                                )
+                                .child(
+                                    resizable_panel().child(
                                         div()
                                             .flex_1()
                                             .min_h_0()
@@ -228,7 +233,9 @@ impl Render for OpenGitApp {
                                             .gap_3()
                                             .child(match active_view {
                                                 ViewType::Commit => render_commit_view(
-                                                    &unstaged, &untracked, &staged,
+                                                    &unstaged,
+                                                    &untracked,
+                                                    &staged,
                                                     amend,
                                                     &self.commit_message,
                                                     app_entity.clone(),
@@ -236,7 +243,8 @@ impl Render for OpenGitApp {
                                                     weak_self.clone(),
                                                 ),
                                                 ViewType::History => render_history_view(
-                                                    &history, selected_hist,
+                                                    &history,
+                                                    selected_hist,
                                                     weak_state.clone(),
                                                 ),
                                                 ViewType::Branches => render_branches_view(
@@ -248,10 +256,13 @@ impl Render for OpenGitApp {
                                                     diff_path.as_ref(),
                                                     diff_preview.as_ref(),
                                                 ),
-                                                _ => div().child("Not implemented").into_any_element(),
+                                                _ => div()
+                                                    .child("Not implemented")
+                                                    .into_any_element(),
                                             }),
-                                    )),
-                            ),
+                                    ),
+                                ),
+                        ),
                     )
                     .into_any_element()
             } else {

@@ -157,6 +157,7 @@ pub struct Tag {
 /// Aggregates working tree status, HEAD, branches, remotes, tags, and ahead/behind counts.
 /// This is the primary data structure UI layer uses to get overall repository state.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct RepositoryStatus {
     /// 工作树状态 —— Working tree status
     pub status: WorkingTreeStatus,
@@ -172,20 +173,6 @@ pub struct RepositoryStatus {
     pub ahead: usize,
     /// 落后上游的提交数 —— Number of commits behind upstream
     pub behind: usize,
-}
-
-impl Default for RepositoryStatus {
-    fn default() -> Self {
-        Self {
-            status: WorkingTreeStatus::default(),
-            head: None,
-            branches: Vec::new(),
-            remotes: Vec::new(),
-            tags: Vec::new(),
-            ahead: 0,
-            behind: 0,
-        }
-    }
 }
 
 /// 差异块 —— Diff hunk

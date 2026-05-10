@@ -22,7 +22,7 @@ impl Repository {
         let mut index = repo.index()?;
         // 使用 IndexAddOption::DEFAULT 添加所有匹配的文件 —— Add all matching files with default options
         index.add_all(
-            paths.iter().map(|p| Path::new(p)),
+            paths.iter().map(Path::new),
             git2::IndexAddOption::DEFAULT,
             None,
         )?;

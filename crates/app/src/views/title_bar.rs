@@ -40,6 +40,7 @@ struct ChromeDragState {
 /// - macOS/Linux/Windows: renders full chrome (menu bar + window controls + drag)
 ///
 /// Uses `IntoElement` derive with Builder pattern for callback injection.
+#[allow(clippy::type_complexity)]
 #[derive(IntoElement)]
 pub struct TitleBar {
     repo_name: String,
@@ -52,11 +53,7 @@ pub struct TitleBar {
 }
 
 impl TitleBar {
-    pub fn new(
-        repo_name: impl Into<String>,
-        has_repo: bool,
-        menu_bar: Entity<AppMenuBar>,
-    ) -> Self {
+    pub fn new(repo_name: impl Into<String>, has_repo: bool, menu_bar: Entity<AppMenuBar>) -> Self {
         Self {
             repo_name: repo_name.into(),
             has_repo,
@@ -124,7 +121,10 @@ fn window_control_btn(
 
     if is_close {
         d = d
-            .hover(|s| s.bg(cx.theme().danger).text_color(cx.theme().danger_foreground))
+            .hover(|s| {
+                s.bg(cx.theme().danger)
+                    .text_color(cx.theme().danger_foreground)
+            })
             .active(|s| {
                 s.bg(cx.theme().danger_active)
                     .text_color(cx.theme().danger_foreground)
@@ -144,22 +144,21 @@ fn window_control_btn(
     if is_windows {
         d = d.window_control_area(area);
     }
-    if use_manual_click
-        && let Some(op) = op {
-            d = d
-                .on_mouse_down(MouseButton::Left, |_, window, cx| {
-                    window.prevent_default();
-                    cx.stop_propagation();
-                })
-                .on_click(move |_, window, cx| {
-                    cx.stop_propagation();
-                    match op {
-                        ChromeWindowOp::Minimize => window.minimize_window(),
-                        ChromeWindowOp::Zoom => window.zoom_window(),
-                        ChromeWindowOp::Close => window.remove_window(),
-                    }
-                });
-        }
+    if use_manual_click && let Some(op) = op {
+        d = d
+            .on_mouse_down(MouseButton::Left, |_, window, cx| {
+                window.prevent_default();
+                cx.stop_propagation();
+            })
+            .on_click(move |_, window, cx| {
+                cx.stop_propagation();
+                match op {
+                    ChromeWindowOp::Minimize => window.minimize_window(),
+                    ChromeWindowOp::Zoom => window.zoom_window(),
+                    ChromeWindowOp::Close => window.remove_window(),
+                }
+            });
+    }
 
     d.child(Icon::new(icon).small())
 }
@@ -222,12 +221,15 @@ impl RenderOnce for TitleBar {
                         state.should_move = false;
                     }),
                 )
-                .on_mouse_move(window.listener_for(&chrome_drag, |state, _, window, _| {
-                    if state.should_move {
-                        state.should_move = false;
-                        window.start_window_move();
-                    }
-                }))
+                .on_mouse_move(window.listener_for(
+                    &chrome_drag,
+                    |state, _, window, _| {
+                        if state.should_move {
+                            state.should_move = false;
+                            window.start_window_move();
+                        }
+                    },
+                ))
             })
             .relative()
             .child(
@@ -253,12 +255,7 @@ impl RenderOnce for TitleBar {
                     )
                     // macOS/Linux: flexible spacer for manual drag
                     .when(!is_windows, |this| {
-                        this.child(
-                            div()
-                                .flex_1()
-                                .h_full()
-                                .min_w(px(48.)),
-                        )
+                        this.child(div().flex_1().h_full().min_w(px(48.)))
                     }),
             )
             .child(
@@ -268,42 +265,33 @@ impl RenderOnce for TitleBar {
                     .gap_2()
                     .when(has_repo, |row| {
                         let on_fetch = on_fetch.clone();
-                        row.child(
-                            Button::new("fetch")
-                                .label("Fetch")
-                                .small()
-                                .on_click(move |_, window, cx| {
-                                    if let Some(f) = &on_fetch {
-                                        f(window, cx);
-                                    }
-                                }),
-                        )
+                        row.child(Button::new("fetch").label("Fetch").small().on_click(
+                            move |_, window, cx| {
+                                if let Some(f) = &on_fetch {
+                                    f(window, cx);
+                                }
+                            },
+                        ))
                     })
                     .when(has_repo, |row| {
                         let on_pull = on_pull.clone();
-                        row.child(
-                            Button::new("pull")
-                                .label("Pull")
-                                .small()
-                                .on_click(move |_, window, cx| {
-                                    if let Some(f) = &on_pull {
-                                        f(window, cx);
-                                    }
-                                }),
-                        )
+                        row.child(Button::new("pull").label("Pull").small().on_click(
+                            move |_, window, cx| {
+                                if let Some(f) = &on_pull {
+                                    f(window, cx);
+                                }
+                            },
+                        ))
                     })
                     .when(has_repo, |row| {
                         let on_push = on_push.clone();
-                        row.child(
-                            Button::new("push")
-                                .label("Push")
-                                .small()
-                                .on_click(move |_, window, cx| {
-                                    if let Some(f) = &on_push {
-                                        f(window, cx);
-                                    }
-                                }),
-                        )
+                        row.child(Button::new("push").label("Push").small().on_click(
+                            move |_, window, cx| {
+                                if let Some(f) = &on_push {
+                                    f(window, cx);
+                                }
+                            },
+                        ))
                     })
                     .child(
                         h_flex()
@@ -320,7 +308,11 @@ impl RenderOnce for TitleBar {
                                 cx,
                             ))
                             .child(window_control_btn(
-                                if is_maximized { "win-restore" } else { "win-max" },
+                                if is_maximized {
+                                    "win-restore"
+                                } else {
+                                    "win-max"
+                                },
                                 if is_maximized {
                                     IconName::WindowRestore
                                 } else {

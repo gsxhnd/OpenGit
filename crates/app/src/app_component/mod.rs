@@ -17,9 +17,9 @@ mod handlers;
 mod render;
 
 use gpui::*;
+use gpui_component::GlobalState;
 use gpui_component::input::InputState;
 use gpui_component::menu::AppMenuBar;
-use gpui_component::GlobalState;
 
 use crate::app::{AppState, ViewType};
 use crate::menu::build_open_git_menus;
@@ -28,7 +28,17 @@ use crate::menu::build_open_git_menus;
 // 动作定义 —— Action definitions
 // ============================================================================
 
-actions!(open_git, [OpenRepository, CloneRepository, QuitApp, MenuFetch, MenuPull, MenuPush]);
+actions!(
+    open_git,
+    [
+        OpenRepository,
+        CloneRepository,
+        QuitApp,
+        MenuFetch,
+        MenuPull,
+        MenuPush
+    ]
+);
 
 /// 窗口标题栏配置 —— Window titlebar options
 ///
@@ -79,10 +89,8 @@ impl OpenGitApp {
         let branch_name_input =
             cx.new(|cx| InputState::new(window, cx).placeholder("New branch name…"));
 
-        let clone_url_input =
-            cx.new(|cx| {
-                InputState::new(window, cx).placeholder("https://github.com/user/repo.git")
-            });
+        let clone_url_input = cx
+            .new(|cx| InputState::new(window, cx).placeholder("https://github.com/user/repo.git"));
 
         cx.bind_keys([
             KeyBinding::new("cmd-o", OpenRepository, None),

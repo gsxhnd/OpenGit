@@ -10,7 +10,9 @@
 
 use gpui::{Menu, MenuItem};
 
-use crate::app_component::{CloneRepository, MenuFetch, MenuPull, MenuPush, OpenRepository, QuitApp};
+use crate::app_component::{
+    CloneRepository, MenuFetch, MenuPull, MenuPush, OpenRepository, QuitApp,
+};
 
 /// 构造 OpenGit 主菜单 —— Build OpenGit main menus
 ///

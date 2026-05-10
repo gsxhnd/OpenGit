@@ -12,7 +12,7 @@
 
 use crate::model::*;
 use crate::operations::GitError;
-use crate::repository::{git_commit_to_model, git_status_to_model, Repository};
+use crate::repository::{Repository, git_commit_to_model, git_status_to_model};
 use std::path::PathBuf;
 
 impl Repository {
@@ -161,16 +161,14 @@ impl Repository {
         // 第四轮：收集远程列表 —— Collect remotes
         // ============================
         let mut remotes = Vec::new();
-        for name_opt in repo.remotes()?.iter() {
-            if let Some(name) = name_opt {
-                if let Ok(remote) = repo.find_remote(name) {
-                    let fetch_url = remote.url().unwrap_or("").to_string();
-                    remotes.push(Remote {
-                        name: name.to_string(),
-                        fetch_url,
-                        push_url: None,
-                    });
-                }
+        for name in repo.remotes()?.iter().flatten() {
+            if let Ok(remote) = repo.find_remote(name) {
+                let fetch_url = remote.url().unwrap_or("").to_string();
+                remotes.push(Remote {
+                    name: name.to_string(),
+                    fetch_url,
+                    push_url: None,
+                });
             }
         }
 
@@ -209,18 +207,16 @@ impl Repository {
         // ============================
         if let Ok(head_ref) = repo.head() {
             let local_branch = git2::Branch::wrap(head_ref);
-            if let Ok(upstream_branch) = local_branch.upstream() {
-                if let (Ok(local_commit), Ok(upstream_commit)) = (
+            if let Ok(upstream_branch) = local_branch.upstream()
+                && let (Ok(local_commit), Ok(upstream_commit)) = (
                     local_branch.get().peel_to_commit(),
                     upstream_branch.get().peel_to_commit(),
-                ) {
-                    if let Ok((ahead, behind)) =
-                        repo.graph_ahead_behind(local_commit.id(), upstream_commit.id())
-                    {
-                        status.ahead = ahead;
-                        status.behind = behind;
-                    }
-                }
+                )
+                && let Ok((ahead, behind)) =
+                    repo.graph_ahead_behind(local_commit.id(), upstream_commit.id())
+            {
+                status.ahead = ahead;
+                status.behind = behind;
             }
         }
 

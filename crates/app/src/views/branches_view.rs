@@ -45,8 +45,7 @@ pub fn render_branches_view(
                         .label("Create branch")
                         .primary()
                         .on_click(move |_, _, cx| {
-                            let name =
-                                cx.read_entity(&inp, |i, _| i.value().to_string());
+                            let name = cx.read_entity(&inp, |i, _| i.value().to_string());
                             let _ = ws.update(cx, |s, cx| {
                                 if name.trim().is_empty() {
                                     s.set_error("Branch name is empty".into());
@@ -93,21 +92,18 @@ pub fn render_branches_view(
                         )
                         // Checkout 按钮 —— Checkout button
                         .child(
-                            Button::new(gpui::SharedString::from(format!(
-                                "sw-{}",
-                                b.name
-                            )))
-                            .label("Checkout")
-                            .small()
-                            .on_click(move |_, _, cx| {
-                                let name = nm.clone();
-                                let _ = ws.update(cx, |s, cx| {
-                                    if let Err(e) = s.checkout_branch(&name) {
-                                        s.set_error(e.to_string());
-                                    }
-                                    cx.notify();
-                                });
-                            }),
+                            Button::new(gpui::SharedString::from(format!("sw-{}", b.name)))
+                                .label("Checkout")
+                                .small()
+                                .on_click(move |_, _, cx| {
+                                    let name = nm.clone();
+                                    let _ = ws.update(cx, |s, cx| {
+                                        if let Err(e) = s.checkout_branch(&name) {
+                                            s.set_error(e.to_string());
+                                        }
+                                        cx.notify();
+                                    });
+                                }),
                         )
                 })),
         )

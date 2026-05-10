@@ -12,9 +12,9 @@
 //! Defines core entities: AppState (main GPUI Entity) and ViewType.
 //! Auxiliary types extracted: Project, Workspace, CommitEditor.
 
+use gpui::Task;
 use ogit::GitOps;
 use ogit::{Commit, FileDiff, Repository, RepositoryStatus};
-use gpui::Task;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -58,7 +58,6 @@ pub struct AppState {
     pub _pending_tasks: Vec<Task<()>>,
 }
 
-
 /// 历史分页大小 —— History page size for pagination
 pub const HISTORY_PAGE_SIZE: usize = 50;
 
@@ -78,14 +77,15 @@ impl AppState {
     ///
     /// Initializes repo, fetches status, and loads first page of history.
     pub fn open_repository(&mut self, path: PathBuf) -> anyhow::Result<()> {
+        tracing::info!("Opening repository: {}", path.display());
         let repo = Arc::new(Repository::open(&path).map_err(|e| anyhow::anyhow!("{}", e))?);
         self.init_with_repo(repo, path)
     }
 
     /// 克隆远程仓库 —— Clone a remote repository
     pub fn clone_repository(&mut self, url: &str, into: PathBuf) -> anyhow::Result<()> {
-        let repo =
-            Arc::new(Repository::clone(url, &into).map_err(|e| anyhow::anyhow!("{}", e))?);
+        tracing::info!("Cloning repository: {} -> {}", url, into.display());
+        let repo = Arc::new(Repository::clone(url, &into).map_err(|e| anyhow::anyhow!("{}", e))?);
         self.init_with_repo(repo, into)
     }
 
@@ -114,6 +114,9 @@ impl AppState {
     /// 关闭当前仓库 —— Close current repository
     #[allow(dead_code)]
     pub fn close_repository(&mut self) {
+        if let Some(ref repo_path) = self.repo_path {
+            tracing::info!("Closing repository: {}", repo_path.display());
+        }
         self.repository = None;
         self.repo_path = None;
         self.repo_status = RepositoryStatus::default();
@@ -132,6 +135,7 @@ impl AppState {
     /// Re-fetches full repository status (files, branches, remotes, etc.).
     pub fn refresh_status(&mut self) -> anyhow::Result<()> {
         if let Some(repo) = &self.repository {
+            tracing::debug!("Refreshing repository status");
             self.repo_status = repo.get_status().map_err(|e| anyhow::anyhow!("{}", e))?;
             self.error = None;
             Ok(())
@@ -145,7 +149,11 @@ impl AppState {
     // ========================================================================
 
     /// 设置错误消息 —— Set error message
+    ///
+    /// 同时将错误记录到 tracing 日志中，便于诊断。
+    /// Also logs the error to tracing for diagnostics.
     pub fn set_error(&mut self, error: String) {
+        tracing::error!("[AppState] {}", error);
         self.error = Some(error);
     }
 
@@ -238,6 +246,12 @@ impl AppState {
             .repository
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        let summary: &str = message.lines().next().unwrap_or("");
+        tracing::info!(
+            "Committing staged changes (amend={}, summary='{}')",
+            amend,
+            summary
+        );
         if amend {
             repo.amend_commit(Some(message), None)
                 .map_err(|e| anyhow::anyhow!("{}", e))?;
@@ -289,8 +303,8 @@ impl AppState {
             .repository
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
-        repo.fetch("origin")
-            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        tracing::info!("Fetching from origin");
+        repo.fetch("origin").map_err(|e| anyhow::anyhow!("{}", e))?;
         self.refresh_status()?;
         Ok(())
     }

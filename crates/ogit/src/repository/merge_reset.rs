@@ -13,7 +13,7 @@
 
 use crate::model::Commit;
 use crate::operations::{GitError, ResetMode};
-use crate::repository::{git_commit_to_model, Repository};
+use crate::repository::{Repository, git_commit_to_model};
 
 impl Repository {
     /// 合并指定分支 —— Merge a branch
@@ -37,7 +37,11 @@ impl Repository {
     /// 解决指定文件的合并冲突 —— Resolve merge conflict for a file
     ///
     /// 待实现：需要将冲突文件标记为已解决 —— TODO: mark conflicted file as resolved
-    pub(crate) fn __resolve_conflict(&self, _path: &str, _resolution: &str) -> Result<(), GitError> {
+    pub(crate) fn __resolve_conflict(
+        &self,
+        _path: &str,
+        _resolution: &str,
+    ) -> Result<(), GitError> {
         Err(GitError::UnsupportedOperation {
             op: "resolve_conflict".to_string(),
         })

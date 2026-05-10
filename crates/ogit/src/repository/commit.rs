@@ -13,7 +13,7 @@
 
 use crate::model::Commit;
 use crate::operations::GitError;
-use crate::repository::{git_commit_to_model, Repository};
+use crate::repository::{Repository, git_commit_to_model};
 use git2::{ObjectType, Signature};
 
 impl Repository {

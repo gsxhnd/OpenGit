@@ -15,7 +15,6 @@ pub struct CommitEditor {
     pub is_amend: bool,
 }
 
-
 #[allow(dead_code)]
 impl CommitEditor {
     pub fn new() -> Self {

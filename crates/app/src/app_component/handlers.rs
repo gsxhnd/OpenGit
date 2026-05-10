@@ -8,7 +8,7 @@
 
 use gpui::*;
 
-use super::{CloneRepository, MenuFetch, MenuPull, MenuPush, OpenRepository, OpenGitApp, QuitApp};
+use super::{CloneRepository, MenuFetch, MenuPull, MenuPush, OpenGitApp, OpenRepository, QuitApp};
 
 impl OpenGitApp {
     // ========================================================================

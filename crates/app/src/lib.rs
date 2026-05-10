@@ -20,6 +20,7 @@ pub mod app_component;
 mod commit_editor;
 mod menu;
 mod project;
+pub mod settings;
 pub mod views;
 mod workspace;
 

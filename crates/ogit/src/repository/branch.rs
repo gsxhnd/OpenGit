@@ -57,7 +57,11 @@ impl Repository {
     /// 否则从当前 HEAD 创建分支。
     ///
     /// If `target` is specified, branch from that ref; otherwise branch from HEAD.
-    pub(crate) fn __create_branch(&self, name: &str, target: Option<&str>) -> Result<Branch, GitError> {
+    pub(crate) fn __create_branch(
+        &self,
+        name: &str,
+        target: Option<&str>,
+    ) -> Result<Branch, GitError> {
         let repo = self
             .repo
             .lock()

@@ -24,16 +24,14 @@ impl Repository {
             .map_err(|_| GitError::ReadError("Failed to lock repository".to_string()))?;
 
         let mut remotes = Vec::new();
-        for name_opt in repo.remotes()?.iter() {
-            if let Some(name) = name_opt {
-                if let Ok(remote) = repo.find_remote(name) {
-                    let fetch_url = remote.url().unwrap_or("").to_string();
-                    remotes.push(Remote {
-                        name: name.to_string(),
-                        fetch_url,
-                        push_url: None,
-                    });
-                }
+        for name in repo.remotes()?.iter().flatten() {
+            if let Ok(remote) = repo.find_remote(name) {
+                let fetch_url = remote.url().unwrap_or("").to_string();
+                remotes.push(Remote {
+                    name: name.to_string(),
+                    fetch_url,
+                    push_url: None,
+                });
             }
         }
         Ok(remotes)

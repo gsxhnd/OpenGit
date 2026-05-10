@@ -11,7 +11,7 @@
 
 use crate::model::*;
 use crate::operations::GitError;
-use crate::repository::{delta_file_status, Repository};
+use crate::repository::{Repository, delta_file_status};
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 
@@ -117,11 +117,7 @@ pub(crate) fn parse_diff_to_model(diff: &git2::Diff) -> Result<Vec<FileDiff>, Gi
             // 检测文件重命名 —— Detect file renames
             let old_path = delta.old_file().path().and_then(|p| {
                 let np = delta.new_file().path().unwrap_or(p);
-                if p != np {
-                    Some(p.to_path_buf())
-                } else {
-                    None
-                }
+                if p != np { Some(p.to_path_buf()) } else { None }
             });
             *cur_file.borrow_mut() = Some(FileDiff {
                 path: new_path,
