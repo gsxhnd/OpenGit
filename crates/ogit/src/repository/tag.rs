@@ -8,12 +8,12 @@
 //! Implements tag CRUD: list, create (lightweight & annotated), delete.
 
 use crate::model::Tag;
-use crate::operations::{GitError, GitOps};
+use crate::operations::GitError;
 use crate::repository::Repository;
 
-impl GitOps for Repository {
+impl Repository {
     /// 获取所有标签 —— Get all tags
-    fn get_tags(&self) -> Result<Vec<Tag>, GitError> {
+    pub(crate) fn __get_tags(&self) -> Result<Vec<Tag>, GitError> {
         let repo = self
             .repo
             .lock()
@@ -39,7 +39,7 @@ impl GitOps for Repository {
     /// 否则创建轻量标签（lightweight tag）。
     ///
     /// If `message` is provided, creates an annotated tag; otherwise a lightweight tag.
-    fn create_tag(
+    pub(crate) fn __create_tag(
         &self,
         name: &str,
         target: Option<&str>,
@@ -82,7 +82,7 @@ impl GitOps for Repository {
     }
 
     /// 删除标签 —— Delete a tag
-    fn delete_tag(&self, name: &str) -> Result<(), GitError> {
+    pub(crate) fn __delete_tag(&self, name: &str) -> Result<(), GitError> {
         let repo = self
             .repo
             .lock()

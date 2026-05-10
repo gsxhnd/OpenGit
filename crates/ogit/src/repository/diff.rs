@@ -10,19 +10,19 @@
 //! Implements commit diff and file diff computation using git2's callback-based diff API.
 
 use crate::model::*;
-use crate::operations::{GitError, GitOps};
+use crate::operations::GitError;
 use crate::repository::{delta_file_status, Repository};
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 
-impl GitOps for Repository {
+impl Repository {
     /// 获取指定提交的完整差异 —— Get diff for a specific commit
     ///
     /// 比较该提交与其第一个父提交之间的差异。
     /// 如果该提交没有父提交（即初始提交），则比较空树与该提交的树。
     ///
     /// Compares the commit with its first parent (or empty tree for initial commits).
-    fn get_commit_diff(&self, hash: &str) -> Result<Vec<FileDiff>, GitError> {
+    pub(crate) fn __get_commit_diff(&self, hash: &str) -> Result<Vec<FileDiff>, GitError> {
         let repo = self
             .repo
             .lock()
@@ -53,7 +53,7 @@ impl GitOps for Repository {
     /// 如果文件没有变更，返回空的 Diff（没有 hunks）。
     ///
     /// Compares the file between index and working tree. Returns empty diff if unchanged.
-    fn get_file_diff(&self, path: &str) -> Result<FileDiff, GitError> {
+    pub(crate) fn __get_file_diff(&self, path: &str) -> Result<FileDiff, GitError> {
         let repo = self
             .repo
             .lock()

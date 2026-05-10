@@ -7,13 +7,13 @@
 //!
 //! Implements stage, unstage, and discard operations on working tree files.
 
-use crate::operations::{GitError, GitOps};
+use crate::operations::GitError;
 use crate::repository::Repository;
 use std::path::Path;
 
-impl GitOps for Repository {
+impl Repository {
     /// 暂存文件 —— Stage files (git add)
-    fn stage_files(&self, paths: &[&str]) -> Result<(), GitError> {
+    pub(crate) fn __stage_files(&self, paths: &[&str]) -> Result<(), GitError> {
         let repo = self
             .repo
             .lock()
@@ -37,7 +37,7 @@ impl GitOps for Repository {
     /// 如果仓库还没有任何提交（未出生分支），直接从索引中移除文件。
     ///
     /// If HEAD exists, reset the index entries for the paths. For unborn branches, remove paths from index.
-    fn unstage_files(&self, paths: &[&str]) -> Result<(), GitError> {
+    pub(crate) fn __unstage_files(&self, paths: &[&str]) -> Result<(), GitError> {
         let repo = self
             .repo
             .lock()
@@ -67,7 +67,7 @@ impl GitOps for Repository {
     /// 此操作不可逆，会丢失工作区中未提交的更改。
     ///
     /// Uses `checkout_head` to restore files to HEAD version. This is irreversible.
-    fn discard_changes(&self, paths: &[&str]) -> Result<(), GitError> {
+    pub(crate) fn __discard_changes(&self, paths: &[&str]) -> Result<(), GitError> {
         let repo = self
             .repo
             .lock()

@@ -11,13 +11,13 @@
 //! Implements remote CRUD (list, add, delete) and network ops (fetch, pull, push).
 
 use crate::model::Remote;
-use crate::operations::{GitError, GitOps};
+use crate::operations::GitError;
 use crate::repository::Repository;
 use git2::ObjectType;
 
-impl GitOps for Repository {
+impl Repository {
     /// 获取所有远程仓库 —— Get all remotes
-    fn get_remotes(&self) -> Result<Vec<Remote>, GitError> {
+    pub(crate) fn __get_remotes(&self) -> Result<Vec<Remote>, GitError> {
         let repo = self
             .repo
             .lock()
@@ -40,7 +40,7 @@ impl GitOps for Repository {
     }
 
     /// 添加远程仓库 —— Add a remote
-    fn add_remote(&self, name: &str, url: &str) -> Result<Remote, GitError> {
+    pub(crate) fn __add_remote(&self, name: &str, url: &str) -> Result<Remote, GitError> {
         let repo = self
             .repo
             .lock()
@@ -55,7 +55,7 @@ impl GitOps for Repository {
     }
 
     /// 删除远程仓库 —— Remove a remote
-    fn remove_remote(&self, name: &str) -> Result<(), GitError> {
+    pub(crate) fn __remove_remote(&self, name: &str) -> Result<(), GitError> {
         let repo = self
             .repo
             .lock()
@@ -71,7 +71,7 @@ impl GitOps for Repository {
     /// 获取的数据存储在远程跟踪分支中（如 `origin/main`）。
     ///
     /// Performs `git fetch <remote>` — fetches without merging. Data is stored in remote-tracking branches.
-    fn fetch(&self, remote: &str) -> Result<(), GitError> {
+    pub(crate) fn __fetch(&self, remote: &str) -> Result<(), GitError> {
         let repo = self
             .repo
             .lock()
@@ -91,7 +91,7 @@ impl GitOps for Repository {
     /// 3. 执行相应的合并操作
     ///
     /// Full flow: fetch → analyze merge strategy → apply fast-forward or normal merge.
-    fn pull(&self, remote_name: &str, branch_name: &str) -> Result<(), GitError> {
+    pub(crate) fn __pull(&self, remote_name: &str, branch_name: &str) -> Result<(), GitError> {
         // ==========================
         // 第一阶段：Fetch —— Phase 1: Fetch
         // ==========================
@@ -158,7 +158,7 @@ impl GitOps for Repository {
     }
 
     /// 推送到远程仓库 —— Push to remote
-    fn push(&self, remote: &str, branch: &str, _force: bool) -> Result<(), GitError> {
+    pub(crate) fn __push(&self, remote: &str, branch: &str, _force: bool) -> Result<(), GitError> {
         let repo = self
             .repo
             .lock()

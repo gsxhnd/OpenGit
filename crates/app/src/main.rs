@@ -5,14 +5,10 @@
 //! Starts GPUI, loads themes, creates main window with `OpenGitApp`.
 
 use gpui::*;
-use gpui_component::ThemeRegistry;
+use gpui_component::{Theme, ThemeRegistry, Root};
 
-use app_lib::app_component::opengit_titlebar_options;
-use app_lib::OpenGitApp;
-
-mod lib;
-
-use lib as app_lib;
+use app::app_component::opengit_titlebar_options;
+use app::OpenGitApp;
 
 fn main() {
     // 创建 GPUI 应用，加载 gpui-component 资源 —— Create GPUI app with gpui-component assets

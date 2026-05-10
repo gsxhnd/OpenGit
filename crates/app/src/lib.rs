@@ -16,7 +16,7 @@
 //! GPUI-based Git GUI client using Entity-Component architecture.
 
 mod app;
-mod app_component;
+pub mod app_component;
 mod menu;
 pub mod views;
 

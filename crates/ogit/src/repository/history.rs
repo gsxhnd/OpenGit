@@ -10,10 +10,10 @@
 //! Implements paginated commit history queries using git2's revwalk.
 
 use crate::model::Commit;
-use crate::operations::{GitError, GitOps};
+use crate::operations::GitError;
 use crate::repository::{git_commit_to_model, Repository};
 
-impl GitOps for Repository {
+impl Repository {
     /// 分页获取提交历史 —— Get commit history with pagination
     ///
     /// 从 HEAD 开始反向遍历提交图（按时间倒序）。
@@ -21,7 +21,7 @@ impl GitOps for Repository {
     ///
     /// Walks the commit graph from HEAD in reverse chronological order.
     /// `count` = number of commits to fetch, `skip` = number of commits to skip.
-    fn get_history(&self, count: usize, skip: usize) -> Result<Vec<Commit>, GitError> {
+    pub(crate) fn __get_history(&self, count: usize, skip: usize) -> Result<Vec<Commit>, GitError> {
         let repo = self
             .repo
             .lock()
@@ -53,7 +53,7 @@ impl GitOps for Repository {
     /// 从 `refs/heads/<branch>` 开始遍历，支持分页。
     ///
     /// Walks from `refs/heads/<branch>` with pagination support.
-    fn get_branch_commits(
+    pub(crate) fn __get_branch_commits(
         &self,
         branch: &str,
         count: usize,
@@ -85,7 +85,7 @@ impl GitOps for Repository {
     }
 
     /// 获取单个提交的详细信息 —— Get single commit details by hash
-    fn get_commit(&self, hash: &str) -> Result<Commit, GitError> {
+    pub(crate) fn __get_commit(&self, hash: &str) -> Result<Commit, GitError> {
         let repo = self
             .repo
             .lock()

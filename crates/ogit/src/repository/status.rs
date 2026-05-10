@@ -11,11 +11,11 @@
 //! Implements `get_status()` and `get_head()` — the most comprehensive status query.
 
 use crate::model::*;
-use crate::operations::{GitError, GitOps};
+use crate::operations::GitError;
 use crate::repository::{git_commit_to_model, git_status_to_model, Repository};
 use std::path::PathBuf;
 
-impl GitOps for Repository {
+impl Repository {
     /// 获取仓库完整状态 —— Get full repository status
     ///
     /// 执行以下步骤：
@@ -29,7 +29,7 @@ impl GitOps for Repository {
     ///
     /// Steps: classify working tree files, get current branch, HEAD commit,
     /// list all branches/remotes/tags, compute ahead/behind counts.
-    fn get_status(&self) -> Result<RepositoryStatus, GitError> {
+    pub(crate) fn __get_status(&self) -> Result<RepositoryStatus, GitError> {
         let repo = self
             .repo
             .lock()
@@ -232,7 +232,7 @@ impl GitOps for Repository {
     /// 如果仓库还没有任何提交（未出生分支），返回 `Ok(None)`。
     ///
     /// Returns `Ok(None)` for unborn branches (no commits yet).
-    fn get_head(&self) -> Result<Option<Commit>, GitError> {
+    pub(crate) fn __get_head(&self) -> Result<Option<Commit>, GitError> {
         let repo = self
             .repo
             .lock()

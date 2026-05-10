@@ -31,7 +31,7 @@ mod status;
 mod tag;
 
 use crate::model::*;
-use crate::operations::{GitError, GitOps};
+use crate::operations::{GitError, GitOps, ResetMode};
 use chrono::{TimeZone, Utc};
 use git2::Repository as Git2Repo;
 use std::path::{Path, PathBuf};
@@ -169,5 +169,174 @@ pub(crate) fn delta_file_status(d: git2::Delta) -> FileStatus {
         git2::Delta::Untracked => FileStatus::Untracked,
         git2::Delta::Modified | git2::Delta::Typechange => FileStatus::Modified,
         _ => FileStatus::Modified,
+    }
+}
+
+// ============================================================================
+// GitOps trait 实现 —— GitOps trait implementation
+// ============================================================================
+//
+// 采用重命名委托模式：子模块定义带有 `__` 前缀的私有实现方法，
+// 本块实现 GitOps trait，将标准接口方法委托给同名的私有实现方法。
+// 子模块中实现方法命名为 `fn __get_status(...)` 等，公有的 trait 方法
+// 通过 `self.__get_status(...)` 调用它们，从而避免同名方法导致的无限递归。
+//
+// Uses rename-delegation pattern: submodules define private `__`-prefixed
+// implementation methods; this trait impl delegates public trait methods to
+// those private methods, avoiding infinite recursion from same-named methods.
+
+impl GitOps for Repository {
+    fn get_status(&self) -> Result<RepositoryStatus, GitError> {
+        self.__get_status()
+    }
+
+    fn get_head(&self) -> Result<Option<Commit>, GitError> {
+        self.__get_head()
+    }
+
+    fn get_history(&self, count: usize, skip: usize) -> Result<Vec<Commit>, GitError> {
+        self.__get_history(count, skip)
+    }
+
+    fn get_branch_commits(
+        &self,
+        branch: &str,
+        count: usize,
+        skip: usize,
+    ) -> Result<Vec<Commit>, GitError> {
+        self.__get_branch_commits(branch, count, skip)
+    }
+
+    fn get_commit(&self, hash: &str) -> Result<Commit, GitError> {
+        self.__get_commit(hash)
+    }
+
+    fn get_commit_diff(&self, hash: &str) -> Result<Vec<FileDiff>, GitError> {
+        self.__get_commit_diff(hash)
+    }
+
+    fn get_file_diff(&self, path: &str) -> Result<FileDiff, GitError> {
+        self.__get_file_diff(path)
+    }
+
+    fn get_branches(&self) -> Result<Vec<Branch>, GitError> {
+        self.__get_branches()
+    }
+
+    fn create_branch(&self, name: &str, target: Option<&str>) -> Result<Branch, GitError> {
+        self.__create_branch(name, target)
+    }
+
+    fn delete_branch(&self, name: &str, force: bool) -> Result<(), GitError> {
+        self.__delete_branch(name, force)
+    }
+
+    fn switch_branch(&self, name: &str) -> Result<(), GitError> {
+        self.__switch_branch(name)
+    }
+
+    fn get_remotes(&self) -> Result<Vec<Remote>, GitError> {
+        self.__get_remotes()
+    }
+
+    fn add_remote(&self, name: &str, url: &str) -> Result<Remote, GitError> {
+        self.__add_remote(name, url)
+    }
+
+    fn remove_remote(&self, name: &str) -> Result<(), GitError> {
+        self.__remove_remote(name)
+    }
+
+    fn get_tags(&self) -> Result<Vec<Tag>, GitError> {
+        self.__get_tags()
+    }
+
+    fn create_tag(
+        &self,
+        name: &str,
+        target: Option<&str>,
+        message: Option<&str>,
+    ) -> Result<Tag, GitError> {
+        self.__create_tag(name, target, message)
+    }
+
+    fn delete_tag(&self, name: &str) -> Result<(), GitError> {
+        self.__delete_tag(name)
+    }
+
+    fn stage_files(&self, paths: &[&str]) -> Result<(), GitError> {
+        self.__stage_files(paths)
+    }
+
+    fn unstage_files(&self, paths: &[&str]) -> Result<(), GitError> {
+        self.__unstage_files(paths)
+    }
+
+    fn discard_changes(&self, paths: &[&str]) -> Result<(), GitError> {
+        self.__discard_changes(paths)
+    }
+
+    fn commit(&self, message: &str, author: Option<&str>) -> Result<Commit, GitError> {
+        self.__commit(message, author)
+    }
+
+    fn amend_commit(
+        &self,
+        message: Option<&str>,
+        author: Option<&str>,
+    ) -> Result<Commit, GitError> {
+        self.__amend_commit(message, author)
+    }
+
+    fn fetch(&self, remote: &str) -> Result<(), GitError> {
+        self.__fetch(remote)
+    }
+
+    fn pull(&self, remote: &str, branch: &str) -> Result<(), GitError> {
+        self.__pull(remote, branch)
+    }
+
+    fn push(&self, remote: &str, branch: &str, force: bool) -> Result<(), GitError> {
+        self.__push(remote, branch, force)
+    }
+
+    fn merge(&self, branch: &str) -> Result<(), GitError> {
+        self.__merge(branch)
+    }
+
+    fn abort_merge(&self) -> Result<(), GitError> {
+        self.__abort_merge()
+    }
+
+    fn resolve_conflict(&self, path: &str, resolution: &str) -> Result<(), GitError> {
+        self.__resolve_conflict(path, resolution)
+    }
+
+    fn get_stashes(&self) -> Result<Vec<Stash>, GitError> {
+        self.__get_stashes()
+    }
+
+    fn create_stash(&self, message: Option<&str>) -> Result<Stash, GitError> {
+        self.__create_stash(message)
+    }
+
+    fn apply_stash(&self, stash_id: &str) -> Result<(), GitError> {
+        self.__apply_stash(stash_id)
+    }
+
+    fn pop_stash(&self, stash_id: &str) -> Result<(), GitError> {
+        self.__pop_stash(stash_id)
+    }
+
+    fn delete_stash(&self, stash_id: &str) -> Result<(), GitError> {
+        self.__delete_stash(stash_id)
+    }
+
+    fn revert_commit(&self, hash: &str) -> Result<Commit, GitError> {
+        self.__revert_commit(hash)
+    }
+
+    fn reset(&self, target: &str, mode: ResetMode) -> Result<(), GitError> {
+        self.__reset(target, mode)
     }
 }

@@ -12,14 +12,14 @@
 //! Implements merge, revert, and reset. Unimplemented ops return `UnsupportedOperation`.
 
 use crate::model::Commit;
-use crate::operations::{GitError, GitOps, ResetMode};
+use crate::operations::{GitError, ResetMode};
 use crate::repository::{git_commit_to_model, Repository};
 
-impl GitOps for Repository {
+impl Repository {
     /// 合并指定分支 —— Merge a branch
     ///
     /// 待实现：需要调用 git2 的 merge API —— TODO: use git2 merge API
-    fn merge(&self, _branch: &str) -> Result<(), GitError> {
+    pub(crate) fn __merge(&self, _branch: &str) -> Result<(), GitError> {
         Err(GitError::UnsupportedOperation {
             op: "merge".to_string(),
         })
@@ -28,7 +28,7 @@ impl GitOps for Repository {
     /// 中止正在进行的合并 —— Abort ongoing merge
     ///
     /// 待实现：使用 `git merge --abort` 的逻辑 —— TODO: implement git merge --abort logic
-    fn abort_merge(&self) -> Result<(), GitError> {
+    pub(crate) fn __abort_merge(&self) -> Result<(), GitError> {
         Err(GitError::UnsupportedOperation {
             op: "abort_merge".to_string(),
         })
@@ -37,7 +37,7 @@ impl GitOps for Repository {
     /// 解决指定文件的合并冲突 —— Resolve merge conflict for a file
     ///
     /// 待实现：需要将冲突文件标记为已解决 —— TODO: mark conflicted file as resolved
-    fn resolve_conflict(&self, _path: &str, _resolution: &str) -> Result<(), GitError> {
+    pub(crate) fn __resolve_conflict(&self, _path: &str, _resolution: &str) -> Result<(), GitError> {
         Err(GitError::UnsupportedOperation {
             op: "resolve_conflict".to_string(),
         })
@@ -50,7 +50,7 @@ impl GitOps for Repository {
     ///
     /// Creates a new commit that reverses the specified commit's changes.
     /// This does NOT rewrite history — it appends a new commit.
-    fn revert_commit(&self, hash: &str) -> Result<Commit, GitError> {
+    pub(crate) fn __revert_commit(&self, hash: &str) -> Result<Commit, GitError> {
         let repo = self
             .repo
             .lock()
@@ -88,7 +88,7 @@ impl GitOps for Repository {
     /// - `Hard`：完全丢弃所有更改（`--hard`），⚠️ 危险操作
     ///
     /// Resets to the target commit with the specified mode. `Hard` mode discards ALL changes.
-    fn reset(&self, target: &str, mode: ResetMode) -> Result<(), GitError> {
+    pub(crate) fn __reset(&self, target: &str, mode: ResetMode) -> Result<(), GitError> {
         let repo = self
             .repo
             .lock()

@@ -16,7 +16,6 @@ use gpui_component::input::{Input, InputState};
 use gpui_component::menu::AppMenuBar;
 use gpui_component::resizable::{h_resizable, resizable_panel};
 use gpui_component::*;
-use std::path::PathBuf;
 
 use crate::app::{AppState, ViewType};
 use crate::menu::build_open_git_menus;
@@ -432,7 +431,7 @@ impl Render for OpenGitApp {
         let diff_path = state.selected_diff_path.clone();
         let amend = state.commit_amend;
         let clone_url_input = self.clone_url_input.clone();
-        drop(state); // 释放读锁 —— Release read lock
+        let _ = state; // 释放读锁 —— Release read lock
 
         let weak_state = self.app_state.downgrade();
         let weak_self = cx.entity().downgrade();

@@ -12,18 +12,18 @@
 //! Implements commit and amend operations using git2's commit API.
 
 use crate::model::Commit;
-use crate::operations::{GitError, GitOps};
+use crate::operations::GitError;
 use crate::repository::{git_commit_to_model, Repository};
 use git2::{ObjectType, Signature};
 
-impl GitOps for Repository {
+impl Repository {
     /// 创建新提交 —— Create a new commit
     ///
     /// 从当前索引创建一个新提交对象。
     /// 如果提供了 `author`，使用自定义作者信息，否则使用全局 git 配置。
     ///
     /// Creates a commit from the current index. Uses custom author if provided, else git config.
-    fn commit(&self, message: &str, author: Option<&str>) -> Result<Commit, GitError> {
+    pub(crate) fn __commit(&self, message: &str, author: Option<&str>) -> Result<Commit, GitError> {
         let repo = self
             .repo
             .lock()
@@ -78,7 +78,7 @@ impl GitOps for Repository {
     ///
     /// Amends the most recent commit with updated message and/or index content.
     /// If no new message, keeps the original message (but updates index content in commit).
-    fn amend_commit(
+    pub(crate) fn __amend_commit(
         &self,
         message: Option<&str>,
         _author: Option<&str>,

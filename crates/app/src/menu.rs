@@ -8,7 +8,7 @@
 //!
 //! Builds the application menu bar with context-sensitive enabled/disabled states.
 
-use gpui_component::menu::{Menu, MenuItem};
+use gpui::{Menu, MenuItem};
 
 use crate::app_component::{CloneRepository, MenuFetch, MenuPull, MenuPush, OpenRepository, QuitApp};
 
