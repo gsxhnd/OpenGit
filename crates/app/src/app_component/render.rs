@@ -22,6 +22,7 @@ use crate::views::{
 };
 
 use super::OpenGitApp;
+use super::welcome::render_welcome_page;
 
 /// 渲染视图标签按钮 —— Render view tab button (horizontal, for content area)
 fn render_content_tab(
@@ -400,114 +401,7 @@ impl Render for OpenGitApp {
                     .into_any_element()
             } else {
                 // ---- 欢迎页 —— Welcome page ---- //
-                let wo = weak_self.clone();
-                div()
-                    .flex_1()
-                    .v_flex()
-                    .gap_6()
-                    .size_full()
-                    .items_center()
-                    .justify_center()
-                    .p_4()
-                    .child(
-                        div()
-                            .flex()
-                            .flex_col()
-                            .items_center()
-                            .gap_4()
-                            .child(div().text_lg().child("Welcome to OpenGit"))
-                            .child(
-                                div()
-                                    .text_color(gpui::rgb(0xcccccc))
-                                    .child("A modern Git client built with Rust and GPUI"),
-                            )
-                            .child(
-                                div()
-                                    .text_color(gpui::rgb(0xaaaaaa))
-                                    .child("Open a Git repository to get started"),
-                            )
-                            .child({
-                                let wo_open = wo.clone();
-                                Button::new("open-repo-welcome")
-                                    .label("Open Repository")
-                                    .primary()
-                                    .on_click(move |_, window, cx| {
-                                        let _ = wo_open.update(cx, |app, cx| {
-                                            app.prompt_open_repository(window, cx);
-                                        });
-                                    })
-                            })
-                            .child(
-                                div()
-                                    .mt_4()
-                                    .flex()
-                                    .flex_col()
-                                    .gap_2()
-                                    .w(px(400.))
-                                    .child(
-                                        div()
-                                            .text_sm()
-                                            .text_color(gpui::rgb(0xcccccc))
-                                            .child("Clone a remote repository"),
-                                    )
-                                    .child(
-                                        div()
-                                            .flex()
-                                            .gap_2()
-                                            .child(Input::new(&clone_url_input).flex_1())
-                                            .child({
-                                                let wo_clone = wo;
-                                                Button::new("clone-repo-btn")
-                                                    .label("Clone")
-                                                    .primary()
-                                                    .on_click(move |_, window, cx| {
-                                                        let _ = wo_clone.update(cx, |app, cx| {
-                                                            app.prompt_clone_repository(window, cx);
-                                                        });
-                                                    })
-                                            }),
-                                    ),
-                            ),
-                    )
-                    .when(!recent_repos.is_empty(), |container: Div| {
-                        let wo_recent = weak_self.clone();
-                        container.child(
-                            div()
-                                .mt_8()
-                                .flex()
-                                .flex_col()
-                                .gap_2()
-                                .w(px(400.))
-                                .child(
-                                    div()
-                                        .text_sm()
-                                        .text_color(gpui::rgb(0x888888))
-                                        .child("Recent Repositories"),
-                                )
-                                .child(div().v_flex().gap_2().children(recent_repos.iter().map(
-                                    |r| {
-                                        let path = r.path.clone();
-                                        let w = wo_recent.clone();
-                                        Button::new(gpui::SharedString::from(format!(
-                                            "recent-{}",
-                                            r.path.display()
-                                        )))
-                                        .label(r.name.clone())
-                                        .secondary()
-                                        .w_full()
-                                        .on_click(
-                                            move |_, _, cx| {
-                                                let p = path.clone();
-                                                let _ = w.update(cx, |app, cx| {
-                                                    app.open_repo_to_workspace(cx, p.clone());
-                                                });
-                                            },
-                                        )
-                                    },
-                                ))),
-                        )
-                    })
-                    .into_any_element()
+                render_welcome_page(&clone_url_input, &recent_repos, weak_self.clone())
             })
             .child(status_bar)
     }

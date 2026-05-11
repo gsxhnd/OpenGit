@@ -15,6 +15,7 @@
 
 mod handlers;
 mod render;
+mod welcome;
 
 use gpui::*;
 use gpui_component::GlobalState;

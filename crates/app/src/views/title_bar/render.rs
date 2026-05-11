@@ -1,167 +1,18 @@
-//! 自定义标题栏 —— Custom title bar (chrome)
+//! 标题栏渲染 —— Title bar rendering
 //!
-//! 渲染应用的自定义窗口装饰，替代系统默认标题栏。
-//! 包含：应用菜单栏、仓库名、Fetch/Pull/Push 按钮和平台窗口控制按钮。
-//! 支持窗口拖拽（通过自定义 ChromeDragState）。
+//! `TitleBar` 的 `RenderOnce` trait 实现。
+//! 构建完整的标题栏 UI 树：菜单区 + 仓库名 + 操作按钮 + 窗口控制。
 //!
-//! Renders custom window chrome: menu bar, repo name, action buttons, window controls.
-//! Supports window dragging via ChromeDragState.
-
-use std::rc::Rc;
+//! RenderOnce implementation for TitleBar.
+//! Builds the complete title bar UI: menu area + repo name + action buttons + window controls.
 
 use gpui::prelude::FluentBuilder as _;
 use gpui::*;
 use gpui_component::button::Button;
-use gpui_component::menu::AppMenuBar;
 use gpui_component::*;
 
-/// 标题栏高度 (px) —— Title bar height in pixels
-pub const CHROME_BAR_H: Pixels = px(40.);
-
-/// 窗口控制操作类型 —— Window control operation type
-#[derive(Clone, Copy)]
-enum ChromeWindowOp {
-    Minimize,
-    Zoom,
-    Close,
-}
-
-/// 拖拽状态 —— Drag state for window movement
-#[derive(Default)]
-struct ChromeDragState {
-    should_move: bool,
-}
-
-/// 自定义标题栏组件 —— Custom title bar component
-///
-/// 使用 `IntoElement` derive 实现 `RenderOnce`。
-/// 通过 Builder 模式注入回调（Fetch/Pull/Push/OpenRepo）。
-///
-/// - macOS/Linux/Windows: renders full chrome (menu bar + window controls + drag)
-///
-/// Uses `IntoElement` derive with Builder pattern for callback injection.
-#[allow(clippy::type_complexity)]
-#[derive(IntoElement)]
-pub struct TitleBar {
-    repo_name: String,
-    has_repo: bool,
-    menu_bar: Entity<AppMenuBar>,
-    on_open_repo: Option<Rc<dyn Fn(&mut Window, &mut App)>>,
-    on_fetch: Option<Rc<dyn Fn(&mut Window, &mut App)>>,
-    on_pull: Option<Rc<dyn Fn(&mut Window, &mut App)>>,
-    on_push: Option<Rc<dyn Fn(&mut Window, &mut App)>>,
-}
-
-impl TitleBar {
-    pub fn new(repo_name: impl Into<String>, has_repo: bool, menu_bar: Entity<AppMenuBar>) -> Self {
-        Self {
-            repo_name: repo_name.into(),
-            has_repo,
-            menu_bar,
-            on_open_repo: None,
-            on_fetch: None,
-            on_pull: None,
-            on_push: None,
-        }
-    }
-
-    pub fn on_open_repo(mut self, f: impl Fn(&mut Window, &mut App) + 'static) -> Self {
-        self.on_open_repo = Some(Rc::new(f));
-        self
-    }
-
-    pub fn on_fetch(mut self, f: impl Fn(&mut Window, &mut App) + 'static) -> Self {
-        self.on_fetch = Some(Rc::new(f));
-        self
-    }
-
-    pub fn on_pull(mut self, f: impl Fn(&mut Window, &mut App) + 'static) -> Self {
-        self.on_pull = Some(Rc::new(f));
-        self
-    }
-
-    pub fn on_push(mut self, f: impl Fn(&mut Window, &mut App) + 'static) -> Self {
-        self.on_push = Some(Rc::new(f));
-        self
-    }
-}
-
-/// 渲染窗口控制按钮 —— Render window control button
-///
-/// - Windows: 使用原生 `window_control_area`
-/// - macOS/Linux/FreeBSD: 手动处理点击事件
-/// - 关闭按钮使用危险色主题（红色）
-///
-/// Platform-aware: native area on Windows, manual clicks elsewhere. Close button uses danger colors.
-fn window_control_btn(
-    id: &'static str,
-    icon: IconName,
-    area: WindowControlArea,
-    is_close: bool,
-    op: Option<ChromeWindowOp>,
-    cx: &App,
-) -> impl IntoElement {
-    let is_windows = cfg!(target_os = "windows");
-    let use_manual_click = cfg!(any(
-        target_os = "linux",
-        target_os = "freebsd",
-        target_os = "macos"
-    ));
-
-    let mut d = div()
-        .id(id)
-        .flex()
-        .w(CHROME_BAR_H)
-        .h_full()
-        .flex_shrink_0()
-        .justify_center()
-        .content_center()
-        .items_center()
-        .text_color(cx.theme().foreground);
-
-    if is_close {
-        d = d
-            .hover(|s| {
-                s.bg(cx.theme().danger)
-                    .text_color(cx.theme().danger_foreground)
-            })
-            .active(|s| {
-                s.bg(cx.theme().danger_active)
-                    .text_color(cx.theme().danger_foreground)
-            });
-    } else {
-        d = d
-            .hover(|s| {
-                s.bg(cx.theme().secondary_hover)
-                    .text_color(cx.theme().secondary_foreground)
-            })
-            .active(|s| {
-                s.bg(cx.theme().secondary_active)
-                    .text_color(cx.theme().secondary_foreground)
-            });
-    }
-
-    if is_windows {
-        d = d.window_control_area(area);
-    }
-    if use_manual_click && let Some(op) = op {
-        d = d
-            .on_mouse_down(MouseButton::Left, |_, window, cx| {
-                window.prevent_default();
-                cx.stop_propagation();
-            })
-            .on_click(move |_, window, cx| {
-                cx.stop_propagation();
-                match op {
-                    ChromeWindowOp::Minimize => window.minimize_window(),
-                    ChromeWindowOp::Zoom => window.zoom_window(),
-                    ChromeWindowOp::Close => window.remove_window(),
-                }
-            });
-    }
-
-    d.child(Icon::new(icon).small())
-}
+use super::window_controls::{ChromeWindowOp, window_control_btn};
+use super::{ChromeDragState, CHROME_BAR_H, TitleBar};
 
 impl RenderOnce for TitleBar {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
@@ -192,8 +43,6 @@ impl RenderOnce for TitleBar {
             .border_b(px(1.))
             .border_color(gpui::rgb(0x333333))
             .bg(gpui::rgb(0x1e1e1e))
-            // Windows: entire titlebar is a native drag zone via WindowControlArea::Drag
-            // This lets the OS handle drag natively without GPUI mouse event interference
             .when(is_windows, |this| {
                 this.window_control_area(WindowControlArea::Drag)
             })
@@ -203,8 +52,6 @@ impl RenderOnce for TitleBar {
             .when(cfg!(target_os = "macos"), |this| {
                 this.on_double_click(|_, window, _| window.titlebar_double_click())
             })
-            // macOS/Linux: manual drag via on_mouse handlers + start_window_move
-            // (WindowControlArea::Drag doesn't trigger drag on these platforms)
             .when(!is_windows, |this| {
                 this.on_mouse_down_out(window.listener_for(&chrome_drag, |state, _, _, _| {
                     state.should_move = false;
@@ -239,7 +86,6 @@ impl RenderOnce for TitleBar {
                     .flex_1()
                     .items_center()
                     .gap_2()
-                    // macOS: reserve space for native traffic lights
                     .when(cfg!(target_os = "macos"), |this| {
                         this.child(div().w(px(80.)).h_full())
                     })
@@ -257,7 +103,6 @@ impl RenderOnce for TitleBar {
                             .truncate()
                             .child(self.repo_name),
                     )
-                    // Linux: flexible spacer for manual drag
                     .when(cfg!(target_os = "linux"), |this| {
                         this.child(div().flex_1().h_full().min_w(px(48.)))
                     }),
