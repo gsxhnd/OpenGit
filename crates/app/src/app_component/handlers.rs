@@ -36,12 +36,14 @@ impl OpenGitApp {
                 if let Some(path) = picked {
                     let _ = async_cx.update(|_w, app| {
                         ws.update(app, |st, cx| {
-                            if let Err(e) = st.open_repository(path) {
+                            if let Err(e) = st.open_repository(path.clone()) {
                                 st.set_error(e.to_string());
                             }
                             cx.notify();
                         });
-                        let _ = wo.update(app, |_o, cx| {
+                        let _ = wo.update(app, |o, cx| {
+                            o.settings.add_recent_repo(path);
+                            o.save_settings(cx);
                             cx.notify();
                         });
                     });
@@ -85,14 +87,17 @@ impl OpenGitApp {
                         .unwrap_or(&url)
                         .trim_end_matches(".git");
                     let target = parent_dir.join(repo_name);
+                    let target_clone = target.clone();
                     let _ = async_cx.update(|_w, app| {
                         ws.update(app, |st, cx| {
-                            if let Err(e) = st.clone_repository(&url, target) {
+                            if let Err(e) = st.clone_repository(&url, target_clone.clone()) {
                                 st.set_error(e.to_string());
                             }
                             cx.notify();
                         });
-                        let _ = wo.update(app, |_o, cx| {
+                        let _ = wo.update(app, |o, cx| {
+                            o.settings.add_recent_repo(target_clone);
+                            o.save_settings(cx);
                             cx.notify();
                         });
                     });
@@ -182,5 +187,44 @@ impl OpenGitApp {
             }
             cx.notify();
         });
+    }
+
+    // ========================================================================
+    // 工作空间管理 —— Workspace management
+    // ========================================================================
+
+    /// 从工作空间切换项目 —— Switch to a workspace project by index
+    pub fn switch_to_project(&mut self, cx: &mut Context<Self>, index: usize) {
+        self.app_state.update(cx, |s, cx| {
+            if let Err(e) = s.switch_to_entry(index) {
+                s.set_error(e.to_string());
+            }
+            cx.notify();
+        });
+        self.save_settings(cx);
+        cx.notify();
+    }
+
+    /// 从工作空间移除项目 —— Remove a project from workspace
+    pub fn remove_project(&mut self, cx: &mut Context<Self>, path: std::path::PathBuf) {
+        self.app_state.update(cx, |s, cx| {
+            s.remove_from_workspace(&path);
+            cx.notify();
+        });
+        self.save_settings(cx);
+        cx.notify();
+    }
+
+    /// 打开项目到工作空间（从欢迎页或最近列表） —— Open repo into workspace
+    pub fn open_repo_to_workspace(&mut self, cx: &mut Context<Self>, path: std::path::PathBuf) {
+        self.app_state.update(cx, |s, cx| {
+            if let Err(e) = s.open_repository(path.clone()) {
+                s.set_error(e.to_string());
+            }
+            cx.notify();
+        });
+        self.settings.add_recent_repo(path);
+        self.save_settings(cx);
+        cx.notify();
     }
 }

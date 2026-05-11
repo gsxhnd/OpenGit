@@ -1,7 +1,7 @@
 //! 主应用组件 —— Main application component
 //!
 //! `OpenGitApp` 是 GPUI 框架下的顶层 Entity，负责：
-//! 1. 应用生命周期管理（菜单同步、仓库打开/关闭）
+//! 1. 应用生命周期管理（菜单同步、仓库打开/关闭、窗口关闭保存配置）
 //! 2. 视图切换（Commit / History / Branches / Diff）
 //! 3. 动作分发（菜单操作 → AppState 方法调用）
 //! 4. UI 渲染（欢迎页 vs 仓库视图、面板布局等）
@@ -23,6 +23,7 @@ use gpui_component::menu::AppMenuBar;
 
 use crate::app::{AppState, ViewType};
 use crate::menu::build_open_git_menus;
+use crate::settings::AppSettings;
 
 // ============================================================================
 // 动作定义 —— Action definitions
@@ -63,6 +64,7 @@ pub fn opengit_titlebar_options() -> TitlebarOptions {
 
 pub struct OpenGitApp {
     pub app_state: Entity<AppState>,
+    pub settings: AppSettings,
     pub active_view: ViewType,
     pub commit_message: Entity<InputState>,
     pub branch_name_input: Entity<InputState>,
@@ -72,8 +74,22 @@ pub struct OpenGitApp {
 }
 
 impl OpenGitApp {
-    pub fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let app_state = cx.new(|_| AppState::new());
+    pub fn new(window: &mut Window, cx: &mut Context<Self>, settings: AppSettings) -> Self {
+        let ws = settings.workspace.clone();
+        let app_state = cx.new(|_| {
+            AppState::new_with_workspace(ws.entries.clone(), ws.groups.clone(), ws.active_index)
+        });
+
+        // 恢复上次活跃项目 —— Restore last active project
+        if !ws.entries.is_empty() && ws.active_index < ws.entries.len() {
+            let last_path = ws.entries[ws.active_index].path.clone();
+            app_state.update(cx, |s, cx| {
+                if let Err(e) = s.open_repository(last_path) {
+                    s.set_error(e.to_string());
+                }
+                cx.notify();
+            });
+        }
         let app_menu_bar = AppMenuBar::new(cx);
 
         let _menu_sync = cx.observe(&app_state, |this, _, cx| {
@@ -99,6 +115,7 @@ impl OpenGitApp {
 
         let mut this = Self {
             app_state,
+            settings,
             active_view: ViewType::Commit,
             commit_message,
             branch_name_input,
@@ -108,6 +125,13 @@ impl OpenGitApp {
         };
         this.sync_app_menus(cx);
         this
+    }
+
+    pub fn save_settings(&mut self, cx: &mut Context<Self>) {
+        self.app_state.read(cx).sync_to_settings(&mut self.settings);
+        if let Err(e) = self.settings.save() {
+            tracing::error!("Failed to save settings: {}", e);
+        }
     }
 
     fn sync_app_menus(&mut self, cx: &mut Context<Self>) {

@@ -47,6 +47,52 @@ impl Repository {
         parse_diff_to_model(&diff)
     }
 
+    /// 获取暂存区中单个文件与 HEAD 的差异 —— Get staged-vs-HEAD diff for a single file
+    ///
+    /// 比较该文件在 HEAD 中的版本与索引（暂存区）中的版本。
+    /// 显示即将提交的变更内容。
+    ///
+    /// Compares the file between HEAD and index (staging area). Shows what will be committed.
+    pub(crate) fn __get_staged_file_diff(&self, path: &str) -> Result<FileDiff, GitError> {
+        let repo = self
+            .repo
+            .lock()
+            .map_err(|_| GitError::ReadError("Failed to lock repository".to_string()))?;
+
+        let head_tree = repo.head().ok().and_then(|h| h.peel_to_tree().ok());
+        let mut opts = git2::DiffOptions::new();
+        opts.pathspec(Path::new(path));
+        let diff = repo.diff_tree_to_index(head_tree.as_ref(), None, Some(&mut opts))?;
+        let parsed = parse_diff_to_model(&diff)?;
+        let want = Path::new(path);
+        if let Some(fd) = parsed.into_iter().find(|f| f.path == want) {
+            return Ok(fd);
+        }
+        Ok(FileDiff {
+            path: PathBuf::from(path),
+            old_path: None,
+            status: FileStatus::Unmodified,
+            hunks: Vec::new(),
+            is_binary: false,
+        })
+    }
+
+    /// 获取所有暂存文件与 HEAD 的差异 —— Get diff for all staged files vs HEAD
+    ///
+    /// 比较 HEAD 树与索引之间的差异，显示所有已暂存但尚未提交的变更。
+    ///
+    /// Compares HEAD tree vs index, showing all staged-but-uncommitted changes.
+    pub(crate) fn __get_all_staged_diff(&self) -> Result<Vec<FileDiff>, GitError> {
+        let repo = self
+            .repo
+            .lock()
+            .map_err(|_| GitError::ReadError("Failed to lock repository".to_string()))?;
+
+        let head_tree = repo.head().ok().and_then(|h| h.peel_to_tree().ok());
+        let diff = repo.diff_tree_to_index(head_tree.as_ref(), None, None)?;
+        parse_diff_to_model(&diff)
+    }
+
     /// 获取工作区中单个文件的差异 —— Get working-tree diff for a single file
     ///
     /// 比较该文件在索引中的版本与工作区中的版本。

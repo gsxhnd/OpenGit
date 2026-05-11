@@ -6,6 +6,7 @@
 //! Displays working tree file changes with stage/unstage/diff actions,
 //! commit message input, and amend toggle.
 
+use gpui::prelude::FluentBuilder as _;
 use gpui::*;
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{Input, InputState};
@@ -142,11 +143,53 @@ fn render_unstaged_file_row(
             }),
         )
 }
+
+/// 渲染暂存文件行（含 Staged Diff 按钮） —— Render staged file row with staged diff button
+fn render_staged_file_row(
+    entry: &FileEntry,
+    weak_state: WeakEntity<AppState>,
+    weak_self: WeakEntity<crate::OpenGitApp>,
+) -> impl IntoElement {
+    let ws = weak_state;
+    let wo = weak_self;
+    let path = entry.path.clone();
+
+    div()
+        .flex()
+        .gap_1()
+        .items_center()
+        .child(render_file_row(
+            format!("s-{}", entry.path.display()),
+            entry,
+            "Unstage",
+            ws.clone(),
+            FileRowAction::Unstage,
+        ))
+        .child(
+            Button::new(gpui::SharedString::from(format!(
+                "sdiff-{}",
+                path.display()
+            )))
+            .label("Diff")
+            .small()
+            .on_click(move |_, _, cx| {
+                let p = path.clone();
+                let _ = ws.update(cx, |s, cx| {
+                    let _ = s.set_staged_diff_path(Some(p));
+                    cx.notify();
+                });
+                let _ = wo.update(cx, |a, cx| {
+                    a.active_view = ViewType::Diff;
+                    cx.notify();
+                });
+            }),
+        )
+}
 ///
 /// 布局结构：
-/// 1. Unstaged 区域（未暂存文件 + 未跟踪文件）
-/// 2. Staged 区域（已暂存文件）
-/// 3. 提交消息输入区域
+/// 1. Unstaged 区域（未暂存文件 + 未跟踪文件）+ Stage All 按钮
+/// 2. Staged 区域（已暂存文件）+ Unstage All 按钮
+/// 3. 提交消息输入区域（含字符提示）
 /// 4. 提交按钮 + Amend 切换
 ///
 /// Layout: unstaged files → staged files → commit message → commit button + amend toggle.
@@ -161,6 +204,9 @@ pub fn render_commit_view(
     weak_state: WeakEntity<AppState>,
     weak_self: WeakEntity<crate::OpenGitApp>,
 ) -> AnyElement {
+    let has_staged = !staged.is_empty();
+    let has_unstaged = !unstaged.is_empty() || !untracked.is_empty();
+
     div()
         .flex_1()
         .min_h_0()
@@ -173,6 +219,23 @@ pub fn render_commit_view(
                 .text_color(gpui::rgb(0xcccccc))
                 .child("Unstaged"),
         )
+        // ---- Stage All 按钮 ---- //
+        .when(has_unstaged, |col: Div| {
+            let ws = weak_state.clone();
+            col.child(
+                Button::new("stage-all")
+                    .label("Stage All")
+                    .small()
+                    .on_click(move |_, _, cx| {
+                        let _ = ws.update(cx, |s, cx| {
+                            if let Err(e) = s.stage_all() {
+                                s.set_error(e.to_string());
+                            }
+                            cx.notify();
+                        });
+                    }),
+            )
+        })
         // ---- Unstaged + Untracked 文件列表 ---- //
         .child(
             div()
@@ -196,23 +259,30 @@ pub fn render_commit_view(
                 .text_color(gpui::rgb(0xcccccc))
                 .child("Staged"),
         )
+        // ---- Unstage All 按钮 ---- //
+        .when(has_staged, |col: Div| {
+            let ws = weak_state.clone();
+            col.child(
+                Button::new("unstage-all")
+                    .label("Unstage All")
+                    .small()
+                    .on_click(move |_, _, cx| {
+                        let _ = ws.update(cx, |s, cx| {
+                            if let Err(e) = s.unstage_all() {
+                                s.set_error(e.to_string());
+                            }
+                            cx.notify();
+                        });
+                    }),
+            )
+        })
         // ---- Staged 文件列表 ---- //
         .child(
-            div()
-                .flex_1()
-                .min_h_0()
-                .v_flex()
-                .gap_1()
-                .children(staged.iter().map(|e| {
-                    let ws = weak_state.clone();
-                    render_file_row(
-                        format!("s-{}", e.path.display()),
-                        e,
-                        "Unstage",
-                        ws,
-                        FileRowAction::Unstage,
-                    )
-                })),
+            div().flex_1().min_h_0().v_flex().gap_1().children(
+                staged
+                    .iter()
+                    .map(|e| render_staged_file_row(e, weak_state.clone(), weak_self.clone())),
+            ),
         )
         // ---- 提交消息输入 ---- //
         .child(
@@ -236,17 +306,40 @@ pub fn render_commit_view(
                         .primary()
                         .on_click(move |_, window, cx| {
                             let msg = cx.read_entity(&msg_e, |i, _| i.value().to_string());
+                            let staged_count = cx.read_entity(&app_e, |s, _| {
+                                s.repo_status.status.staged_files.len()
+                            });
+                            // 验证：消息不能为空 —— Validate: message must not be empty
+                            if msg.trim().is_empty() {
+                                app_e.update(cx, |s, cx| {
+                                    s.set_error("Commit message is empty".into());
+                                    cx.notify();
+                                });
+                                return;
+                            }
+                            // 验证：必须有暂存文件 —— Validate: must have staged files
+                            if staged_count == 0 {
+                                app_e.update(cx, |s, cx| {
+                                    s.set_error("No staged files to commit".into());
+                                    cx.notify();
+                                });
+                                return;
+                            }
                             let amend = cx.read_entity(&app_e, |s, _| s.commit_amend);
                             app_e.update(cx, |s, cx| {
                                 if let Err(e) = s.commit_staged(&msg, amend) {
                                     s.set_error(e.to_string());
+                                    cx.notify();
+                                    return;
                                 }
                                 cx.notify();
                             });
-                            // 提交后清空消息输入 —— Clear message after commit
-                            msg_e.update(cx, |inp, cx| {
-                                inp.set_value("", window, cx);
-                            });
+                            // 仅提交成功时清空消息 —— Only clear message on success
+                            if app_e.read(cx).error.is_none() {
+                                msg_e.update(cx, |inp, cx| {
+                                    inp.set_value("", window, cx);
+                                });
+                            }
                         })
                 })
                 .child({
@@ -263,5 +356,12 @@ pub fn render_commit_view(
                         })
                 }),
         )
+        // ---- 提交消息字符提示 —— Commit message character hint ---- //
+        .child({
+            div()
+                .text_xs()
+                .text_color(gpui::rgb(0x666666))
+                .child("Tip: First line is the commit title (keep under 72 characters)")
+        })
         .into_any_element()
 }

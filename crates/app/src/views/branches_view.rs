@@ -98,7 +98,12 @@ pub fn render_branches_view(
                                 .on_click(move |_, _, cx| {
                                     let name = nm.clone();
                                     let _ = ws.update(cx, |s, cx| {
-                                        if let Err(e) = s.checkout_branch(&name) {
+                                        if !cur && s.has_uncommitted_changes() {
+                                            s.set_error(format!(
+                                                "Uncommitted changes exist. Please commit or stash before switching to '{}'.",
+                                                name
+                                            ));
+                                        } else if let Err(e) = s.checkout_branch(&name) {
                                             s.set_error(e.to_string());
                                         }
                                         cx.notify();

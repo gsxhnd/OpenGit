@@ -6,6 +6,7 @@
 //!
 //! Displays current branch name and change statistics (ahead/behind counts, unstaged/staged).
 
+use gpui::prelude::FluentBuilder;
 use gpui::*;
 
 /// 底部状态栏组件 —— Bottom status bar component
@@ -20,6 +21,7 @@ pub struct StatusBar {
     behind: usize,
     changed_count: usize,
     staged_count: usize,
+    current_operation: Option<String>,
 }
 
 impl StatusBar {
@@ -30,6 +32,7 @@ impl StatusBar {
         behind: usize,
         changed_count: usize,
         staged_count: usize,
+        current_operation: Option<String>,
     ) -> Self {
         Self {
             current_branch: current_branch.into(),
@@ -37,6 +40,7 @@ impl StatusBar {
             behind,
             changed_count,
             staged_count,
+            current_operation,
         }
     }
 }
@@ -44,9 +48,9 @@ impl StatusBar {
 impl RenderOnce for StatusBar {
     /// 渲染状态栏 —— Render status bar
     ///
-    /// 左侧显示分支名，右侧显示 ↑A ↓B · unstaged X · staged Y 统计信息。
+    /// 左侧显示分支名和当前操作，右侧显示 ↑A ↓B · unstaged X · staged Y 统计信息。
     ///
-    /// Left: branch name, Right: ↑ahead ↓behind · unstaged count · staged count
+    /// Left: branch name + current operation, Right: ↑ahead ↓behind · unstaged count · staged count
     fn render(self, _: &mut Window, _: &mut App) -> impl IntoElement {
         div()
             .w_full()
@@ -60,9 +64,18 @@ impl RenderOnce for StatusBar {
             .justify_between()
             .child(
                 div()
-                    .text_xs()
-                    .text_color(gpui::rgb(0x888888))
-                    .child(format!("Branch: {}", self.current_branch)),
+                    .flex()
+                    .gap_3()
+                    .items_center()
+                    .child(
+                        div()
+                            .text_xs()
+                            .text_color(gpui::rgb(0x888888))
+                            .child(format!("Branch: {}", self.current_branch)),
+                    )
+                    .when_some(self.current_operation, |row: Div, op: String| {
+                        row.child(div().text_xs().text_color(gpui::rgb(0x6abf69)).child(op))
+                    }),
             )
             .child(
                 div()

@@ -223,6 +223,14 @@ impl GitOps for Repository {
         self.__get_file_diff(path)
     }
 
+    fn get_staged_file_diff(&self, path: &str) -> Result<FileDiff, GitError> {
+        self.__get_staged_file_diff(path)
+    }
+
+    fn get_all_staged_diff(&self) -> Result<Vec<FileDiff>, GitError> {
+        self.__get_all_staged_diff()
+    }
+
     fn get_branches(&self) -> Result<Vec<Branch>, GitError> {
         self.__get_branches()
     }

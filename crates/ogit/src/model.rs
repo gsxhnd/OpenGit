@@ -156,8 +156,7 @@ pub struct Tag {
 ///
 /// Aggregates working tree status, HEAD, branches, remotes, tags, and ahead/behind counts.
 /// This is the primary data structure UI layer uses to get overall repository state.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RepositoryStatus {
     /// 工作树状态 —— Working tree status
     pub status: WorkingTreeStatus,

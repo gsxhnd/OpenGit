@@ -123,6 +123,12 @@ pub trait GitOps {
     /// 获取工作区中单个文件的差异 —— Get working-tree diff for a single file
     fn get_file_diff(&self, path: &str) -> Result<FileDiff, GitError>;
 
+    /// 获取暂存区中单个文件与 HEAD 的差异 —— Get staged-vs-HEAD diff for a single file
+    fn get_staged_file_diff(&self, path: &str) -> Result<FileDiff, GitError>;
+
+    /// 获取所有暂存文件与 HEAD 的差异 —— Get diff for all staged files vs HEAD
+    fn get_all_staged_diff(&self) -> Result<Vec<FileDiff>, GitError>;
+
     /// 获取所有分支列表 —— Get all branches
     fn get_branches(&self) -> Result<Vec<Branch>, GitError>;
 

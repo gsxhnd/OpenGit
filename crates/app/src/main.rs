@@ -4,17 +4,19 @@
 //!
 //! ## 启动流程 —— Startup sequence
 //!
-//! 1. 初始化日志系统（tracing） —— Initialize logging
+//! 1. 初始化日志系统（tracing，同时输出到 stderr 和文件） —— Initialize logging
 //! 2. 创建配置/日志目录 —— Create config/log directories
 //! 3. 加载或创建配置文件 —— Load or create config file
 //! 4. 初始化 GPUI 应用 —— Initialize GPUI application
 //! 5. 加载主题并应用保存的主题 —— Load themes and apply saved theme
 //! 6. 创建主窗口（使用保存的窗口尺寸） —— Create main window with saved bounds
+//! 7. 窗口关闭时保存配置 —— Save config on window close
 //!
 //! Start GPUI, load themes, create main window with `OpenGitApp`.
 
 use gpui::*;
 use gpui_component::{Root, Theme, ThemeRegistry};
+use std::fs::OpenOptions;
 
 use app::OpenGitApp;
 use app::app_component::opengit_titlebar_options;
@@ -25,13 +27,29 @@ fn main() {
     // Step 1: 初始化日志系统 —— Initialize logging subsystem
     // ========================================================================
     // Uses RUST_LOG env var for filtering, defaults to INFO level.
-    // Logs to stderr (console). File logging can be added later.
+    // Logs to stderr (console) and to a log file in the app log directory.
     {
         use tracing_subscriber::prelude::*;
         let filter = tracing_subscriber::EnvFilter::try_from_default_env()
             .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info"));
+
+        let log_dir = AppSettings::log_dir();
+        let log_file = OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(log_dir.join("opengit.log"))
+            .ok();
+
+        let stderr_layer = tracing_subscriber::fmt::layer().with_writer(std::io::stderr);
+        let file_layer = log_file.map(|f| {
+            tracing_subscriber::fmt::layer()
+                .with_writer(f)
+                .with_ansi(false)
+        });
+
         tracing_subscriber::registry()
-            .with(tracing_subscriber::fmt::layer().with_writer(std::io::stderr))
+            .with(stderr_layer)
+            .with(file_layer)
             .with(filter)
             .init();
     }
@@ -69,7 +87,7 @@ fn main() {
     );
 
     // ========================================================================
-    // Step 4-6: 启动 GPUI 应用 —— Start GPUI application
+    // Step 4-7: 启动 GPUI 应用 —— Start GPUI application
     // ========================================================================
     let app = gpui_platform::application().with_assets(gpui_component_assets::Assets);
 
@@ -92,6 +110,8 @@ fn main() {
         ) {
             tracing::error!("Failed to watch themes directory: {}", err);
         }
+
+        let app_settings_clone = app_settings.clone();
 
         // 在异步任务中创建窗口 —— Create window in async task
         cx.spawn(async move |cx| {
@@ -117,7 +137,7 @@ fn main() {
             let window = cx
                 .open_window(window_options, |window, cx| {
                     let app_view = cx.new(|cx| {
-                        let app = OpenGitApp::new(window, cx);
+                        let app = OpenGitApp::new(window, cx, app_settings_clone);
                         // 如果配置损坏，启动时显示错误 —— Surface corrupted config error on startup
                         if let Some(err) = config_error.clone() {
                             app.app_state.update(cx, |state, cx| {
@@ -130,6 +150,7 @@ fn main() {
                         }
                         app
                     });
+
                     cx.new(|cx| Root::new(app_view, window, cx))
                 })
                 .expect("Failed to open window");

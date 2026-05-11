@@ -44,29 +44,49 @@ pub fn render_diff_lines(diff: &FileDiff) -> impl IntoElement {
 
 /// 渲染差异视图 —— Render diff view
 ///
-/// 如果选择了文件（`diff_path` 非空），显示文件路径和差异内容。
-/// 如果选择了文件但没有差异（文件未修改），显示空内容。
-/// 如果未选择文件，显示提示信息"Select a file from Commit view"。
+/// 如果选择了文件（`diff_path` 或 `staged_diff_path` 非空），显示文件路径和差异内容。
+/// 支持两种模式：
+/// - Working tree diff: 工作区 vs 索引
+/// - Staged diff: 暂存区 vs HEAD
 ///
-/// Shows file path and diff content if a file is selected.
-/// Shows hint when no file is selected.
+/// 如果未选择文件，显示提示信息。
+///
+/// Shows file path and diff content if a file is selected. Supports both working-tree
+/// and staged diff modes.
 pub fn render_diff_view(
     diff_path: Option<&std::path::PathBuf>,
+    staged_diff_path: Option<&std::path::PathBuf>,
     diff_preview: Option<&FileDiff>,
 ) -> AnyElement {
+    let path_label = match (diff_path, staged_diff_path) {
+        (Some(p), _) => format!("Working diff: {}", p.display()),
+        (_, Some(p)) => format!("Staged diff: {}", p.display()),
+        (None, None) => "Select a file from Commit view (click Diff)".to_string(),
+    };
     div()
         .flex_1()
         .min_h_0()
         .v_flex()
         .gap_2()
         // 文件路径标题 —— File path header
-        .child(div().text_sm().child(match diff_path {
-            Some(p) => format!("Diff: {}", p.display()),
-            None => "Select a file from Commit view (click row)".to_string(),
-        }))
+        .child(div().text_sm().child(path_label))
         // 差异内容区域 —— Diff content area
         .when_some(diff_preview, |col, d: &ogit::FileDiff| {
-            col.flex_1().min_h_0().child(render_diff_lines(d))
+            col.child(
+                div()
+                    .flex_1()
+                    .min_h_0()
+                    .v_flex()
+                    .when(d.is_binary, |c| {
+                        c.child(
+                            div()
+                                .text_sm()
+                                .text_color(gpui::rgb(0xe57373))
+                                .child("Binary file — diff not shown"),
+                        )
+                    })
+                    .when(!d.is_binary, |c| c.child(render_diff_lines(d))),
+            )
         })
         .into_any_element()
 }

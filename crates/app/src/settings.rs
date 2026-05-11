@@ -91,6 +91,35 @@ pub struct RecentRepo {
     pub last_opened: Option<String>,
 }
 
+/// 项目分组 —— Project group
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProjectGroup {
+    pub id: String,
+    pub name: String,
+}
+
+/// 工作区项目条目 —— Workspace project entry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WorkspaceEntry {
+    pub path: PathBuf,
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_opened: Option<String>,
+}
+
+/// 工作区设置 —— Workspace settings
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct WorkspaceSettings {
+    #[serde(default)]
+    pub entries: Vec<WorkspaceEntry>,
+    #[serde(default)]
+    pub groups: Vec<ProjectGroup>,
+    #[serde(default)]
+    pub active_index: usize,
+}
+
 /// 应用设置 —— Application settings
 ///
 /// Central configuration model. Persisted as JSON.
@@ -107,6 +136,9 @@ pub struct AppSettings {
 
     #[serde(default)]
     pub git_backend: GitBackendType,
+
+    #[serde(default)]
+    pub workspace: WorkspaceSettings,
 }
 
 fn default_theme() -> String {
@@ -120,6 +152,7 @@ impl Default for AppSettings {
             recent_repos: Vec::new(),
             theme: DEFAULT_THEME.to_string(),
             git_backend: GitBackendType::default(),
+            workspace: WorkspaceSettings::default(),
         }
     }
 }
@@ -305,6 +338,57 @@ impl AppSettings {
         self.window.x = x;
         self.window.y = y;
     }
+
+    /// 添加工作区项目 —— Add a workspace project entry
+    pub fn add_workspace_entry(&mut self, path: PathBuf) {
+        let name = path
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| path.to_string_lossy().to_string());
+
+        if !self.workspace.entries.iter().any(|e| e.path == path) {
+            self.workspace.entries.push(WorkspaceEntry {
+                path,
+                name,
+                group_id: None,
+                last_opened: None,
+            });
+        }
+    }
+
+    /// 移除工作区项目 —— Remove a workspace project entry
+    pub fn remove_workspace_entry(&mut self, path: &std::path::Path) {
+        self.workspace.entries.retain(|e| e.path != path);
+        if self.workspace.active_index >= self.workspace.entries.len() {
+            self.workspace.active_index = self.workspace.entries.len().saturating_sub(1);
+        }
+    }
+
+    /// 添加项目分组 —— Add a project group
+    pub fn add_workspace_group(&mut self, name: &str) -> String {
+        let id = uuid_simple(name);
+        self.workspace.groups.push(ProjectGroup {
+            id: id.clone(),
+            name: name.to_string(),
+        });
+        id
+    }
+
+    /// 设置工作区活跃项目索引 —— Set active workspace index
+    pub fn set_workspace_active(&mut self, index: usize) {
+        if index < self.workspace.entries.len() {
+            self.workspace.active_index = index;
+        }
+    }
+}
+
+/// 简单 UUID 生成（基于名称哈希） —— Simple UUID-like ID from name hash
+fn uuid_simple(name: &str) -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+    let mut h = DefaultHasher::new();
+    name.hash(&mut h);
+    format!("{:x}", h.finish())
 }
 
 // ============================================================================

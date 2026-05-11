@@ -18,6 +18,9 @@ use ogit::{Commit, FileDiff, Repository, RepositoryStatus};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use crate::settings::{ProjectGroup, WorkspaceEntry};
+use crate::workspace::{CachedStatus, Workspace};
+
 // ============================================================================
 // AppState —— 主应用状态实体
 // ============================================================================
@@ -31,6 +34,8 @@ use std::sync::Arc;
 /// GPUI views interact with it via `WeakEntity<AppState>`.
 #[derive(Default)]
 pub struct AppState {
+    /// 工作空间（多项目管理） —— Workspace for multi-project management
+    pub workspace: Workspace,
     /// 当前打开的仓库（Arc 包装以支持跨线程共享） —— Currently open repository
     pub repository: Option<Arc<Repository>>,
     /// 仓库在文件系统上的路径 —— Repository path on filesystem
@@ -50,8 +55,12 @@ pub struct AppState {
     pub selected_history: Option<usize>,
     /// 内联差异的目标文件路径 —— Path for inline diff (working tree vs index)
     pub selected_diff_path: Option<PathBuf>,
-    /// 选中文��的差异预览（缓存） —— Cached diff for selected_diff_path
+    /// 选中的暂存文件差异路径 —— Staged file diff path (HEAD vs index)
+    pub selected_staged_diff_path: Option<PathBuf>,
+    /// 选中文���的差异预览（缓存） —— Cached diff for selected_diff_path
     pub diff_preview: Option<FileDiff>,
+    /// 当前正在执行的操作描述 —— Current operation description for status bar
+    pub current_operation: Option<String>,
     /// 是否使用 --amend 模式提交 —— Amend toggle for next commit
     pub commit_amend: bool,
     /// 待处理的后台任务 —— Pending background tasks
@@ -67,6 +76,19 @@ impl AppState {
         Self::default()
     }
 
+    /// 使用工作空间设置创建 AppState —— Create AppState with workspace settings
+    pub fn new_with_workspace(
+        entries: Vec<WorkspaceEntry>,
+        groups: Vec<ProjectGroup>,
+        active_index: usize,
+    ) -> Self {
+        let workspace = Workspace::from_settings(entries, groups, active_index);
+        Self {
+            workspace,
+            ..Default::default()
+        }
+    }
+
     // ========================================================================
     // 仓库生命周期 —— Repository lifecycle
     // ========================================================================
@@ -74,19 +96,99 @@ impl AppState {
     /// 打开本地仓库 —— Open a local repository
     ///
     /// 初始化仓库、获取状态并加载第一页提交历史。
+    /// 同时将仓库加入工作空间。
     ///
     /// Initializes repo, fetches status, and loads first page of history.
+    /// Also adds the repo to the workspace.
     pub fn open_repository(&mut self, path: PathBuf) -> anyhow::Result<()> {
         tracing::info!("Opening repository: {}", path.display());
         let repo = Arc::new(Repository::open(&path).map_err(|e| anyhow::anyhow!("{}", e))?);
+        let name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("Project")
+            .to_string();
+        self.workspace.add_entry(path.clone(), name);
         self.init_with_repo(repo, path)
+    }
+
+    /// 切换到工作空间中的指定项目 —— Switch to a workspace project by index
+    ///
+    /// 关闭当前仓库并打开目标项目。
+    ///
+    /// Closes the current repo and opens the target project.
+    pub fn switch_to_entry(&mut self, index: usize) -> anyhow::Result<()> {
+        if !self.workspace.switch_to(index) {
+            return Err(anyhow::anyhow!("Invalid project index"));
+        }
+        let path = self
+            .workspace
+            .active_path()
+            .cloned()
+            .ok_or_else(|| anyhow::anyhow!("No active project"))?;
+        self.set_error("".into());
+        self.error = None;
+        self.close_repository();
+        self.open_repository(path)
+    }
+
+    /// 刷新工作空间缓存状态 —— Refresh workspace cached status
+    pub fn refresh_workspace_status(&mut self) {
+        let repo_path = self.repo_path.clone();
+        self.workspace.refresh_all();
+        // 更新活跃项目的工作空间状态缓存 —— Update active project's workspace cache
+        if let Some(ref path) = repo_path {
+            let changed = self.repo_status.status.unstaged_files.len()
+                + self.repo_status.status.untracked_files.len();
+            let staged = self.repo_status.status.staged_files.len();
+            let has_conflict = self
+                .repo_status
+                .status
+                .unstaged_files
+                .iter()
+                .chain(self.repo_status.status.staged_files.iter())
+                .any(|f| f.status == ogit::FileStatus::Conflicted);
+            self.workspace.update_status(
+                path,
+                CachedStatus {
+                    branch: self.repo_status.status.current_branch.clone(),
+                    changed,
+                    staged,
+                    ahead: self.repo_status.ahead,
+                    behind: self.repo_status.behind,
+                    has_conflict,
+                    ok: true,
+                },
+            );
+        }
     }
 
     /// 克隆远程仓库 —— Clone a remote repository
     pub fn clone_repository(&mut self, url: &str, into: PathBuf) -> anyhow::Result<()> {
         tracing::info!("Cloning repository: {} -> {}", url, into.display());
         let repo = Arc::new(Repository::clone(url, &into).map_err(|e| anyhow::anyhow!("{}", e))?);
+        let name = into
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("Project")
+            .to_string();
+        self.workspace.add_entry(into.clone(), name);
         self.init_with_repo(repo, into)
+    }
+
+    /// 从工作空间移除项目 —— Remove a project from workspace
+    pub fn remove_from_workspace(&mut self, path: &PathBuf) {
+        self.workspace.remove_entry(path);
+        // 如果移除的是当前活跃项目，切换到第一个
+        if self.repo_path.as_ref() == Some(path) {
+            self.close_repository();
+            if !self.workspace.is_empty()
+                && let Some(p) = self.workspace.active_path().cloned()
+                && let Err(e) = self.open_repository(p)
+            {
+                self.set_error(e.to_string());
+            }
+        }
     }
 
     /// 使用给定的仓库初始化状态 —— Initialize state with a given repository
@@ -104,7 +206,9 @@ impl AppState {
         self.history_skip = 0;
         self.selected_history = None;
         self.selected_diff_path = None;
+        self.selected_staged_diff_path = None;
         self.diff_preview = None;
+        self.current_operation = None;
         self.commit_amend = false;
         let _ = self.load_history_reset();
 
@@ -125,19 +229,22 @@ impl AppState {
         self.history_skip = 0;
         self.selected_history = None;
         self.selected_diff_path = None;
+        self.selected_staged_diff_path = None;
         self.diff_preview = None;
+        self.current_operation = None;
     }
 
     /// 刷新仓库状态 —— Refresh repository status
     ///
-    /// 重新获取完整仓库状态（文件、分支、远程等）。
+    /// 重新获取完整仓库状态（文件、分支、远程等），并更新工作空间缓存。
     ///
-    /// Re-fetches full repository status (files, branches, remotes, etc.).
+    /// Re-fetches full repository status (files, branches, remotes, etc.) and updates workspace cache.
     pub fn refresh_status(&mut self) -> anyhow::Result<()> {
         if let Some(repo) = &self.repository {
             tracing::debug!("Refreshing repository status");
             self.repo_status = repo.get_status().map_err(|e| anyhow::anyhow!("{}", e))?;
             self.error = None;
+            self.refresh_workspace_status();
             Ok(())
         } else {
             Err(anyhow::anyhow!("No repository opened"))
@@ -223,7 +330,30 @@ impl AppState {
         Ok(())
     }
 
-    /// 取消暂存文件 —— Unstage a file
+    /// 暂存所有未暂存和未跟踪的文件 —— Stage all unstaged and untracked files
+    pub fn stage_all(&mut self) -> anyhow::Result<()> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        let paths: Vec<String> = self
+            .repo_status
+            .status
+            .unstaged_files
+            .iter()
+            .chain(self.repo_status.status.untracked_files.iter())
+            .map(|e| e.path.to_string_lossy().to_string())
+            .collect();
+        let refs: Vec<&str> = paths.iter().map(|s| s.as_str()).collect();
+        if !refs.is_empty() {
+            repo.stage_files(&refs)
+                .map_err(|e| anyhow::anyhow!("{}", e))?;
+        }
+        self.refresh_status()?;
+        Ok(())
+    }
+
+    /// 取消暂存 —— Unstage a file
     pub fn unstage_path(&mut self, rel: &Path) -> anyhow::Result<()> {
         let repo = self
             .repository
@@ -232,6 +362,28 @@ impl AppState {
         let s = rel.to_string_lossy();
         repo.unstage_files(&[s.as_ref()])
             .map_err(|e| anyhow::anyhow!("{}", e))?;
+        self.refresh_status()?;
+        Ok(())
+    }
+
+    /// 取消暂存所有已暂存文件 —— Unstage all staged files
+    pub fn unstage_all(&mut self) -> anyhow::Result<()> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        let paths: Vec<String> = self
+            .repo_status
+            .status
+            .staged_files
+            .iter()
+            .map(|e| e.path.to_string_lossy().to_string())
+            .collect();
+        let refs: Vec<&str> = paths.iter().map(|s| s.as_str()).collect();
+        if !refs.is_empty() {
+            repo.unstage_files(&refs)
+                .map_err(|e| anyhow::anyhow!("{}", e))?;
+        }
         self.refresh_status()?;
         Ok(())
     }
@@ -304,9 +456,13 @@ impl AppState {
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
         tracing::info!("Fetching from origin");
-        repo.fetch("origin").map_err(|e| anyhow::anyhow!("{}", e))?;
-        self.refresh_status()?;
-        Ok(())
+        self.current_operation = Some("Fetching…".into());
+        let result = repo.fetch("origin").map_err(|e| anyhow::anyhow!("{}", e));
+        self.current_operation = None;
+        if result.is_ok() {
+            self.refresh_status()?;
+        }
+        result
     }
 
     /// 从 origin 拉取当前分支 —— Pull current branch from origin
@@ -315,11 +471,16 @@ impl AppState {
             .repository
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
-        repo.pull("origin", branch)
-            .map_err(|e| anyhow::anyhow!("{}", e))?;
-        self.refresh_status()?;
-        let _ = self.load_history_reset();
-        Ok(())
+        self.current_operation = Some("Pulling…".into());
+        let result = repo
+            .pull("origin", branch)
+            .map_err(|e| anyhow::anyhow!("{}", e));
+        self.current_operation = None;
+        if result.is_ok() {
+            self.refresh_status()?;
+            let _ = self.load_history_reset();
+        }
+        result
     }
 
     /// 推送当前分支到 origin —— Push current branch to origin
@@ -328,10 +489,15 @@ impl AppState {
             .repository
             .as_ref()
             .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
-        repo.push("origin", branch, false)
-            .map_err(|e| anyhow::anyhow!("{}", e))?;
-        self.refresh_status()?;
-        Ok(())
+        self.current_operation = Some("Pushing…".into());
+        let result = repo
+            .push("origin", branch, false)
+            .map_err(|e| anyhow::anyhow!("{}", e));
+        self.current_operation = None;
+        if result.is_ok() {
+            self.refresh_status()?;
+        }
+        result
     }
 
     // ========================================================================
@@ -341,10 +507,13 @@ impl AppState {
     /// 设置差异文件路径并加载差异 —— Set diff path and load diff preview
     ///
     /// 如果仓库可用，计算工作区与索引之间的差异并缓存到 `diff_preview`。
+    /// 设置 `staged` 为 true 时，显示暂存区 vs HEAD 的差异。
     ///
     /// Computes working-tree diff for the given path and caches it in `diff_preview`.
+    /// When `staged` is true, shows staged vs HEAD diff.
     pub fn set_diff_path(&mut self, path: Option<PathBuf>) -> anyhow::Result<()> {
         self.selected_diff_path = path.clone();
+        self.selected_staged_diff_path = None;
         self.diff_preview = match (&self.repository, path.as_ref()) {
             (Some(repo), Some(p)) => {
                 let s = p.to_string_lossy();
@@ -356,6 +525,41 @@ impl AppState {
             _ => None,
         };
         Ok(())
+    }
+
+    /// 设置暂存差异路径并加载差异 —— Set staged diff path and load diff
+    ///
+    /// 显示暂存区相对于 HEAD 的变更内容（即将提交的内容）。
+    ///
+    /// Shows staged changes relative to HEAD (what will be committed).
+    pub fn set_staged_diff_path(&mut self, path: Option<PathBuf>) -> anyhow::Result<()> {
+        self.selected_staged_diff_path = path.clone();
+        self.selected_diff_path = None;
+        self.diff_preview = match (&self.repository, path.as_ref()) {
+            (Some(repo), Some(p)) => {
+                let s = p.to_string_lossy();
+                Some(
+                    repo.get_staged_file_diff(s.as_ref())
+                        .map_err(|e| anyhow::anyhow!("{}", e))?,
+                )
+            }
+            _ => None,
+        };
+        Ok(())
+    }
+
+    /// 检查是否有未提交的变更 —— Check if working tree has uncommitted changes
+    pub fn has_uncommitted_changes(&self) -> bool {
+        !self.repo_status.status.unstaged_files.is_empty()
+            || !self.repo_status.status.untracked_files.is_empty()
+            || !self.repo_status.status.staged_files.is_empty()
+    }
+
+    /// 同步工作空间状态到设置 —— Sync workspace state to settings
+    pub fn sync_to_settings(&self, settings: &mut crate::settings::AppSettings) {
+        settings.workspace.entries = self.workspace.entries.clone();
+        settings.workspace.groups = self.workspace.groups.clone();
+        settings.workspace.active_index = self.workspace.active_index;
     }
 }
 
