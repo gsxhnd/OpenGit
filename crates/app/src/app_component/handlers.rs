@@ -146,9 +146,9 @@ impl OpenGitApp {
             }
             if let Err(e) = s.fetch_origin() {
                 s.set_error(e.to_string());
-                s.add_toast(format!("Fetch failed: {}", e), crate::app::ToastKind::Error);
+                s.add_toast(format!("Fetch failed: {}", e), crate::app_state::ToastKind::Error);
             } else {
-                s.add_toast("Fetch completed", crate::app::ToastKind::Success);
+                s.add_toast("Fetch completed", crate::app_state::ToastKind::Success);
             }
             cx.notify();
         });
@@ -169,9 +169,9 @@ impl OpenGitApp {
         self.app_state.update(cx, |s, cx| {
             if let Err(e) = s.pull_origin(&branch) {
                 s.set_error(e.to_string());
-                s.add_toast(format!("Pull failed: {}", e), crate::app::ToastKind::Error);
+                s.add_toast(format!("Pull failed: {}", e), crate::app_state::ToastKind::Error);
             } else {
-                s.add_toast("Pull completed", crate::app::ToastKind::Success);
+                s.add_toast("Pull completed", crate::app_state::ToastKind::Success);
             }
             cx.notify();
         });
@@ -192,9 +192,9 @@ impl OpenGitApp {
         self.app_state.update(cx, |s, cx| {
             if let Err(e) = s.push_origin(&branch) {
                 s.set_error(e.to_string());
-                s.add_toast(format!("Push failed: {}", e), crate::app::ToastKind::Error);
+                s.add_toast(format!("Push failed: {}", e), crate::app_state::ToastKind::Error);
             } else {
-                s.add_toast("Push completed", crate::app::ToastKind::Success);
+                s.add_toast("Push completed", crate::app_state::ToastKind::Success);
             }
             cx.notify();
         });
@@ -213,7 +213,7 @@ impl OpenGitApp {
             self.app_state.update(cx, |s, _cx| {
                 s.project_view_states.insert(
                     path,
-                    crate::app::ProjectViewState {
+                    crate::app_state::ProjectViewState {
                         active_view: current_view,
                         selected_diff_path: s.selected_diff_path.clone(),
                         selected_staged_diff_path: s.selected_staged_diff_path.clone(),
@@ -242,7 +242,7 @@ impl OpenGitApp {
             {
                 self.active_view = vs.active_view;
             } else {
-                self.active_view = crate::app::ViewType::Commit;
+                self.active_view = crate::app_state::ViewType::Commit;
             }
         }
 

@@ -15,7 +15,7 @@ use gpui_component::resizable::{h_resizable, resizable_panel};
 use gpui_component::scroll::ScrollableElement as _;
 use gpui_component::*;
 
-use crate::app::ViewType;
+use crate::app_state::ViewType;
 use crate::views::{
     StatusBar, TitleBar, render_branches_view, render_commit_view, render_diff_view,
     render_history_view, render_project_sidebar, render_stash_view, render_tag_view,
@@ -217,13 +217,13 @@ impl Render for OpenGitApp {
                     .gap_2()
                     .children(toasts.into_iter().map(|t| {
                         let (bg, border) = match t.kind {
-                            crate::app::ToastKind::Success => {
+                            crate::app_state::ToastKind::Success => {
                                 (gpui::rgb(0x1a3a1a), gpui::rgb(0x4caf50))
                             }
-                            crate::app::ToastKind::Error => {
+                            crate::app_state::ToastKind::Error => {
                                 (gpui::rgb(0x3a1a1a), gpui::rgb(0xe57373))
                             }
-                            crate::app::ToastKind::Info => {
+                            crate::app_state::ToastKind::Info => {
                                 (gpui::rgb(0x1a1a3a), gpui::rgb(0x64b5f6))
                             }
                         };

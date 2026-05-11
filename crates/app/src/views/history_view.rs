@@ -11,7 +11,7 @@ use gpui::*;
 use gpui_component::button::Button;
 use gpui_component::{Sizable, StyledExt};
 
-use crate::app::AppState;
+use crate::app_state::AppState;
 use ogit::Commit;
 
 /// 渲染提交历史视图 —— Render commit history view

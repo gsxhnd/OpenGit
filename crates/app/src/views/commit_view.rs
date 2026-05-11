@@ -12,7 +12,7 @@ use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{Input, InputState};
 use gpui_component::{Sizable, StyledExt};
 
-use crate::app::{AppState, ViewType};
+use crate::app_state::{AppState, ViewType};
 use ogit::{FileEntry, FileStatus};
 
 /// 文件行操作类型 —— File row action types
@@ -358,12 +358,12 @@ pub fn render_commit_view(
                                     s.set_error(e.to_string());
                                     s.add_toast(
                                         format!("Commit failed: {}", e),
-                                        crate::app::ToastKind::Error,
+                                        crate::app_state::ToastKind::Error,
                                     );
                                     cx.notify();
                                     return;
                                 }
-                                s.add_toast("Commit successful", crate::app::ToastKind::Success);
+                                s.add_toast("Commit successful", crate::app_state::ToastKind::Success);
                                 cx.notify();
                             });
                             // 仅提交成功时清空消息 —— Only clear message on success

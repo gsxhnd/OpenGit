@@ -13,7 +13,7 @@ use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{Input, InputState};
 use gpui_component::{Sizable, StyledExt};
 
-use crate::app::AppState;
+use crate::app_state::AppState;
 use ogit::{Branch, Remote};
 
 /// 渲染分支管理视图 —— Render branch management view
@@ -117,7 +117,7 @@ pub fn render_branches_view(
                                                 } else {
                                                     s.add_toast(
                                                         format!("Switched to branch '{}'", name),
-                                                        crate::app::ToastKind::Success,
+                                                        crate::app_state::ToastKind::Success,
                                                     );
                                                 }
                                                 cx.notify();
@@ -141,12 +141,12 @@ pub fn render_branches_view(
                                                     s.set_error(e.to_string());
                                                     s.add_toast(
                                                         format!("Failed to delete branch '{}': {}", name, e),
-                                                        crate::app::ToastKind::Error,
+                                                        crate::app_state::ToastKind::Error,
                                                     );
                                                 } else {
                                                     s.add_toast(
                                                         format!("Deleted branch '{}'", name),
-                                                        crate::app::ToastKind::Success,
+                                                        crate::app_state::ToastKind::Success,
                                                     );
                                                 }
                                                 cx.notify();
@@ -188,13 +188,13 @@ pub fn render_branches_view(
                                     s.set_error(e.to_string());
                                     s.add_toast(
                                         format!("Add remote failed: {}", e),
-                                        crate::app::ToastKind::Error,
+                                        crate::app_state::ToastKind::Error,
                                     );
                                     false
                                 } else {
                                     s.add_toast(
                                         format!("Added remote '{}'", name.trim()),
-                                        crate::app::ToastKind::Success,
+                                        crate::app_state::ToastKind::Success,
                                     );
                                     true
                                 }
@@ -257,12 +257,12 @@ pub fn render_branches_view(
                                             s.set_error(e.to_string());
                                             s.add_toast(
                                                 format!("Remove remote failed: {}", e),
-                                                crate::app::ToastKind::Error,
+                                                crate::app_state::ToastKind::Error,
                                             );
                                         } else {
                                             s.add_toast(
                                                 format!("Removed remote '{}'", name),
-                                                crate::app::ToastKind::Success,
+                                                crate::app_state::ToastKind::Success,
                                             );
                                         }
                                         cx.notify();

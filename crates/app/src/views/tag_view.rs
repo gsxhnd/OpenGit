@@ -10,7 +10,7 @@ use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{Input, InputState};
 use gpui_component::{Sizable, StyledExt};
 
-use crate::app::AppState;
+use crate::app_state::AppState;
 use ogit::Tag;
 
 /// 渲染标签管理视图 —— Render tag management view
@@ -59,13 +59,13 @@ pub fn render_tag_view(
                                             s.set_error(e.to_string());
                                             s.add_toast(
                                                 format!("Create tag failed: {}", e),
-                                                crate::app::ToastKind::Error,
+                                                crate::app_state::ToastKind::Error,
                                             );
                                             false
                                         } else {
                                             s.add_toast(
                                                 format!("Created tag '{}'", name.trim()),
-                                                crate::app::ToastKind::Success,
+                                                crate::app_state::ToastKind::Success,
                                             );
                                             true
                                         }
@@ -161,12 +161,12 @@ pub fn render_tag_view(
                                             s.set_error(e.to_string());
                                             s.add_toast(
                                                 format!("Delete tag failed: {}", e),
-                                                crate::app::ToastKind::Error,
+                                                crate::app_state::ToastKind::Error,
                                             );
                                         } else {
                                             s.add_toast(
                                                 format!("Deleted tag '{}'", name),
-                                                crate::app::ToastKind::Success,
+                                                crate::app_state::ToastKind::Success,
                                             );
                                         }
                                         cx.notify();

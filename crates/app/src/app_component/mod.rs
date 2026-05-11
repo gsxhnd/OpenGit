@@ -22,7 +22,7 @@ use gpui_component::input::InputState;
 use gpui_component::menu::AppMenuBar;
 use notify::Watcher as _;
 
-use crate::app::{AppState, ViewType};
+use crate::app_state::{AppState, ViewType};
 use crate::menu::build_open_git_menus;
 use crate::settings::AppSettings;
 

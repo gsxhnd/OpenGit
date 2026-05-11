@@ -9,7 +9,7 @@ use gpui::*;
 use gpui_component::button::Button;
 use gpui_component::{Sizable, StyledExt};
 
-use crate::app::AppState;
+use crate::app_state::AppState;
 use ogit::Stash;
 
 /// 渲染储藏管理视图 —— Render stash management view
@@ -93,12 +93,12 @@ pub fn render_stash_view(stashes: &[Stash], weak_state: WeakEntity<AppState>) ->
                                                     s.set_error(e.to_string());
                                                     s.add_toast(
                                                         format!("Apply stash failed: {}", e),
-                                                        crate::app::ToastKind::Error,
+                                                        crate::app_state::ToastKind::Error,
                                                     );
                                                 } else {
                                                     s.add_toast(
                                                         "Stash applied",
-                                                        crate::app::ToastKind::Success,
+                                                        crate::app_state::ToastKind::Success,
                                                     );
                                                 }
                                                 cx.notify();
@@ -122,12 +122,12 @@ pub fn render_stash_view(stashes: &[Stash], weak_state: WeakEntity<AppState>) ->
                                                     s.set_error(e.to_string());
                                                     s.add_toast(
                                                         format!("Pop stash failed: {}", e),
-                                                        crate::app::ToastKind::Error,
+                                                        crate::app_state::ToastKind::Error,
                                                     );
                                                 } else {
                                                     s.add_toast(
                                                         "Stash popped",
-                                                        crate::app::ToastKind::Success,
+                                                        crate::app_state::ToastKind::Success,
                                                     );
                                                 }
                                                 cx.notify();
@@ -151,12 +151,12 @@ pub fn render_stash_view(stashes: &[Stash], weak_state: WeakEntity<AppState>) ->
                                                     s.set_error(e.to_string());
                                                     s.add_toast(
                                                         format!("Delete stash failed: {}", e),
-                                                        crate::app::ToastKind::Error,
+                                                        crate::app_state::ToastKind::Error,
                                                     );
                                                 } else {
                                                     s.add_toast(
                                                         "Stash deleted",
-                                                        crate::app::ToastKind::Success,
+                                                        crate::app_state::ToastKind::Success,
                                                     );
                                                 }
                                                 cx.notify();
