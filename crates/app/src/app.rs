@@ -386,7 +386,8 @@ impl AppState {
     /// 清理过期的 toast（超过 5 秒） —— Remove expired toasts (older than 5s)
     pub fn expire_toasts(&mut self) {
         let now = std::time::Instant::now();
-        self.toasts.retain(|t| now.duration_since(t.created_at).as_secs() < 5);
+        self.toasts
+            .retain(|t| now.duration_since(t.created_at).as_secs() < 5);
     }
 
     // ========================================================================
@@ -656,11 +657,7 @@ impl AppState {
     // ========================================================================
 
     /// 创建标签 —— Create a tag
-    pub fn create_tag(
-        &mut self,
-        name: &str,
-        message: Option<&str>,
-    ) -> anyhow::Result<()> {
+    pub fn create_tag(&mut self, name: &str, message: Option<&str>) -> anyhow::Result<()> {
         let repo = self
             .repository
             .as_ref()

@@ -239,6 +239,10 @@ impl RenderOnce for TitleBar {
                     .flex_1()
                     .items_center()
                     .gap_2()
+                    // macOS: reserve space for native traffic lights
+                    .when(cfg!(target_os = "macos"), |this| {
+                        this.child(div().w(px(80.)).h_full())
+                    })
                     .child(self.menu_bar)
                     .child(
                         div()
@@ -253,8 +257,8 @@ impl RenderOnce for TitleBar {
                             .truncate()
                             .child(self.repo_name),
                     )
-                    // macOS/Linux: flexible spacer for manual drag
-                    .when(!is_windows, |this| {
+                    // Linux: flexible spacer for manual drag
+                    .when(cfg!(target_os = "linux"), |this| {
                         this.child(div().flex_1().h_full().min_w(px(48.)))
                     }),
             )
@@ -293,45 +297,47 @@ impl RenderOnce for TitleBar {
                             },
                         ))
                     })
-                    .child(
-                        h_flex()
-                            .id("opengit-window-controls")
-                            .items_center()
-                            .flex_shrink_0()
-                            .h_full()
-                            .child(window_control_btn(
-                                "win-min",
-                                IconName::WindowMinimize,
-                                WindowControlArea::Min,
-                                false,
-                                use_manual_click.then_some(ChromeWindowOp::Minimize),
-                                cx,
-                            ))
-                            .child(window_control_btn(
-                                if is_maximized {
-                                    "win-restore"
-                                } else {
-                                    "win-max"
-                                },
-                                if is_maximized {
-                                    IconName::WindowRestore
-                                } else {
-                                    IconName::WindowMaximize
-                                },
-                                WindowControlArea::Max,
-                                false,
-                                use_manual_click.then_some(ChromeWindowOp::Zoom),
-                                cx,
-                            ))
-                            .child(window_control_btn(
-                                "win-close",
-                                IconName::WindowClose,
-                                WindowControlArea::Close,
-                                true,
-                                use_manual_click.then_some(ChromeWindowOp::Close),
-                                cx,
-                            )),
-                    ),
+                    .when(!cfg!(target_os = "macos"), |row| {
+                        row.child(
+                            h_flex()
+                                .id("opengit-window-controls")
+                                .items_center()
+                                .flex_shrink_0()
+                                .h_full()
+                                .child(window_control_btn(
+                                    "win-min",
+                                    IconName::WindowMinimize,
+                                    WindowControlArea::Min,
+                                    false,
+                                    use_manual_click.then_some(ChromeWindowOp::Minimize),
+                                    cx,
+                                ))
+                                .child(window_control_btn(
+                                    if is_maximized {
+                                        "win-restore"
+                                    } else {
+                                        "win-max"
+                                    },
+                                    if is_maximized {
+                                        IconName::WindowRestore
+                                    } else {
+                                        IconName::WindowMaximize
+                                    },
+                                    WindowControlArea::Max,
+                                    false,
+                                    use_manual_click.then_some(ChromeWindowOp::Zoom),
+                                    cx,
+                                ))
+                                .child(window_control_btn(
+                                    "win-close",
+                                    IconName::WindowClose,
+                                    WindowControlArea::Close,
+                                    true,
+                                    use_manual_click.then_some(ChromeWindowOp::Close),
+                                    cx,
+                                )),
+                        )
+                    }),
             )
     }
 }

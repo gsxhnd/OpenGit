@@ -183,57 +183,56 @@ impl Workspace {
         use std::thread;
 
         let entries: Vec<_> = self.entries.clone();
-        let mut results: Vec<(std::path::PathBuf, CachedStatus)> = Vec::with_capacity(entries.len());
+        let mut results: Vec<(std::path::PathBuf, CachedStatus)> =
+            Vec::with_capacity(entries.len());
 
         thread::scope(|s| {
             let mut handles = Vec::with_capacity(entries.len());
             for entry in &entries {
                 let path = entry.path.clone();
-                handles.push(s.spawn(move || {
-                    match ogit::Repository::open(&path) {
-                        Ok(repo) => match repo.get_status() {
-                            Ok(status) => {
-                                let changed = status.status.unstaged_files.len()
-                                    + status.status.untracked_files.len();
-                                let staged = status.status.staged_files.len();
-                                let has_conflict = status
-                                    .status
-                                    .unstaged_files
-                                    .iter()
-                                    .chain(status.status.staged_files.iter())
-                                    .any(|f| f.status == ogit::FileStatus::Conflicted);
-                                (
-                                    path,
-                                    CachedStatus {
-                                        branch: status.status.current_branch,
-                                        changed,
-                                        staged,
-                                        ahead: status.ahead,
-                                        behind: status.behind,
-                                        has_conflict,
-                                        ok: true,
-                                    },
-                                )
-                            }
-                            Err(e) => {
-                                tracing::warn!("Failed to refresh {}: {}", path.display(), e);
-                                (
-                                    path,
-                                    CachedStatus {
-                                        ok: false,
-                                        ..Default::default()
-                                    },
-                                )
-                            }
+                handles.push(s.spawn(move || match ogit::Repository::open(&path) {
+                    Ok(repo) => match repo.get_status() {
+                        Ok(status) => {
+                            let changed = status.status.unstaged_files.len()
+                                + status.status.untracked_files.len();
+                            let staged = status.status.staged_files.len();
+                            let has_conflict = status
+                                .status
+                                .unstaged_files
+                                .iter()
+                                .chain(status.status.staged_files.iter())
+                                .any(|f| f.status == ogit::FileStatus::Conflicted);
+                            (
+                                path,
+                                CachedStatus {
+                                    branch: status.status.current_branch,
+                                    changed,
+                                    staged,
+                                    ahead: status.ahead,
+                                    behind: status.behind,
+                                    has_conflict,
+                                    ok: true,
+                                },
+                            )
+                        }
+                        Err(e) => {
+                            tracing::warn!("Failed to refresh {}: {}", path.display(), e);
+                            (
+                                path,
+                                CachedStatus {
+                                    ok: false,
+                                    ..Default::default()
+                                },
+                            )
+                        }
+                    },
+                    Err(_) => (
+                        path,
+                        CachedStatus {
+                            ok: false,
+                            ..Default::default()
                         },
-                        Err(_) => (
-                            path,
-                            CachedStatus {
-                                ok: false,
-                                ..Default::default()
-                            },
-                        ),
-                    }
+                    ),
                 }));
             }
             for handle in handles {

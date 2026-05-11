@@ -233,7 +233,13 @@ impl OpenGitApp {
         // 恢复目标项目的 active_view —— Restore target project's active_view
         let new_path = self.app_state.read(cx).repo_path.clone();
         if let Some(path) = new_path {
-            if let Some(vs) = self.app_state.read(cx).project_view_states.get(&path).cloned() {
+            if let Some(vs) = self
+                .app_state
+                .read(cx)
+                .project_view_states
+                .get(&path)
+                .cloned()
+            {
                 self.active_view = vs.active_view;
             } else {
                 self.active_view = crate::app::ViewType::Commit;

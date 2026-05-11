@@ -245,167 +245,156 @@ impl Render for OpenGitApp {
                     .flex()
                     .min_h_0()
                     .min_w_0()
-                    .items_stretch()
                     .child(
-                        div()
-                            .flex_1()
-                            .min_w_0()
-                            .min_h_0()
+                        h_resizable("opengit-main-split")
+                            // ---- 左侧项目侧边栏 —— Left project sidebar ---- //
                             .child(
-                                h_resizable("opengit-main-split")
-                                    // ---- 左侧项目侧边栏 —— Left project sidebar ---- //
+                                resizable_panel()
+                                    .size(px(200.))
+                                    .size_range(px(140.)..px(360.))
+                                    .flex_none()
                                     .child(
-                                        resizable_panel()
-                                            .size(px(200.))
-                                            .size_range(px(140.)..px(360.))
-                                            .flex_none()
-                                            .child(
-                                                div()
-                                                    .h_full()
-                                                    .min_w_0()
-                                                    .v_flex()
-                                                    .gap_2()
-                                                    .bg(gpui::rgb(0x161616))
-                                                    .border_r(px(1.))
-                                                    .border_color(gpui::rgb(0x333333))
-                                                    .p_2()
-                                                    // ---- 搜索框 —— Search input ---- //
-                                                    .child(
-                                                        Input::new(&project_search_input).w_full(),
-                                                    )
-                                                    .child(
-                                                        render_project_sidebar(
-                                                            &ws_entries,
-                                                            &ws_statuses,
-                                                            ws_active_index,
-                                                            ws_active_path.as_ref(),
-                                                            &search_query,
-                                                            weak_self.clone(),
-                                                        ),
-                                                    ),
-                                            ),
-                                    )
-                                    // ---- 右侧内容面板 —— Right content panel ---- //
-                                    .child(
-                                        resizable_panel()
-                                            .size_range(px(100.)..Pixels::MAX)
-                                            .child(
-                                                div()
-                                                    .flex_1()
-                                                    .min_h_0()
-                                                    .min_w_0()
-                                                    .v_flex()
-                                                    // 视图标签栏 —— View tab bar
-                                                    .child(
-                                                        div()
-                                                            .flex()
-                                                            .gap_1()
-                                                            .p_2()
-                                                            .bg(gpui::rgb(0x1a1a1a))
-                                                            .border_b(px(1.))
-                                                            .border_color(gpui::rgb(0x333333))
-                                                            .child(render_content_tab(
-                                                                "commit",
-                                                                "Commit",
-                                                                ViewType::Commit,
-                                                                active_view,
-                                                                cx,
-                                                            ))
-                                                            .child(render_content_tab(
-                                                                "history",
-                                                                "History",
-                                                                ViewType::History,
-                                                                active_view,
-                                                                cx,
-                                                            ))
-                                                            .child(render_content_tab(
-                                                                "branches",
-                                                                "Branches",
-                                                                ViewType::Branches,
-                                                                active_view,
-                                                                cx,
-                                                            ))
-                                                            .child(render_content_tab(
-                                                                "diff",
-                                                                "Diff",
-                                                                ViewType::Diff,
-                                                                active_view,
-                                                                cx,
-                                                            ))
-                                                            .child(render_content_tab(
-                                                                "stash",
-                                                                "Stash",
-                                                                ViewType::Stash,
-                                                                active_view,
-                                                                cx,
-                                                            ))
-                                                            .child(render_content_tab(
-                                                                "tags",
-                                                                "Tags",
-                                                                ViewType::Tags,
-                                                                active_view,
-                                                                cx,
-                                                            )),
-                                                    )
-                                                    // 主视图内容 —— Main view content
-                                                    .child(
-                                                        div()
-                                                            .flex_1()
-                                                            .min_h_0()
-                                                            .min_w_0()
-                                                            .overflow_y_scrollbar()
-                                                            .child(
-                                                                div()
-                                                                    .p_4()
-                                                                    .v_flex()
-                                                                    .gap_3()
-                                                                    .child(match active_view {
-                                                                        ViewType::Commit => render_commit_view(
-                                                                            &unstaged,
-                                                                            &untracked,
-                                                                            &staged,
-                                                                            amend,
-                                                                            &self.commit_message,
-                                                                            app_entity.clone(),
-                                                                            weak_state.clone(),
-                                                                            weak_self.clone(),
-                                                                        ),
-                                                                        ViewType::History => render_history_view(
-                                                                            &history,
-                                                                            selected_hist,
-                                                                            weak_state.clone(),
-                                                                        ),
-                                                                        ViewType::Branches => render_branches_view(
-                                                                            &branches,
-                                                                            &remote_list,
-                                                                            &self.branch_name_input,
-                                                                            &self.remote_name_input,
-                                                                            &self.remote_url_input,
-                                                                            weak_state.clone(),
-                                                                        ),
-                                                                        ViewType::Diff => render_diff_view(
-                                                                            diff_path.as_ref(),
-                                                                            staged_diff_path.as_ref(),
-                                                                            diff_preview.as_ref(),
-                                                                        ),
-                                                                        ViewType::Stash => render_stash_view(
-                                                                            &stash_list,
-                                                                            weak_state.clone(),
-                                                                        ),
-                                                                        ViewType::Tags => render_tag_view(
-                                                                            &tag_list,
-                                                                            &self.tag_name_input,
-                                                                            &self.tag_message_input,
-                                                                            weak_state.clone(),
-                                                                        ),
-                                                                        _ => div()
-                                                                            .child("Not implemented")
-                                                                            .into_any_element(),
-                                                                    }),
-                                                            ),
-                                                    ),
-                                            ),
+                                        div()
+                                            .size_full()
+                                            .min_w_0()
+                                            .v_flex()
+                                            .gap_2()
+                                            .bg(gpui::rgb(0x161616))
+                                            .border_r(px(1.))
+                                            .border_color(gpui::rgb(0x333333))
+                                            .p_2()
+                                            // ---- 搜索框 —— Search input ---- //
+                                            .child(Input::new(&project_search_input).w_full())
+                                            .child(render_project_sidebar(
+                                                &ws_entries,
+                                                &ws_statuses,
+                                                ws_active_index,
+                                                ws_active_path.as_ref(),
+                                                &search_query,
+                                                weak_self.clone(),
+                                            )),
                                     ),
+                            )
+                            // ---- 右侧内容面板 —— Right content panel ---- //
+                            .child(
+                                resizable_panel().size_range(px(100.)..Pixels::MAX).child(
+                                    div()
+                                        .size_full()
+                                        .min_h_0()
+                                        .min_w_0()
+                                        .v_flex()
+                                        // 视图标签栏 —— View tab bar
+                                        .child(
+                                            div()
+                                                .flex()
+                                                .gap_1()
+                                                .p_2()
+                                                .bg(gpui::rgb(0x1a1a1a))
+                                                .border_b(px(1.))
+                                                .border_color(gpui::rgb(0x333333))
+                                                .child(render_content_tab(
+                                                    "commit",
+                                                    "Commit",
+                                                    ViewType::Commit,
+                                                    active_view,
+                                                    cx,
+                                                ))
+                                                .child(render_content_tab(
+                                                    "history",
+                                                    "History",
+                                                    ViewType::History,
+                                                    active_view,
+                                                    cx,
+                                                ))
+                                                .child(render_content_tab(
+                                                    "branches",
+                                                    "Branches",
+                                                    ViewType::Branches,
+                                                    active_view,
+                                                    cx,
+                                                ))
+                                                .child(render_content_tab(
+                                                    "diff",
+                                                    "Diff",
+                                                    ViewType::Diff,
+                                                    active_view,
+                                                    cx,
+                                                ))
+                                                .child(render_content_tab(
+                                                    "stash",
+                                                    "Stash",
+                                                    ViewType::Stash,
+                                                    active_view,
+                                                    cx,
+                                                ))
+                                                .child(render_content_tab(
+                                                    "tags",
+                                                    "Tags",
+                                                    ViewType::Tags,
+                                                    active_view,
+                                                    cx,
+                                                )),
+                                        )
+                                        // 主视图内容 —— Main view content
+                                        .child(
+                                            div()
+                                                .flex_1()
+                                                .min_h_0()
+                                                .min_w_0()
+                                                .overflow_y_scrollbar()
+                                                .child(
+                                                    div().p_4().v_flex().gap_3().child(
+                                                        match active_view {
+                                                            ViewType::Commit => render_commit_view(
+                                                                &unstaged,
+                                                                &untracked,
+                                                                &staged,
+                                                                amend,
+                                                                &self.commit_message,
+                                                                app_entity.clone(),
+                                                                weak_state.clone(),
+                                                                weak_self.clone(),
+                                                            ),
+                                                            ViewType::History => {
+                                                                render_history_view(
+                                                                    &history,
+                                                                    selected_hist,
+                                                                    weak_state.clone(),
+                                                                )
+                                                            }
+                                                            ViewType::Branches => {
+                                                                render_branches_view(
+                                                                    &branches,
+                                                                    &remote_list,
+                                                                    &self.branch_name_input,
+                                                                    &self.remote_name_input,
+                                                                    &self.remote_url_input,
+                                                                    weak_state.clone(),
+                                                                )
+                                                            }
+                                                            ViewType::Diff => render_diff_view(
+                                                                diff_path.as_ref(),
+                                                                staged_diff_path.as_ref(),
+                                                                diff_preview.as_ref(),
+                                                            ),
+                                                            ViewType::Stash => render_stash_view(
+                                                                &stash_list,
+                                                                weak_state.clone(),
+                                                            ),
+                                                            ViewType::Tags => render_tag_view(
+                                                                &tag_list,
+                                                                &self.tag_name_input,
+                                                                &self.tag_message_input,
+                                                                weak_state.clone(),
+                                                            ),
+                                                            _ => div()
+                                                                .child("Not implemented")
+                                                                .into_any_element(),
+                                                        },
+                                                    ),
+                                                ),
+                                        ),
+                                ),
                             ),
                     )
                     .into_any_element()

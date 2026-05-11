@@ -99,12 +99,12 @@ impl Repository {
 
 /// 解析 stash id（如 "stash@{0}"）为索引数字 —— Parse stash id (e.g. "stash@{0}") to index
 fn parse_stash_index(stash_id: &str) -> Result<usize, GitError> {
-    let start = stash_id.find('{').ok_or_else(|| {
-        GitError::InvalidRef(format!("Invalid stash id format: {}", stash_id))
-    })?;
-    let end = stash_id.find('}').ok_or_else(|| {
-        GitError::InvalidRef(format!("Invalid stash id format: {}", stash_id))
-    })?;
+    let start = stash_id
+        .find('{')
+        .ok_or_else(|| GitError::InvalidRef(format!("Invalid stash id format: {}", stash_id)))?;
+    let end = stash_id
+        .find('}')
+        .ok_or_else(|| GitError::InvalidRef(format!("Invalid stash id format: {}", stash_id)))?;
     stash_id[start + 1..end]
         .parse::<usize>()
         .map_err(|e| GitError::InvalidRef(format!("Invalid stash index: {}", e)))

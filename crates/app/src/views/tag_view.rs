@@ -40,34 +40,38 @@ pub fn render_tag_view(
                         .label("Create tag")
                         .primary()
                         .on_click(move |_, window, cx| {
-                            let name: String = cx.read_entity(&inp_name, |i: &InputState, _| i.value().to_string());
-                            let msg: String = cx.read_entity(&inp_msg, |i: &InputState, _| i.value().to_string());
-                            let success = ws.update(cx, |s, _cx| {
-                                if name.trim().is_empty() {
-                                    s.set_error("Tag name is empty".into());
-                                    false
-                                } else {
-                                    let message = if msg.trim().is_empty() {
-                                        None
-                                    } else {
-                                        Some(msg.trim())
-                                    };
-                                    if let Err(e) = s.create_tag(name.trim(), message) {
-                                        s.set_error(e.to_string());
-                                        s.add_toast(
-                                            format!("Create tag failed: {}", e),
-                                            crate::app::ToastKind::Error,
-                                        );
+                            let name: String = cx
+                                .read_entity(&inp_name, |i: &InputState, _| i.value().to_string());
+                            let msg: String =
+                                cx.read_entity(&inp_msg, |i: &InputState, _| i.value().to_string());
+                            let success = ws
+                                .update(cx, |s, _cx| {
+                                    if name.trim().is_empty() {
+                                        s.set_error("Tag name is empty".into());
                                         false
                                     } else {
-                                        s.add_toast(
-                                            format!("Created tag '{}'", name.trim()),
-                                            crate::app::ToastKind::Success,
-                                        );
-                                        true
+                                        let message = if msg.trim().is_empty() {
+                                            None
+                                        } else {
+                                            Some(msg.trim())
+                                        };
+                                        if let Err(e) = s.create_tag(name.trim(), message) {
+                                            s.set_error(e.to_string());
+                                            s.add_toast(
+                                                format!("Create tag failed: {}", e),
+                                                crate::app::ToastKind::Error,
+                                            );
+                                            false
+                                        } else {
+                                            s.add_toast(
+                                                format!("Created tag '{}'", name.trim()),
+                                                crate::app::ToastKind::Success,
+                                            );
+                                            true
+                                        }
                                     }
-                                }
-                            }).unwrap_or(false);
+                                })
+                                .unwrap_or(false);
                             if success {
                                 inp_name.update(cx, |i, _cx| {
                                     i.set_value("", window, _cx);
@@ -131,22 +135,18 @@ pub fn render_tag_view(
                                         .gap_2()
                                         .child(div().text_sm().child(name.clone()))
                                         .child(
-                                            div()
-                                                .text_xs()
-                                                .text_color(gpui::rgb(0x888888))
-                                                .child(if is_annotated {
+                                            div().text_xs().text_color(gpui::rgb(0x888888)).child(
+                                                if is_annotated {
                                                     "annotated"
                                                 } else {
                                                     "lightweight"
-                                                }),
+                                                },
+                                            ),
                                         ),
                                 )
                                 .when_some(t.message.clone(), |col, msg| {
                                     col.child(
-                                        div()
-                                            .text_xs()
-                                            .text_color(gpui::rgb(0xaaaaaa))
-                                            .child(msg),
+                                        div().text_xs().text_color(gpui::rgb(0xaaaaaa)).child(msg),
                                     )
                                 }),
                         )

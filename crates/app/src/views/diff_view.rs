@@ -71,29 +71,32 @@ pub fn render_diff_view(
         // 文件路径标题 —— File path header
         .child(div().text_sm().child(path_label))
         // 差异内容区域 —— Diff content area
-        .when(diff_preview.is_none() && diff_path.is_none() && staged_diff_path.is_none(), |col: Div| {
-            col.child(
-                div()
-                    .flex_1()
-                    .min_h_0()
-                    .v_flex()
-                    .items_center()
-                    .justify_center()
-                    .gap_2()
-                    .child(
-                        div()
-                            .text_sm()
-                            .text_color(gpui::rgb(0x888888))
-                            .child("No file selected"),
-                    )
-                    .child(
-                        div()
-                            .text_xs()
-                            .text_color(gpui::rgb(0x666666))
-                            .child("Click 'Diff' on a file in the Commit view"),
-                    ),
-            )
-        })
+        .when(
+            diff_preview.is_none() && diff_path.is_none() && staged_diff_path.is_none(),
+            |col: Div| {
+                col.child(
+                    div()
+                        .flex_1()
+                        .min_h_0()
+                        .v_flex()
+                        .items_center()
+                        .justify_center()
+                        .gap_2()
+                        .child(
+                            div()
+                                .text_sm()
+                                .text_color(gpui::rgb(0x888888))
+                                .child("No file selected"),
+                        )
+                        .child(
+                            div()
+                                .text_xs()
+                                .text_color(gpui::rgb(0x666666))
+                                .child("Click 'Diff' on a file in the Commit view"),
+                        ),
+                )
+            },
+        )
         .when_some(diff_preview, |col, d: &ogit::FileDiff| {
             col.child(
                 div()

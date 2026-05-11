@@ -53,7 +53,7 @@ pub fn opengit_titlebar_options() -> TitlebarOptions {
         title: Some("OpenGit".into()),
         appears_transparent: true,
         #[cfg(target_os = "macos")]
-        traffic_light_position: Some(point(px(-200.), px(12.))),
+        traffic_light_position: Some(point(px(12.), px(12.))),
         #[cfg(not(target_os = "macos"))]
         traffic_light_position: None,
     }
@@ -129,8 +129,8 @@ impl OpenGitApp {
             cx.new(|cx| InputState::new(window, cx).placeholder("Tag message (optional)…"));
 
         let remote_name_input = cx.new(|cx| InputState::new(window, cx).placeholder("origin"));
-        let remote_url_input =
-            cx.new(|cx| InputState::new(window, cx).placeholder("https://github.com/user/repo.git"));
+        let remote_url_input = cx
+            .new(|cx| InputState::new(window, cx).placeholder("https://github.com/user/repo.git"));
 
         cx.bind_keys([
             KeyBinding::new("cmd-o", OpenRepository, None),
@@ -192,8 +192,8 @@ impl OpenGitApp {
 
         let events = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
         let events_clone = events.clone();
-        let mut watcher = match notify::recommended_watcher(
-            move |res: notify::Result<notify::Event>| {
+        let mut watcher =
+            match notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
                 if let Ok(event) = res {
                     // 忽略 .git 目录内的事件 —— Ignore .git directory events
                     let is_git_internal = event.paths.iter().any(|p| {
@@ -204,14 +204,13 @@ impl OpenGitApp {
                         events_clone.lock().unwrap().push(event);
                     }
                 }
-            },
-        ) {
-            Ok(w) => w,
-            Err(e) => {
-                tracing::error!("Failed to create file watcher: {}", e);
-                return;
-            }
-        };
+            }) {
+                Ok(w) => w,
+                Err(e) => {
+                    tracing::error!("Failed to create file watcher: {}", e);
+                    return;
+                }
+            };
 
         if let Err(e) = watcher.watch(&repo_path, notify::RecursiveMode::Recursive) {
             tracing::error!("Failed to watch repository: {}", e);

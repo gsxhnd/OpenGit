@@ -13,10 +13,7 @@ use crate::app::AppState;
 use ogit::Stash;
 
 /// 渲染储藏管理视图 —— Render stash management view
-pub fn render_stash_view(
-    stashes: &[Stash],
-    weak_state: WeakEntity<AppState>,
-) -> AnyElement {
+pub fn render_stash_view(stashes: &[Stash], weak_state: WeakEntity<AppState>) -> AnyElement {
     div()
         .flex_1()
         .min_h_0()
