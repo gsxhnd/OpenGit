@@ -206,84 +206,111 @@ pub fn render_commit_view(
 ) -> AnyElement {
     let has_staged = !staged.is_empty();
     let has_unstaged = !unstaged.is_empty() || !untracked.is_empty();
+    let has_any_changes = has_staged || has_unstaged;
 
     div()
         .flex_1()
         .min_h_0()
         .v_flex()
         .gap_3()
-        // ---- Unstaged 标签 ---- //
-        .child(
-            div()
-                .text_xs()
-                .text_color(gpui::rgb(0xcccccc))
-                .child("Unstaged"),
-        )
-        // ---- Stage All 按钮 ---- //
-        .when(has_unstaged, |col: Div| {
-            let ws = weak_state.clone();
+        // ---- 空状态引导 —— Empty state guidance ---- //
+        .when(!has_any_changes, |col: Div| {
             col.child(
-                Button::new("stage-all")
-                    .label("Stage All")
-                    .small()
-                    .on_click(move |_, _, cx| {
-                        let _ = ws.update(cx, |s, cx| {
-                            if let Err(e) = s.stage_all() {
-                                s.set_error(e.to_string());
-                            }
-                            cx.notify();
-                        });
-                    }),
+                div()
+                    .flex_1()
+                    .min_h_0()
+                    .v_flex()
+                    .items_center()
+                    .justify_center()
+                    .gap_2()
+                    .child(
+                        div()
+                            .text_sm()
+                            .text_color(gpui::rgb(0x888888))
+                            .child("No changes to commit"),
+                    )
+                    .child(
+                        div()
+                            .text_xs()
+                            .text_color(gpui::rgb(0x666666))
+                            .child("Modify files in your working tree to see them here"),
+                    ),
             )
         })
-        // ---- Unstaged + Untracked 文件列表 ---- //
-        .child(
-            div()
-                .flex_1()
-                .min_h_0()
-                .v_flex()
-                .gap_1()
-                // 未暂存文件 —— Unstaged files
-                .children(unstaged.iter().map(|e| {
-                    render_unstaged_file_row("u", e, weak_state.clone(), weak_self.clone())
-                }))
-                // 未跟踪文件 —— Untracked files
-                .children(untracked.iter().map(|e| {
-                    render_unstaged_file_row("n", e, weak_state.clone(), weak_self.clone())
-                })),
-        )
-        // ---- Staged 标签 ---- //
-        .child(
-            div()
-                .text_xs()
-                .text_color(gpui::rgb(0xcccccc))
-                .child("Staged"),
-        )
-        // ---- Unstage All 按钮 ---- //
-        .when(has_staged, |col: Div| {
-            let ws = weak_state.clone();
+        .when(has_any_changes, |col: Div| {
+            // ---- Unstaged 标签 ---- //
             col.child(
-                Button::new("unstage-all")
-                    .label("Unstage All")
-                    .small()
-                    .on_click(move |_, _, cx| {
-                        let _ = ws.update(cx, |s, cx| {
-                            if let Err(e) = s.unstage_all() {
-                                s.set_error(e.to_string());
-                            }
-                            cx.notify();
-                        });
-                    }),
+                div()
+                    .text_xs()
+                    .text_color(gpui::rgb(0xcccccc))
+                    .child("Unstaged"),
+            )
+            // ---- Stage All 按钮 ---- //
+            .when(has_unstaged, |col: Div| {
+                let ws = weak_state.clone();
+                col.child(
+                    Button::new("stage-all")
+                        .label("Stage All")
+                        .small()
+                        .on_click(move |_, _, cx| {
+                            let _ = ws.update(cx, |s, cx| {
+                                if let Err(e) = s.stage_all() {
+                                    s.set_error(e.to_string());
+                                }
+                                cx.notify();
+                            });
+                        }),
+                )
+            })
+            // ---- Unstaged + Untracked 文件列表 ---- //
+            .child(
+                div()
+                    .flex_1()
+                    .min_h_0()
+                    .v_flex()
+                    .gap_1()
+                    // 未暂存文件 —— Unstaged files
+                    .children(unstaged.iter().map(|e| {
+                        render_unstaged_file_row("u", e, weak_state.clone(), weak_self.clone())
+                    }))
+                    // 未跟踪文件 —— Untracked files
+                    .children(untracked.iter().map(|e| {
+                        render_unstaged_file_row("n", e, weak_state.clone(), weak_self.clone())
+                    })),
+            )
+            // ---- Staged 标签 ---- //
+            .child(
+                div()
+                    .text_xs()
+                    .text_color(gpui::rgb(0xcccccc))
+                    .child("Staged"),
+            )
+            // ---- Unstage All 按钮 ---- //
+            .when(has_staged, |col: Div| {
+                let ws = weak_state.clone();
+                col.child(
+                    Button::new("unstage-all")
+                        .label("Unstage All")
+                        .small()
+                        .on_click(move |_, _, cx| {
+                            let _ = ws.update(cx, |s, cx| {
+                                if let Err(e) = s.unstage_all() {
+                                    s.set_error(e.to_string());
+                                }
+                                cx.notify();
+                            });
+                        }),
+                )
+            })
+            // ---- Staged 文件列表 ---- //
+            .child(
+                div().flex_1().min_h_0().v_flex().gap_1().children(
+                    staged
+                        .iter()
+                        .map(|e| render_staged_file_row(e, weak_state.clone(), weak_self.clone())),
+                ),
             )
         })
-        // ---- Staged 文件列表 ---- //
-        .child(
-            div().flex_1().min_h_0().v_flex().gap_1().children(
-                staged
-                    .iter()
-                    .map(|e| render_staged_file_row(e, weak_state.clone(), weak_self.clone())),
-            ),
-        )
         // ---- 提交消息输入 ---- //
         .child(
             div()
@@ -329,9 +356,14 @@ pub fn render_commit_view(
                             app_e.update(cx, |s, cx| {
                                 if let Err(e) = s.commit_staged(&msg, amend) {
                                     s.set_error(e.to_string());
+                                    s.add_toast(
+                                        format!("Commit failed: {}", e),
+                                        crate::app::ToastKind::Error,
+                                    );
                                     cx.notify();
                                     return;
                                 }
+                                s.add_toast("Commit successful", crate::app::ToastKind::Success);
                                 cx.notify();
                             });
                             // 仅提交成功时清空消息 —— Only clear message on success

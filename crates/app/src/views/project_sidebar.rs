@@ -11,6 +11,7 @@
 use gpui::prelude::*;
 use gpui::*;
 use gpui_component::button::Button;
+use gpui_component::scroll::ScrollableElement as _;
 use gpui_component::{Sizable, StyledExt};
 
 use crate::settings::WorkspaceEntry;
@@ -72,10 +73,6 @@ pub fn render_project_sidebar(
         .min_w_0()
         .v_flex()
         .gap_2()
-        .bg(gpui::rgb(0x161616))
-        .border_r(px(1.))
-        .border_color(gpui::rgb(0x333333))
-        .p_2()
         // ---- 标题 + 搜索提示 —— Title + search hint ---- //
         .child(
             div()
@@ -101,6 +98,7 @@ pub fn render_project_sidebar(
             div()
                 .flex_1()
                 .min_h_0()
+                .overflow_y_scrollbar()
                 .v_flex()
                 .gap_1()
                 .children(row_data.into_iter().map(|row| {

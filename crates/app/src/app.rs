@@ -25,6 +25,43 @@ use crate::workspace::{CachedStatus, Workspace};
 // AppState —— 主应用状态实体
 // ============================================================================
 
+/// 通知 toast 条目 —— Toast notification entry
+#[derive(Debug, Clone)]
+pub struct Toast {
+    pub id: String,
+    pub message: String,
+    pub kind: ToastKind,
+    pub created_at: std::time::Instant,
+}
+
+/// 通知类型 —— Toast kind
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ToastKind {
+    Success,
+    Error,
+    Info,
+}
+
+/// 项目视图状态快照 —— Per-project view state snapshot
+#[derive(Debug, Clone)]
+pub struct ProjectViewState {
+    pub active_view: ViewType,
+    pub selected_diff_path: Option<PathBuf>,
+    pub selected_staged_diff_path: Option<PathBuf>,
+    pub selected_history: Option<usize>,
+}
+
+impl Default for ProjectViewState {
+    fn default() -> Self {
+        Self {
+            active_view: ViewType::Commit,
+            selected_diff_path: None,
+            selected_staged_diff_path: None,
+            selected_history: None,
+        }
+    }
+}
+
 /// 主应用状态实体 —— Main application state entity
 ///
 /// 集中管理当前仓库的所有状态数据，是视图层和 `ogit` 库之间的桥梁。
@@ -47,6 +84,8 @@ pub struct AppState {
     pub is_loading: bool,
     /// 错误消息（如果有） —— Error message (if any)
     pub error: Option<String>,
+    /// 通知 toast 列表 —— Toast notifications
+    pub toasts: Vec<Toast>,
     /// 已加载的提交历史（最新在前） —— Loaded commit history (most recent first)
     pub history_commits: Vec<Commit>,
     /// 历史记录"加载更多"的偏移量 —— Next offset for "load more" history
@@ -65,6 +104,14 @@ pub struct AppState {
     pub commit_amend: bool,
     /// 待处理的后台任务 —— Pending background tasks
     pub _pending_tasks: Vec<Task<()>>,
+    /// 每个项目的视图状态缓存 —— View state cache per project path
+    pub project_view_states: std::collections::HashMap<PathBuf, ProjectViewState>,
+    /// 缓存的储藏列表 —— Cached stash list
+    pub stash_list: Vec<ogit::Stash>,
+    /// 缓存的标签列表 —— Cached tag list
+    pub tag_list: Vec<ogit::Tag>,
+    /// 缓存的远程列表 —— Cached remote list
+    pub remote_list: Vec<ogit::Remote>,
 }
 
 /// 历史分页大小 —— History page size for pagination
@@ -199,10 +246,11 @@ impl AppState {
     fn init_with_repo(&mut self, repo: Arc<Repository>, path: PathBuf) -> anyhow::Result<()> {
         let status = repo.get_status().map_err(|e| anyhow::anyhow!("{}", e))?;
 
-        self.repository = Some(repo);
-        self.repo_path = Some(path);
+        self.repository = Some(repo.clone());
+        self.repo_path = Some(path.clone());
         self.repo_status = status;
         self.error = None;
+        self.toasts.clear();
         self.history_skip = 0;
         self.selected_history = None;
         self.selected_diff_path = None;
@@ -210,6 +258,17 @@ impl AppState {
         self.diff_preview = None;
         self.current_operation = None;
         self.commit_amend = false;
+        self.stash_list = repo.get_stashes().unwrap_or_default();
+        self.tag_list = repo.get_tags().unwrap_or_default();
+        self.remote_list = repo.get_remotes().unwrap_or_default();
+
+        // 恢复该项目的视图状态 —— Restore view state for this project
+        if let Some(vs) = self.project_view_states.get(&path).cloned() {
+            self.selected_diff_path = vs.selected_diff_path;
+            self.selected_staged_diff_path = vs.selected_staged_diff_path;
+            self.selected_history = vs.selected_history;
+        }
+
         let _ = self.load_history_reset();
 
         Ok(())
@@ -220,11 +279,22 @@ impl AppState {
     pub fn close_repository(&mut self) {
         if let Some(ref repo_path) = self.repo_path {
             tracing::info!("Closing repository: {}", repo_path.display());
+            // 保存当前项目的视图状态 —— Save view state before closing
+            self.project_view_states.insert(
+                repo_path.clone(),
+                ProjectViewState {
+                    active_view: ViewType::Commit,
+                    selected_diff_path: self.selected_diff_path.clone(),
+                    selected_staged_diff_path: self.selected_staged_diff_path.clone(),
+                    selected_history: self.selected_history,
+                },
+            );
         }
         self.repository = None;
         self.repo_path = None;
         self.repo_status = RepositoryStatus::default();
         self.error = None;
+        self.toasts.clear();
         self.history_commits.clear();
         self.history_skip = 0;
         self.selected_history = None;
@@ -243,6 +313,9 @@ impl AppState {
         if let Some(repo) = &self.repository {
             tracing::debug!("Refreshing repository status");
             self.repo_status = repo.get_status().map_err(|e| anyhow::anyhow!("{}", e))?;
+            self.stash_list = repo.get_stashes().unwrap_or_default();
+            self.tag_list = repo.get_tags().unwrap_or_default();
+            self.remote_list = repo.get_remotes().unwrap_or_default();
             self.error = None;
             self.refresh_workspace_status();
             Ok(())
@@ -268,6 +341,52 @@ impl AppState {
     #[allow(dead_code)]
     pub fn clear_error(&mut self) {
         self.error = None;
+    }
+
+    // ========================================================================
+    // 通知系统 —— Toast notifications
+    // ========================================================================
+
+    /// 添加一个 toast 通知 —— Add a toast notification
+    pub fn add_toast(&mut self, message: impl Into<String>, kind: ToastKind) {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let msg = message.into();
+        let id = format!(
+            "toast-{}-{:?}",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis(),
+            kind
+        );
+        tracing::info!("[Toast] {:?}: {}", kind, msg);
+        self.toasts.push(Toast {
+            id,
+            message: msg,
+            kind,
+            created_at: std::time::Instant::now(),
+        });
+        // 保留最近 5 条 —— Keep last 5 toasts
+        if self.toasts.len() > 5 {
+            self.toasts.remove(0);
+        }
+    }
+
+    /// 移除指定 id 的 toast —— Remove toast by id
+    pub fn remove_toast(&mut self, id: &str) {
+        self.toasts.retain(|t| t.id != id);
+    }
+
+    /// 清除所有 toast —— Clear all toasts
+    #[allow(dead_code)]
+    pub fn clear_toasts(&mut self) {
+        self.toasts.clear();
+    }
+
+    /// 清理过期的 toast（超过 5 秒） —— Remove expired toasts (older than 5s)
+    pub fn expire_toasts(&mut self) {
+        let now = std::time::Instant::now();
+        self.toasts.retain(|t| now.duration_since(t.created_at).as_secs() < 5);
     }
 
     // ========================================================================
@@ -445,8 +564,155 @@ impl AppState {
         Ok(())
     }
 
+    /// 删除分支 —— Delete a branch
+    pub fn delete_branch(&mut self, name: &str) -> anyhow::Result<()> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        repo.delete_branch(name, false)
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        self.refresh_status()?;
+        Ok(())
+    }
+
+    /// 重命名分支 —— Rename a branch
+    pub fn rename_branch(&mut self, old_name: &str, new_name: &str) -> anyhow::Result<()> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        repo.create_branch(new_name, Some(old_name))
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        repo.delete_branch(old_name, false)
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        self.refresh_status()?;
+        Ok(())
+    }
+
     // ========================================================================
-    // 远程操作 —— Remote operations
+    // Stash 操作 —— Stash operations
+    // ========================================================================
+
+    /// 获取储藏列表 —— Get stash list
+    pub fn get_stashes(&self) -> anyhow::Result<Vec<ogit::Stash>> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        repo.get_stashes().map_err(|e| anyhow::anyhow!("{}", e))
+    }
+
+    /// 创建新储藏 —— Create a new stash
+    pub fn create_stash(&mut self, message: Option<&str>) -> anyhow::Result<()> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        repo.create_stash(message)
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        self.refresh_status()?;
+        Ok(())
+    }
+
+    /// 应用储藏 —— Apply a stash
+    pub fn apply_stash(&mut self, stash_id: &str) -> anyhow::Result<()> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        repo.apply_stash(stash_id)
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        self.refresh_status()?;
+        Ok(())
+    }
+
+    /// 弹出储藏 —— Pop a stash
+    pub fn pop_stash(&mut self, stash_id: &str) -> anyhow::Result<()> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        repo.pop_stash(stash_id)
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        self.refresh_status()?;
+        Ok(())
+    }
+
+    /// 删除储藏 —— Delete a stash
+    pub fn delete_stash(&mut self, stash_id: &str) -> anyhow::Result<()> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        repo.delete_stash(stash_id)
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        self.refresh_status()?;
+        Ok(())
+    }
+
+    // ========================================================================
+    // Tag 操作 —— Tag operations
+    // ========================================================================
+
+    /// 创建标签 —— Create a tag
+    pub fn create_tag(
+        &mut self,
+        name: &str,
+        message: Option<&str>,
+    ) -> anyhow::Result<()> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        repo.create_tag(name, None, message)
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        self.refresh_status()?;
+        Ok(())
+    }
+
+    /// 删除标签 —— Delete a tag
+    pub fn delete_tag(&mut self, name: &str) -> anyhow::Result<()> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        repo.delete_tag(name)
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        self.refresh_status()?;
+        Ok(())
+    }
+
+    // ========================================================================
+    // Remote 操作 —— Remote operations
+    // ========================================================================
+
+    /// 添加远程仓库 —— Add a remote
+    pub fn add_remote(&mut self, name: &str, url: &str) -> anyhow::Result<()> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        repo.add_remote(name, url)
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        self.refresh_status()?;
+        Ok(())
+    }
+
+    /// 删除远程仓库 —— Remove a remote
+    pub fn remove_remote(&mut self, name: &str) -> anyhow::Result<()> {
+        let repo = self
+            .repository
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No repository opened"))?;
+        repo.remove_remote(name)
+            .map_err(|e| anyhow::anyhow!("{}", e))?;
+        self.refresh_status()?;
+        Ok(())
+    }
+
+    // ========================================================================
+    // 远程同步 —— Remote sync
     // ========================================================================
 
     /// 从 origin 远程获取更新 —— Fetch from origin

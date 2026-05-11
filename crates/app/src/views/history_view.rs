@@ -6,6 +6,7 @@
 //! Shows paginated commit list with "Load more" and click-to-select.
 //! Each row shows: summary, author, date, and short hash.
 
+use gpui::prelude::FluentBuilder as _;
 use gpui::*;
 use gpui_component::button::Button;
 use gpui_component::{Sizable, StyledExt};
@@ -59,6 +60,29 @@ pub fn render_history_view(
                 .min_h_0()
                 .v_flex()
                 .gap_1()
+                .when(history.is_empty(), |col: Div| {
+                    col.child(
+                        div()
+                            .flex_1()
+                            .min_h_0()
+                            .v_flex()
+                            .items_center()
+                            .justify_center()
+                            .gap_2()
+                            .child(
+                                div()
+                                    .text_sm()
+                                    .text_color(gpui::rgb(0x888888))
+                                    .child("No commits yet"),
+                            )
+                            .child(
+                                div()
+                                    .text_xs()
+                                    .text_color(gpui::rgb(0x666666))
+                                    .child("Stage files and create your first commit"),
+                            ),
+                    )
+                })
                 .children(history.iter().enumerate().map(|(idx, c)| {
                     let sel = selected_hist == Some(idx);
                     let ws = weak_state.clone();

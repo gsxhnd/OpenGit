@@ -42,6 +42,7 @@ impl OpenGitApp {
                             cx.notify();
                         });
                         let _ = wo.update(app, |o, cx| {
+                            o.setup_file_watcher(cx);
                             o.settings.add_recent_repo(path);
                             o.save_settings(cx);
                             cx.notify();
@@ -96,6 +97,7 @@ impl OpenGitApp {
                             cx.notify();
                         });
                         let _ = wo.update(app, |o, cx| {
+                            o.setup_file_watcher(cx);
                             o.settings.add_recent_repo(target_clone);
                             o.save_settings(cx);
                             cx.notify();
@@ -144,6 +146,9 @@ impl OpenGitApp {
             }
             if let Err(e) = s.fetch_origin() {
                 s.set_error(e.to_string());
+                s.add_toast(format!("Fetch failed: {}", e), crate::app::ToastKind::Error);
+            } else {
+                s.add_toast("Fetch completed", crate::app::ToastKind::Success);
             }
             cx.notify();
         });
@@ -164,6 +169,9 @@ impl OpenGitApp {
         self.app_state.update(cx, |s, cx| {
             if let Err(e) = s.pull_origin(&branch) {
                 s.set_error(e.to_string());
+                s.add_toast(format!("Pull failed: {}", e), crate::app::ToastKind::Error);
+            } else {
+                s.add_toast("Pull completed", crate::app::ToastKind::Success);
             }
             cx.notify();
         });
@@ -184,6 +192,9 @@ impl OpenGitApp {
         self.app_state.update(cx, |s, cx| {
             if let Err(e) = s.push_origin(&branch) {
                 s.set_error(e.to_string());
+                s.add_toast(format!("Push failed: {}", e), crate::app::ToastKind::Error);
+            } else {
+                s.add_toast("Push completed", crate::app::ToastKind::Success);
             }
             cx.notify();
         });
@@ -195,12 +206,41 @@ impl OpenGitApp {
 
     /// 从工作空间切换项目 —— Switch to a workspace project by index
     pub fn switch_to_project(&mut self, cx: &mut Context<Self>, index: usize) {
+        // 保存当前项目的视图状态（包括 active_view） —— Save current project's view state
+        let current_path = self.app_state.read(cx).repo_path.clone();
+        let current_view = self.active_view;
+        if let Some(path) = current_path {
+            self.app_state.update(cx, |s, _cx| {
+                s.project_view_states.insert(
+                    path,
+                    crate::app::ProjectViewState {
+                        active_view: current_view,
+                        selected_diff_path: s.selected_diff_path.clone(),
+                        selected_staged_diff_path: s.selected_staged_diff_path.clone(),
+                        selected_history: s.selected_history,
+                    },
+                );
+            });
+        }
+
         self.app_state.update(cx, |s, cx| {
             if let Err(e) = s.switch_to_entry(index) {
                 s.set_error(e.to_string());
             }
             cx.notify();
         });
+
+        // 恢复目标项目的 active_view —— Restore target project's active_view
+        let new_path = self.app_state.read(cx).repo_path.clone();
+        if let Some(path) = new_path {
+            if let Some(vs) = self.app_state.read(cx).project_view_states.get(&path).cloned() {
+                self.active_view = vs.active_view;
+            } else {
+                self.active_view = crate::app::ViewType::Commit;
+            }
+        }
+
+        self.setup_file_watcher(cx);
         self.save_settings(cx);
         cx.notify();
     }
@@ -223,6 +263,7 @@ impl OpenGitApp {
             }
             cx.notify();
         });
+        self.setup_file_watcher(cx);
         self.settings.add_recent_repo(path);
         self.save_settings(cx);
         cx.notify();

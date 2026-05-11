@@ -20,6 +20,7 @@ use gpui::*;
 use gpui_component::GlobalState;
 use gpui_component::input::InputState;
 use gpui_component::menu::AppMenuBar;
+use notify::Watcher as _;
 
 use crate::app::{AppState, ViewType};
 use crate::menu::build_open_git_menus;
@@ -69,8 +70,20 @@ pub struct OpenGitApp {
     pub commit_message: Entity<InputState>,
     pub branch_name_input: Entity<InputState>,
     pub clone_url_input: Entity<InputState>,
+    pub project_search_input: Entity<InputState>,
+    pub tag_name_input: Entity<InputState>,
+    pub tag_message_input: Entity<InputState>,
+    pub remote_name_input: Entity<InputState>,
+    pub remote_url_input: Entity<InputState>,
     pub app_menu_bar: Entity<AppMenuBar>,
     _menu_sync: Subscription,
+    /// 文件系统监听器 —— Filesystem watcher for auto-refresh
+    #[allow(dead_code)]
+    _file_watcher: Option<notify::RecommendedWatcher>,
+    /// 文件系统事件队列（共享） —— File event queue (shared)
+    file_events: std::sync::Arc<std::sync::Mutex<Vec<notify::Event>>>,
+    /// 上次自动刷新时间（防抖） —— Last auto-refresh time for debounce
+    last_file_refresh: std::time::Instant,
 }
 
 impl OpenGitApp {
@@ -108,6 +121,17 @@ impl OpenGitApp {
         let clone_url_input = cx
             .new(|cx| InputState::new(window, cx).placeholder("https://github.com/user/repo.git"));
 
+        let project_search_input =
+            cx.new(|cx| InputState::new(window, cx).placeholder("Search projects…"));
+
+        let tag_name_input = cx.new(|cx| InputState::new(window, cx).placeholder("v1.0.0"));
+        let tag_message_input =
+            cx.new(|cx| InputState::new(window, cx).placeholder("Tag message (optional)…"));
+
+        let remote_name_input = cx.new(|cx| InputState::new(window, cx).placeholder("origin"));
+        let remote_url_input =
+            cx.new(|cx| InputState::new(window, cx).placeholder("https://github.com/user/repo.git"));
+
         cx.bind_keys([
             KeyBinding::new("cmd-o", OpenRepository, None),
             KeyBinding::new("ctrl-o", OpenRepository, None),
@@ -120,10 +144,19 @@ impl OpenGitApp {
             commit_message,
             branch_name_input,
             clone_url_input,
+            project_search_input,
+            tag_name_input,
+            tag_message_input,
+            remote_name_input,
+            remote_url_input,
             app_menu_bar,
             _menu_sync,
+            _file_watcher: None,
+            file_events: std::sync::Arc::new(std::sync::Mutex::new(Vec::new())),
+            last_file_refresh: std::time::Instant::now(),
         };
         this.sync_app_menus(cx);
+        this.setup_file_watcher(cx);
         this
     }
 
@@ -144,5 +177,75 @@ impl OpenGitApp {
         self.app_menu_bar.update(cx, |bar, cx| {
             bar.reload(cx);
         });
+    }
+
+    /// 设置文件系统监听器 —— Setup filesystem watcher for auto-refresh
+    ///
+    /// 监听当前仓库目录的文件变化，将事件存入共享队列。
+    /// 在 Render 中检查队列并防抖刷新仓库状态。
+    /// 忽略 `.git` 目录内的事件以减少噪音。
+    pub fn setup_file_watcher(&mut self, cx: &mut Context<Self>) {
+        let Some(repo_path) = self.app_state.read(cx).repo_path.clone() else {
+            self._file_watcher = None;
+            return;
+        };
+
+        let events = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+        let events_clone = events.clone();
+        let mut watcher = match notify::recommended_watcher(
+            move |res: notify::Result<notify::Event>| {
+                if let Ok(event) = res {
+                    // 忽略 .git 目录内的事件 —— Ignore .git directory events
+                    let is_git_internal = event.paths.iter().any(|p| {
+                        p.components()
+                            .any(|c| c.as_os_str().to_string_lossy().starts_with(".git"))
+                    });
+                    if !is_git_internal {
+                        events_clone.lock().unwrap().push(event);
+                    }
+                }
+            },
+        ) {
+            Ok(w) => w,
+            Err(e) => {
+                tracing::error!("Failed to create file watcher: {}", e);
+                return;
+            }
+        };
+
+        if let Err(e) = watcher.watch(&repo_path, notify::RecursiveMode::Recursive) {
+            tracing::error!("Failed to watch repository: {}", e);
+            return;
+        }
+
+        self._file_watcher = Some(watcher);
+        self.file_events = events;
+        self.last_file_refresh = std::time::Instant::now();
+    }
+
+    /// 处理文件系统事件队列并刷新状态 —— Process file events and refresh status
+    pub fn process_file_events(&mut self, cx: &mut Context<Self>) {
+        let has_events = {
+            let mut events = self.file_events.lock().unwrap();
+            let has = !events.is_empty();
+            events.clear();
+            has
+        };
+        if has_events {
+            let now = std::time::Instant::now();
+            if now.duration_since(self.last_file_refresh).as_millis() >= 500 {
+                self.last_file_refresh = now;
+                self.app_state.update(cx, |state, cx| {
+                    if state.repository.is_some() {
+                        if let Err(e) = state.refresh_status() {
+                            tracing::warn!("Auto-refresh failed: {}", e);
+                        } else {
+                            tracing::debug!("Auto-refreshed repository status from file events");
+                        }
+                        cx.notify();
+                    }
+                });
+            }
+        }
     }
 }

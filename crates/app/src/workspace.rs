@@ -175,55 +175,76 @@ impl Workspace {
         self.entry_statuses.get(path)
     }
 
-    /// 刷新所有项目状态 —— Refresh all project statuses (synchronous for now)
+    /// 刷新所有项目状态 —— Refresh all project statuses (concurrent)
+    ///
+    /// 使用线程作用域并发刷新多个仓库状态，提高性能。
+    /// 失败项目单独记录，不影响其他项目。
     pub fn refresh_all(&mut self) {
-        for entry in &self.entries {
-            match ogit::Repository::open(&entry.path) {
-                Ok(repo) => match repo.get_status() {
-                    Ok(status) => {
-                        let changed = status.status.unstaged_files.len()
-                            + status.status.untracked_files.len();
-                        let staged = status.status.staged_files.len();
-                        let has_conflict = status
-                            .status
-                            .unstaged_files
-                            .iter()
-                            .chain(status.status.staged_files.iter())
-                            .any(|f| f.status == ogit::FileStatus::Conflicted);
-                        self.entry_statuses.insert(
-                            entry.path.clone(),
-                            CachedStatus {
-                                branch: status.status.current_branch,
-                                changed,
-                                staged,
-                                ahead: status.ahead,
-                                behind: status.behind,
-                                has_conflict,
-                                ok: true,
-                            },
-                        );
-                    }
-                    Err(e) => {
-                        tracing::warn!("Failed to refresh {}: {}", entry.path.display(), e);
-                        self.entry_statuses.insert(
-                            entry.path.clone(),
+        use std::thread;
+
+        let entries: Vec<_> = self.entries.clone();
+        let mut results: Vec<(std::path::PathBuf, CachedStatus)> = Vec::with_capacity(entries.len());
+
+        thread::scope(|s| {
+            let mut handles = Vec::with_capacity(entries.len());
+            for entry in &entries {
+                let path = entry.path.clone();
+                handles.push(s.spawn(move || {
+                    match ogit::Repository::open(&path) {
+                        Ok(repo) => match repo.get_status() {
+                            Ok(status) => {
+                                let changed = status.status.unstaged_files.len()
+                                    + status.status.untracked_files.len();
+                                let staged = status.status.staged_files.len();
+                                let has_conflict = status
+                                    .status
+                                    .unstaged_files
+                                    .iter()
+                                    .chain(status.status.staged_files.iter())
+                                    .any(|f| f.status == ogit::FileStatus::Conflicted);
+                                (
+                                    path,
+                                    CachedStatus {
+                                        branch: status.status.current_branch,
+                                        changed,
+                                        staged,
+                                        ahead: status.ahead,
+                                        behind: status.behind,
+                                        has_conflict,
+                                        ok: true,
+                                    },
+                                )
+                            }
+                            Err(e) => {
+                                tracing::warn!("Failed to refresh {}: {}", path.display(), e);
+                                (
+                                    path,
+                                    CachedStatus {
+                                        ok: false,
+                                        ..Default::default()
+                                    },
+                                )
+                            }
+                        },
+                        Err(_) => (
+                            path,
                             CachedStatus {
                                 ok: false,
                                 ..Default::default()
                             },
-                        );
+                        ),
                     }
-                },
-                Err(_) => {
-                    self.entry_statuses.insert(
-                        entry.path.clone(),
-                        CachedStatus {
-                            ok: false,
-                            ..Default::default()
-                        },
-                    );
+                }));
+            }
+            for handle in handles {
+                if let Ok(result) = handle.join() {
+                    results.push(result);
                 }
             }
+        });
+
+        for (path, status) in results {
+            self.entry_statuses.insert(path, status);
         }
     }
 }

@@ -60,29 +60,52 @@ impl Repository {
     }
 
     /// 应用储藏（不删除） —— Apply a stash (keep it in the stash list)
-    ///
-    /// 待实现：需要解析 stash_id 并调用 stash_apply —— TODO: parse stash_id and call stash_apply
-    pub(crate) fn __apply_stash(&self, _stash_id: &str) -> Result<(), GitError> {
-        Err(GitError::UnsupportedOperation {
-            op: "apply_stash".to_string(),
-        })
+    pub(crate) fn __apply_stash(&self, stash_id: &str) -> Result<(), GitError> {
+        let mut repo = self
+            .repo
+            .lock()
+            .map_err(|_| GitError::WriteError("Failed to lock repository".to_string()))?;
+
+        let idx = parse_stash_index(stash_id)?;
+        let mut opts = git2::StashApplyOptions::new();
+        repo.stash_apply(idx, Some(&mut opts))?;
+        Ok(())
     }
 
     /// 弹出储藏（应用并删除） —— Pop a stash (apply and drop)
-    ///
-    /// 待实现：需要解析 stash_id 并调用 stash_pop —— TODO: parse stash_id and call stash_pop
-    pub(crate) fn __pop_stash(&self, _stash_id: &str) -> Result<(), GitError> {
-        Err(GitError::UnsupportedOperation {
-            op: "pop_stash".to_string(),
-        })
+    pub(crate) fn __pop_stash(&self, stash_id: &str) -> Result<(), GitError> {
+        let mut repo = self
+            .repo
+            .lock()
+            .map_err(|_| GitError::WriteError("Failed to lock repository".to_string()))?;
+
+        let idx = parse_stash_index(stash_id)?;
+        repo.stash_pop(idx, None)?;
+        Ok(())
     }
 
     /// 删除储藏 —— Delete a stash
-    ///
-    /// 待实现：需要解析 stash_id 并调用 stash_drop —— TODO: parse stash_id and call stash_drop
-    pub(crate) fn __delete_stash(&self, _stash_id: &str) -> Result<(), GitError> {
-        Err(GitError::UnsupportedOperation {
-            op: "delete_stash".to_string(),
-        })
+    pub(crate) fn __delete_stash(&self, stash_id: &str) -> Result<(), GitError> {
+        let mut repo = self
+            .repo
+            .lock()
+            .map_err(|_| GitError::WriteError("Failed to lock repository".to_string()))?;
+
+        let idx = parse_stash_index(stash_id)?;
+        repo.stash_drop(idx)?;
+        Ok(())
     }
+}
+
+/// 解析 stash id（如 "stash@{0}"）为索引数字 —— Parse stash id (e.g. "stash@{0}") to index
+fn parse_stash_index(stash_id: &str) -> Result<usize, GitError> {
+    let start = stash_id.find('{').ok_or_else(|| {
+        GitError::InvalidRef(format!("Invalid stash id format: {}", stash_id))
+    })?;
+    let end = stash_id.find('}').ok_or_else(|| {
+        GitError::InvalidRef(format!("Invalid stash id format: {}", stash_id))
+    })?;
+    stash_id[start + 1..end]
+        .parse::<usize>()
+        .map_err(|e| GitError::InvalidRef(format!("Invalid stash index: {}", e)))
 }
