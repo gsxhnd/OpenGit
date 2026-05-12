@@ -14,7 +14,7 @@ const config: ForgeConfig = {
   },
   rebuildConfig: {},
   makers: [
-    new MakerZIP({}, ["darwin"]),
+    new MakerZIP({}, ["darwin", "linux", "win32"]),
     new MakerDMG({ format: "ULFO" }, ["darwin"]),
     new MakerSquirrel({ name: "OpenGit" }, ["win32"]),
     new MakerDeb({
