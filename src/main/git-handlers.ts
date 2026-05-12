@@ -1,6 +1,29 @@
+/**
+ * Git Handlers - 主进程 Git 操作处理器
+ *
+ * 所有 Git 操作通过 IPC 从渲染进程调用，在主进程中执行。
+ * 使用 child_process.execFile 调用系统 git 命令（非 shell 模式，安全）。
+ *
+ * 架构：
+ * - registerGitHandlers() 注册所有 ipcMain.handle 处理器
+ * - 每个处理器对应一个 IPC 通道（定义在 shared/ipc.ts）
+ * - 辅助函数：git() 执行命令、gitSilent() 静默执行、各种解析器
+ *
+ * 安全考虑：
+ * - 使用 execFile 而非 exec，避免 shell 注入
+ * - 所有参数通过数组传递，不拼接字符串
+ * - maxBuffer 设为 50MB 以支持大型仓库
+ *
+ * 错误处理：
+ * - git() 抛出错误（含 stderr 信息）
+ * - gitSilent() 静默返回空字符串
+ * - 处理器层面的错误会传递给渲染进程的 catch
+ */
 import { ipcMain, BrowserWindow } from 'electron'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
+import * as path from 'path'
+import * as fs from 'fs'
 import { IPC_CHANNELS } from '../shared/ipc'
 import {
   RepositoryStatus,
@@ -23,8 +46,10 @@ import { setupFileWatcher, stopFileWatcher } from './file-watcher'
 
 const execFileAsync = promisify(execFile)
 
+/** 当前打开的仓库路径（单仓库模式） */
 let currentRepoPath: string | null = null
 
+/** 获取当前仓库路径，未打开时抛出错误 */
 function getRepoPath(): string {
   if (!currentRepoPath) throw new Error('No repository opened')
   return currentRepoPath
@@ -812,5 +837,119 @@ export function registerGitHandlers() {
         message: timeParts.slice(1).join(' '),
       } as ReflogEntry
     })
+  })
+
+  // ============ Git Hooks 管理 ============
+
+  /**
+   * 获取所有 Git Hook 的状态和内容
+   * 扫描 .git/hooks/ 目录，返回每个 hook 的存在/启用状态及脚本内容
+   */
+  ipcMain.handle(IPC_CHANNELS.GIT_GET_HOOKS, async () => {
+    const repoPath = getRepoPath()
+    const hooksDir = path.join(repoPath, '.git', 'hooks')
+
+    const hookTypes = [
+      'pre-commit', 'prepare-commit-msg', 'commit-msg', 'post-commit',
+      'pre-rebase', 'post-rewrite', 'post-checkout', 'post-merge',
+      'pre-push', 'pre-auto-gc',
+    ]
+
+    const results = []
+    for (const hookName of hookTypes) {
+      const hookPath = path.join(hooksDir, hookName)
+      const disabledPath = hookPath + '.disabled'
+      let exists = false
+      let enabled = false
+      let content: string | null = null
+
+      try {
+        // 检查启用状态的 hook 文件
+        const stat = fs.statSync(hookPath)
+        exists = true
+        enabled = true
+        content = fs.readFileSync(hookPath, 'utf-8')
+      } catch {
+        // 检查禁用状态的 hook 文件
+        try {
+          fs.statSync(disabledPath)
+          exists = true
+          enabled = false
+          content = fs.readFileSync(disabledPath, 'utf-8')
+        } catch {
+          // Hook 不存在
+        }
+      }
+
+      results.push({ name: hookName, exists, enabled, content })
+    }
+
+    return results
+  })
+
+  /**
+   * 切换 Hook 的启用/禁用状态
+   * 通过重命名文件实现：hookName ↔ hookName.disabled
+   */
+  ipcMain.handle(IPC_CHANNELS.GIT_TOGGLE_HOOK, async (_event, hookName: string, enable: boolean) => {
+    const repoPath = getRepoPath()
+    const hooksDir = path.join(repoPath, '.git', 'hooks')
+    const hookPath = path.join(hooksDir, hookName)
+    const disabledPath = hookPath + '.disabled'
+
+    if (enable) {
+      // 从 .disabled 重命名为正常名称，并设置可执行权限
+      if (fs.existsSync(disabledPath)) {
+        fs.renameSync(disabledPath, hookPath)
+        fs.chmodSync(hookPath, 0o755)
+      } else {
+        throw new Error(`Hook file not found: ${hookName}.disabled`)
+      }
+    } else {
+      // 从正常名称重命名为 .disabled
+      if (fs.existsSync(hookPath)) {
+        fs.renameSync(hookPath, disabledPath)
+      } else {
+        throw new Error(`Hook file not found: ${hookName}`)
+      }
+    }
+  })
+
+  /**
+   * 保存 Hook 脚本内容
+   * 写入文件并设置可执行权限 (0o755)
+   */
+  ipcMain.handle(IPC_CHANNELS.GIT_SAVE_HOOK, async (_event, hookName: string, content: string) => {
+    const repoPath = getRepoPath()
+    const hooksDir = path.join(repoPath, '.git', 'hooks')
+    const hookPath = path.join(hooksDir, hookName)
+
+    // 确保 hooks 目录存在
+    if (!fs.existsSync(hooksDir)) {
+      fs.mkdirSync(hooksDir, { recursive: true })
+    }
+
+    // 写入脚本内容并设置可执行权限
+    fs.writeFileSync(hookPath, content, 'utf-8')
+    fs.chmodSync(hookPath, 0o755)
+  })
+
+  /**
+   * 删除 Hook 脚本文件
+   * 同时检查 .disabled 后缀的文件
+   */
+  ipcMain.handle(IPC_CHANNELS.GIT_DELETE_HOOK, async (_event, hookName: string) => {
+    const repoPath = getRepoPath()
+    const hooksDir = path.join(repoPath, '.git', 'hooks')
+    const hookPath = path.join(hooksDir, hookName)
+    const disabledPath = hookPath + '.disabled'
+
+    if (fs.existsSync(hookPath)) {
+      fs.unlinkSync(hookPath)
+    } else if (fs.existsSync(disabledPath)) {
+      fs.unlinkSync(disabledPath)
+    } else {
+      throw new Error(`Hook file not found: ${hookName}`)
+    }
   })
 }

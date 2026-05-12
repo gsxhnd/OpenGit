@@ -1,6 +1,16 @@
-// Shared type definitions between main and renderer processes
+/**
+ * Shared Types - 跨进程共享类型定义
+ *
+ * 定义主进程和渲染进程之间共享的所有数据类型。
+ * 这些类型用于 IPC 通信的参数和返回值，确保类型安全。
+ *
+ * 分类：
+ * - Git Models: Git 对象的数据模型（Commit、Branch、Tag 等）
+ * - Diff Models: 差异比较相关类型（FileDiff、DiffHunk、DiffLine）
+ * - App Models: 应用层面的类型（Settings、Workspace、Toast、ViewType）
+ */
 
-// ============ Git Models ============
+// ============ Git Models - Git 对象模型 ============
 
 export interface Commit {
   hash: string
@@ -205,4 +215,6 @@ export type ViewType =
   | 'blame'
   | 'reflog'
   | 'settings'
+  | 'projects'
+  | 'hooks'
   | 'welcome'

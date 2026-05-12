@@ -1,3 +1,34 @@
+/**
+ * Zustand Store - 全局状态管理
+ *
+ * 采用单一 store 模式管理所有应用状态和操作。
+ * 按功能领域划分为以下模块：
+ *
+ * 状态模块：
+ * - Repository: 仓库路径、状态、加载状态
+ * - Navigation: 当前视图、历史视图（用于返回）
+ * - History: 提交历史、搜索、筛选
+ * - Diff: 差异预览、视图模式（unified/side-by-side）
+ * - Commit Detail: 选中的提交详情和 diff
+ * - Stash/Tags: 暂存区和标签列表
+ * - Graph: 提交图数据
+ * - File Search/History/Blame: 文件级操作数据
+ * - Reflog: HEAD 操作历史
+ * - Merge/Conflict: 合并状态和冲突文件
+ * - Toast: 通知消息队列
+ * - Settings: 应用配置
+ * - Workspace: 多项目工作区
+ *
+ * 操作模块：
+ * - 所有操作都是 async 函数，内部调用 window.api.* (preload bridge)
+ * - 操作完成后自动刷新相关状态
+ * - 错误通过 toast 通知用户
+ *
+ * 设计决策：
+ * - 使用单一 store 而非多个 store，简化跨模块状态访问
+ * - 所有 API 调用集中在 store actions 中，视图层保持纯展示
+ * - Toast 通知统一在 action 中触发，确保一致的用户反馈
+ */
 import { create } from 'zustand'
 import type {
   RepositoryStatus,
@@ -671,7 +702,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   loadConflictFiles: async () => {
     try {
       const files = await window.api.getConflictFiles()
-      set({ conflictFiles: files.map((f) => f.path), isMerging: files.length > 0 })
+      set({ conflictFiles: files.map((f: any) => f.path), isMerging: files.length > 0 })
     } catch (err: any) {
       get().addToast(`Load conflicts failed: ${err.message}`, 'error')
     }

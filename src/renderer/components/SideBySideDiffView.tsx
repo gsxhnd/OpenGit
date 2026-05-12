@@ -42,10 +42,10 @@ function buildSideBySideLines(hunk: DiffHunk): { left: LineWithNumber[]; right: 
   // Pad to same length
   const maxLen = Math.max(left.length, right.length)
   while (left.length < maxLen) {
-    left.push({ line: { prefix: ' ', content: '' }, oldLineNum: null, newLineNum: null })
+    left.push({ line: { prefix: ' ', content: '', oldLine: null, newLine: null }, oldLineNum: null, newLineNum: null })
   }
   while (right.length < maxLen) {
-    right.push({ line: { prefix: ' ', content: '' }, oldLineNum: null, newLineNum: null })
+    right.push({ line: { prefix: ' ', content: '', oldLine: null, newLine: null }, oldLineNum: null, newLineNum: null })
   }
 
   return { left, right }

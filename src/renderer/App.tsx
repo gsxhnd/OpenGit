@@ -1,3 +1,17 @@
+/**
+ * App - 应用根组件
+ *
+ * 负责整体布局和视图路由：
+ * - TitleBar: 自定义标题栏（macOS traffic light 风格）
+ * - WorkspaceSwitcher: 多项目切换标签栏
+ * - Sidebar: 左侧导航栏
+ * - Main content: 根据 currentView 渲染对应视图
+ * - StatusBar: 底部状态栏（分支/ahead/behind）
+ * - ToastContainer: 全局通知容器
+ * - CommandPalette: 命令面板（Ctrl+Shift+P）
+ *
+ * 初始化时加载设置、注册文件变更监听。
+ */
 import { useEffect } from 'react'
 import { useAppStore } from './store'
 import { useAppKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
@@ -23,20 +37,23 @@ import { FileHistoryView } from './views/FileHistoryView'
 import { BlameView } from './views/BlameView'
 import { ReflogView } from './views/ReflogView'
 import { SettingsView } from './views/SettingsView'
+import { ProjectListView } from './views/ProjectListView'
+import { HooksView } from './views/HooksView'
 
 export default function App() {
   const { currentView, repoPath, refreshStatus, loadSettings, loadConflictFiles } = useAppStore()
 
-  // Setup keyboard shortcuts
+  // 注册全局键盘快捷键
   useAppKeyboardShortcuts()
 
-  // Setup theme
+  // 初始化主题
   useTheme()
 
   useEffect(() => {
+    // 加载应用设置
     loadSettings()
 
-    // Listen for file system changes
+    // 监听文件系统变更事件（自动刷新状态）
     const unsubscribe = window.api.onRepoChanged(() => {
       refreshStatus()
       loadConflictFiles()
@@ -47,6 +64,7 @@ export default function App() {
     }
   }, [])
 
+  /** 根据当前视图类型渲染对应组件 */
   const renderView = () => {
     switch (currentView) {
       case 'welcome':
@@ -77,6 +95,10 @@ export default function App() {
         return <ReflogView />
       case 'settings':
         return <SettingsView />
+      case 'projects':
+        return <ProjectListView />
+      case 'hooks':
+        return <HooksView />
       default:
         return <WelcomeView />
     }

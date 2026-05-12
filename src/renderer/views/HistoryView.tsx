@@ -1,3 +1,13 @@
+/**
+ * HistoryView - 提交历史视图
+ *
+ * 展示仓库的提交历史列表，支持：
+ * - 搜索提交（按消息内容、hash、作者）
+ * - 按作者/文件路径筛选
+ * - 分页加载（每次 50 条）
+ * - 点击提交查看详情（跳转 CommitDetailView）
+ * - 右键菜单：Cherry-pick、Revert（通过 CommitDetailView 操作）
+ */
 import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { useAppStore } from '../store'

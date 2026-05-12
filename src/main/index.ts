@@ -1,3 +1,18 @@
+/**
+ * Main Process Entry - Electron 主进程入口
+ *
+ * 负责应用生命周期管理：
+ * - 创建主窗口（BrowserWindow）
+ * - 注册 IPC 处理器（Git 操作、设置、窗口控制）
+ * - 管理窗口状态持久化（位置、尺寸）
+ * - 加载渲染进程（开发模式用 URL，生产模式用文件）
+ *
+ * 窗口配置：
+ * - macOS: hiddenInset 标题栏 + traffic light 按钮
+ * - 其他平台: 标准窗口框架
+ * - contextIsolation: true（安全隔离）
+ * - nodeIntegration: false（禁止渲染进程直接访问 Node）
+ */
 import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
 import { join } from 'path'
 import { registerGitHandlers } from './git-handlers'
@@ -5,6 +20,7 @@ import { registerSettingsHandlers, loadSettings, saveSettings } from './settings
 import { setupFileWatcher } from './file-watcher'
 import { IPC_CHANNELS } from '../shared/ipc'
 
+/** 主窗口实例引用 */
 let mainWindow: BrowserWindow | null = null
 
 function createWindow() {
