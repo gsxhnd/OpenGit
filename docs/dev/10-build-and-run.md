@@ -4,98 +4,84 @@
 
 | 工具 | 版本 | 说明 |
 |------|------|------|
-| Rust | stable (最新) | Edition 2024 |
-| Git | 2.30+ | 使用系统 git 后端时需要 |
-| cmake | 3.x | 编译 libgit2 |
-| pkg-config | - | Linux 依赖查找 |
-| libssl-dev | - | HTTPS 支持 |
+| Node.js | 18+ | Electron 42 需要 |
+| npm | 9+ | 包管理器 |
+| Git | 2.30+ | 客户端依赖系统 git |
 
-**Linux 额外依赖 (Debian/Ubuntu):**
+## 10.2 安装依赖
 
 ```bash
-sudo apt install -y \
-    build-essential cmake pkg-config \
-    libssl-dev libgit2-dev \
-    libx11-dev libxcb1-dev libxkbcommon-dev \
-    libwayland-dev libvulkan-dev \
-    libfontconfig-dev libfreetype-dev
+npm install
 ```
 
-**macOS:**
+## 10.3 开发模式
 
 ```bash
-brew install cmake pkg-config openssl libgit2
+# 启动开发服务器 (支持热更新)
+npm run dev
 ```
 
-**Windows:**
+开发流程（`scripts/dev.mjs`）：
+1. Vite 构建 main 和 preload 进程 (CJS 输出到 `dist/`)
+2. 启动 Vite dev server 用于 renderer (HMR 热更新)
+3. 启动 Electron，加载 Vite dev server URL
+4. 监听 main/preload 源码变更，自动重新构建并重启 Electron
 
-```powershell
-# 安装 Visual Studio Build Tools (C++ 工具集)
-# 安装 CMake
-# git2-rs 会自动编译 libgit2
-```
-
-## 10.2 构建命令
+## 10.4 构建命令
 
 ```bash
-# Debug 构建
-cargo build
+# 分别构建三个目标
+npm run build:main      # Vite 构建主进程 → dist/main/
+npm run build:preload   # Vite 构建预加载脚本 → dist/preload/
+npm run build:renderer  # Vite 构建渲染进程 → dist/renderer/
 
-# Release 构建 (推荐日常使用，GPUI 在 debug 模式下较慢)
-cargo build --release
-
-# 运行
-cargo run --release
-
-# 检查编译 (不生成二进制)
-cargo check
+# 完整构建
+npm run build           # 依次执行以上三个构建
 ```
 
-## 10.3 测试命令
+## 10.5 生产运行
 
 ```bash
-# 运行所有测试
-cargo test
+# 从构建产物运行
+npm run start
 
-# 运行特定模块测试
-cargo test git::
-cargo test views::
-
-# 运行测试并显示输出
-cargo test -- --nocapture
-
-# 运行特定测试
-cargo test test_create_branch
+# 或直接
+npx electron .
 ```
 
-## 10.4 代码质量
+## 10.6 打包发布
 
 ```bash
-# 格式化
-cargo fmt
+# 构建并打包为安装包
+npm run make
 
-# 格式检查 (CI 用)
-cargo fmt -- --check
-
-# Clippy lint
-cargo clippy -- -D warnings
-
-# 完整 CI 检查
-cargo fmt -- --check && cargo clippy -- -D warnings && cargo test
+# 输出:
+# out/make/zip/darwin/  — macOS ZIP
+# out/make/dmg/darwin/  — macOS DMG
+# out/make/squirrel/    — Windows installer
+# out/make/deb/         — Linux DEB
+# out/make/rpm/         — Linux RPM
 ```
 
-## 10.5 开发技巧
-
-**主题热加载：** 修改 `themes/` 下的 JSON 文件，应用会自动重新加载主题。
-
-**GPUI 调试：** 设置环境变量启用详细日志：
+## 10.7 代码质量
 
 ```bash
-RUST_LOG=gpui=debug cargo run --release
+# TypeScript 类型检查
+npm run typecheck       # tsc --noEmit
+
+# ESLint 检查
+npm run lint            # eslint . --ext .ts,.tsx
 ```
 
-**Git2 调试：** 启用 libgit2 trace：
+## 10.8 调试
 
 ```bash
-RUST_LOG=git2=trace cargo run --release
+# Electron 设置环境变量启用 devtools:
+# 在 main/index.ts 中已设置自动打开 devtools (开发模式)
+
+# 查看主进程日志:
+# 控制台输出直接打印到终端
+
+# 查看渲染进程日志:
+# DevTools Console (开发模式自动打开)
 ```

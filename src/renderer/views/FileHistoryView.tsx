@@ -11,14 +11,14 @@ export function FileHistoryView() {
       transition={{ duration: 0.2 }}
       className="flex flex-col h-full"
     >
-      <div className="px-3 py-2 border-b border-[var(--color-border)]">
+      <div className="px-3 py-2 border-b border-border">
         <button
           onClick={goBack}
-          className="px-2 py-0.5 text-xs rounded hover:bg-[var(--color-secondary)] text-[var(--color-muted-foreground)] mb-1"
+          className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground mb-1"
         >
           ← Back
         </button>
-        <h3 className="text-sm font-mono text-[var(--color-foreground)]">
+        <h3 className="text-sm font-mono text-foreground">
           History: {fileHistoryPath}
         </h3>
       </div>
@@ -27,26 +27,26 @@ export function FileHistoryView() {
         {fileHistoryCommits.map((commit) => (
           <div
             key={commit.hash}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-[var(--color-secondary)] cursor-pointer border-b border-[var(--color-border)]"
+            className="flex items-center gap-3 px-3 py-2 hover:bg-secondary cursor-pointer border-b border-border"
             onClick={() => loadCommitDetail(commit.hash)}
           >
-            <span className="font-mono text-xs text-[var(--color-accent)] w-16 flex-shrink-0">
+            <span className="font-mono text-xs text-accent w-16 flex-shrink-0">
               {commit.hash.slice(0, 7)}
             </span>
-            <span className="flex-1 text-sm text-[var(--color-foreground)] truncate">
+            <span className="flex-1 text-sm text-foreground truncate">
               {commit.summary}
             </span>
-            <span className="text-xs text-[var(--color-muted-foreground)]">
+            <span className="text-xs text-muted-foreground">
               {commit.author.split(' <')[0]}
             </span>
-            <span className="text-xs text-[var(--color-muted-foreground)] w-20 text-right">
+            <span className="text-xs text-muted-foreground w-20 text-right">
               {new Date(commit.time).toLocaleDateString()}
             </span>
           </div>
         ))}
 
         {fileHistoryCommits.length === 0 && (
-          <p className="px-3 py-8 text-sm text-[var(--color-muted-foreground)] text-center">
+          <p className="px-3 py-8 text-sm text-muted-foreground text-center">
             No history for this file
           </p>
         )}

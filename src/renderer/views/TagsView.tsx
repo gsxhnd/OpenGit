@@ -27,19 +27,19 @@ export function TagsView() {
       className="flex flex-col h-full"
     >
       {/* Create tag */}
-      <div className="px-3 py-3 border-b border-[var(--color-border)] space-y-2">
+      <div className="px-3 py-3 border-b border-border space-y-2">
         <div className="flex gap-2">
           <input
             type="text"
             value={tagName}
             onChange={(e) => setTagName(e.target.value)}
             placeholder="Tag name..."
-            className="flex-1 px-3 py-1.5 text-sm bg-[var(--color-muted)] border border-[var(--color-input-border)] rounded-md text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
+            className="flex-1 px-3 py-1.5 text-sm bg-muted border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           />
           <button
             onClick={handleCreate}
             disabled={!tagName.trim()}
-            className="px-3 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:opacity-90 disabled:opacity-40"
+            className="px-3 py-1.5 text-xs rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40"
           >
             Create
           </button>
@@ -50,7 +50,7 @@ export function TagsView() {
           onChange={(e) => setTagMessage(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
           placeholder="Message (optional, makes annotated tag)..."
-          className="w-full px-3 py-1.5 text-sm bg-[var(--color-muted)] border border-[var(--color-input-border)] rounded-md text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
+          className="w-full px-3 py-1.5 text-sm bg-muted border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
         />
       </div>
 
@@ -59,18 +59,18 @@ export function TagsView() {
         {tagList.map((tag) => (
           <div
             key={tag.name}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-[var(--color-secondary)] border-b border-[var(--color-border)] group"
+            className="flex items-center gap-3 px-3 py-2 hover:bg-secondary border-b border-border group"
           >
-            <span className="text-sm text-[var(--color-warning)]">⊙</span>
-            <span className="flex-1 text-sm text-[var(--color-foreground)]">{tag.name}</span>
+            <span className="text-sm text-warning">⊙</span>
+            <span className="flex-1 text-sm text-foreground">{tag.name}</span>
             {tag.message && (
-              <span className="text-xs text-[var(--color-muted-foreground)] italic">
+              <span className="text-xs text-muted-foreground italic">
                 annotated
               </span>
             )}
             <button
               onClick={() => deleteTag(tag.name)}
-              className="hidden group-hover:block px-2 py-0.5 text-xs rounded bg-[var(--color-muted)] hover:bg-[var(--color-secondary)] text-[var(--color-danger)]"
+              className="hidden group-hover:block px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-destructive"
             >
               Delete
             </button>
@@ -78,7 +78,7 @@ export function TagsView() {
         ))}
 
         {tagList.length === 0 && (
-          <p className="px-3 py-8 text-sm text-[var(--color-muted-foreground)] text-center">
+          <p className="px-3 py-8 text-sm text-muted-foreground text-center">
             No tags
           </p>
         )}

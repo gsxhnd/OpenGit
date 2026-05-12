@@ -11,7 +11,7 @@ export function StatusBar() {
   const stagedCount = status.stagedFiles.length
 
   return (
-    <footer className="flex items-center justify-between h-6 px-3 bg-[var(--color-status-bar)] border-t border-[var(--color-border)] text-[10px] text-[var(--color-muted-foreground)]">
+    <footer className="flex items-center justify-between h-6 px-3 bg-status-bar border-t border-border text-[10px] text-muted-foreground">
       <div className="flex items-center gap-3">
         {status.currentBranch && (
           <span className="flex items-center gap-1">
@@ -32,7 +32,7 @@ export function StatusBar() {
         {unstagedCount > 0 && <span>{unstagedCount} unstaged</span>}
         {stagedCount > 0 && <span>{stagedCount} staged</span>}
         {status.mergeHead && (
-          <span className="text-[var(--color-warning)]">MERGING</span>
+          <span className="text-warning">MERGING</span>
         )}
       </div>
     </footer>

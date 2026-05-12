@@ -10,7 +10,7 @@ export function DiffView() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex items-center justify-center h-full text-[var(--color-muted-foreground)]"
+        className="flex items-center justify-center h-full text-muted-foreground"
       >
         No diff selected
       </motion.div>
@@ -24,18 +24,18 @@ export function DiffView() {
         animate={{ opacity: 1, x: 0 }}
         className="flex flex-col h-full"
       >
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--color-border)]">
+        <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
           <button
             onClick={goBack}
-            className="px-2 py-0.5 text-xs rounded hover:bg-[var(--color-secondary)] text-[var(--color-muted-foreground)]"
+            className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
           >
             ← Back
           </button>
-          <span className="text-sm font-mono text-[var(--color-foreground)]">
+          <span className="text-sm font-mono text-foreground">
             {diffPreview.path}
           </span>
         </div>
-        <div className="flex items-center justify-center flex-1 text-[var(--color-muted-foreground)]">
+        <div className="flex items-center justify-center flex-1 text-muted-foreground">
           Binary file
         </div>
       </motion.div>
@@ -50,14 +50,14 @@ export function DiffView() {
       className="flex flex-col h-full"
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--color-border)]">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
         <button
           onClick={goBack}
-          className="px-2 py-0.5 text-xs rounded hover:bg-[var(--color-secondary)] text-[var(--color-muted-foreground)]"
+          className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
         >
           ← Back
         </button>
-        <span className="text-sm font-mono text-[var(--color-foreground)]">
+        <span className="text-sm font-mono text-foreground">
           {diffPreview.path}
         </span>
       </div>
@@ -67,7 +67,7 @@ export function DiffView() {
         {diffPreview.hunks.map((hunk, hi) => (
           <div key={hi}>
             {/* Hunk header */}
-            <div className="px-3 py-1 bg-[var(--color-muted)] text-[var(--color-info)] sticky top-0">
+            <div className="px-3 py-1 bg-muted text-info sticky top-0">
               @@ -{hunk.oldRange.start},{hunk.oldRange.count} +{hunk.newRange.start},
               {hunk.newRange.count} @@ {hunk.header}
             </div>
@@ -77,12 +77,12 @@ export function DiffView() {
                 key={li}
                 className={cn(
                   'px-3 whitespace-pre',
-                  line.prefix === '+' && 'bg-[var(--color-diff-added-bg)] text-[var(--color-diff-added)]',
-                  line.prefix === '-' && 'bg-[var(--color-diff-deleted-bg)] text-[var(--color-diff-deleted)]',
-                  line.prefix === ' ' && 'text-[var(--color-foreground)]'
+                  line.prefix === '+' && 'bg-diff-added-bg text-diff-added',
+                  line.prefix === '-' && 'bg-diff-deleted-bg text-diff-deleted',
+                  line.prefix === ' ' && 'text-foreground'
                 )}
               >
-                <span className="inline-block w-4 text-[var(--color-muted-foreground)] select-none">
+                <span className="inline-block w-4 text-muted-foreground select-none">
                   {line.prefix}
                 </span>
                 {line.content}
@@ -92,7 +92,7 @@ export function DiffView() {
         ))}
 
         {diffPreview.hunks.length === 0 && (
-          <p className="px-3 py-8 text-center text-[var(--color-muted-foreground)]">
+          <p className="px-3 py-8 text-center text-muted-foreground">
             No changes
           </p>
         )}

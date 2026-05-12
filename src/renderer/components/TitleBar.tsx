@@ -1,5 +1,6 @@
 import { useAppStore } from '../store'
 import { cn } from '../lib/utils'
+import { Button } from './ui/button'
 
 export function TitleBar() {
   const { repoPath, repoStatus, doFetch, doPull, doPush } = useAppStore()
@@ -10,16 +11,16 @@ export function TitleBar() {
     <header
       className={cn(
         'drag-region flex items-center justify-between h-11 px-4',
-        'bg-[var(--color-title-bar)] border-b border-[var(--color-border)]',
+        'bg-title-bar border-b border-border',
         'select-none'
       )}
     >
       {/* Left: macOS traffic lights spacer + app name */}
       <div className="flex items-center gap-3">
         <div className="w-[68px]" /> {/* Space for traffic lights on macOS */}
-        <span className="text-sm font-medium text-[var(--color-foreground)]">{repoName}</span>
+        <span className="text-sm font-medium text-foreground">{repoName}</span>
         {repoStatus?.status.currentBranch && (
-          <span className="text-xs text-[var(--color-muted-foreground)] bg-[var(--color-secondary)] px-2 py-0.5 rounded">
+          <span className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded">
             {repoStatus.status.currentBranch}
           </span>
         )}
@@ -28,27 +29,15 @@ export function TitleBar() {
       {/* Right: Actions */}
       {repoPath && (
         <div className="no-drag flex items-center gap-1">
-          <button
-            onClick={() => doFetch()}
-            className="px-3 py-1 text-xs rounded hover:bg-[var(--color-secondary)] text-[var(--color-foreground)] transition-colors"
-            title="Fetch"
-          >
+          <Button variant="ghost" size="sm" onClick={() => doFetch()} className="h-7 text-xs">
             Fetch
-          </button>
-          <button
-            onClick={() => doPull()}
-            className="px-3 py-1 text-xs rounded hover:bg-[var(--color-secondary)] text-[var(--color-foreground)] transition-colors"
-            title="Pull"
-          >
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => doPull()} className="h-7 text-xs">
             Pull
-          </button>
-          <button
-            onClick={() => doPush()}
-            className="px-3 py-1 text-xs rounded hover:bg-[var(--color-secondary)] text-[var(--color-foreground)] transition-colors"
-            title="Push"
-          >
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => doPush()} className="h-7 text-xs">
             Push
-          </button>
+          </Button>
         </div>
       )}
     </header>

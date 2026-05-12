@@ -2,133 +2,104 @@
 
 ```
 OpenGit/
-├── Cargo.toml                    # 项目配置与依赖
-├── Cargo.lock
+├── package.json                  # NPM 包定义，scripts，依赖
+├── package-lock.json
+├── tsconfig.json                 # 基础 TS 配置
+├── tsconfig.main.json            # 主进程 TS 配置
+├── tsconfig.preload.json         # 预加载脚本 TS 配置
+├── tsconfig.renderer.json        # 渲染进程 TS 配置
+├── vite.main.config.ts           # 主进程 Vite 配置
+├── vite.preload.config.ts        # 预加载 Vite 配置
+├── vite.renderer.config.ts       # 渲染进程 Vite 配置
+├── forge.config.ts               # Electron Forge 打包配置
+├── components.json               # shadcn/ui 配置 (base-nova 风格)
 ├── LICENSE                       # MIT License
-├── README.md
+├── README.md                     # 项目说明
 ├── .gitignore
 │
 ├── docs/
 │   ├── dev/                      # 开发文档 (本文档)
 │   │   └── README.md
-│   └── wiki/                     # 用户文档
+│   └── wiki/                     # 用户文档 (计划)
 │
-├── themes/                       # 主题 JSON 配置文件
-│   ├── ayu.json
-│   ├── catppuccin.json
-│   ├── gruvbox.json
-│   ├── tokyonight.json
-│   └── ...
-│
-├── locales/                      # 国际化翻译文件
-│   ├── zh-CN.json
-│   └── en.json
-│
-├── assets/                       # 静态资源
-│   └── icons/                    # 应用图标
+├── scripts/
+│   ├── dev.mjs                   # 开发启动脚本 (构建 main/preload → Vite dev server → Electron)
+│   └── start.mjs                 # 生产启动脚本 (直接运行 dist/ 构建产物)
 │
 ├── .agents/                      # AI Agent 技能参考
 │   └── skills/
-│       ├── gpui-action/
-│       ├── gpui-async/
-│       ├── gpui-context/
-│       ├── gpui-element/
-│       ├── gpui-entity/
-│       ├── gpui-event/
-│       ├── gpui-focus-handle/
-│       ├── gpui-global/
-│       ├── gpui-layout-and-style/
-│       ├── gpui-new-component/
-│       ├── gpui-style-guide/
-│       └── gpui-test/
+│       └── shadcn/               # shadcn/ui 组件技能
+│
+├── .kilo/                        # Kilo agent 配置
+│   ├── agent-manager.json
+│   └── package.json
+│
+├── dist/                         # 构建输出 (Vite compile → Electron Forge package)
 │
 └── src/
-    ├── main.rs                   # 应用入口
-    ├── app.rs                    # 应用初始化、窗口管理、全局状态
+    ├── main/                     # Electron 主进程
+    │   ├── index.ts              # 应用入口：窗口创建、生命周期、IPC 注册
+    │   ├── git-handlers.ts       # Git IPC 处理程序 (~710 行)
+    │   │                         #   - parseStatus: git status --porcelain
+    │   │                         #   - parseHistory: git log (分页，自定义分隔符)
+    │   │                         #   - parseDiff: git diff / git show
+    │   │                         #   - parseBranches: git branch -a -vv
+    │   │                         #   - parseRemotes: git remote -v
+    │   │                         #   - parseTags: git tag -l
+    │   │                         #   - parseStash: git stash list
+    │   │                         #   - parseGraph: git log --all (DAG 拓扑)
+    │   │                         #   - parseBlame: git blame --porcelain
+    │   │                         #   - parseReflog: git reflog
+    │   │                         #   - parseSearch: git ls-files + git grep
+    │   │                         #   - 以及 stage/unstage/commit/push/pull/merge 等操作
+    │   ├── settings.ts           # 设置持久化 (JSON 文件读写，损坏恢复)
+    │   └── file-watcher.ts       # 文件监听 (fs.watch recursive，500ms 防抖)
     │
-    ├── workspace/                # 工作区 (多项目管理)
-    │   ├── mod.rs                # Workspace Entity 定义
-    │   ├── project.rs            # 单项目状态 Entity
-    │   ├── project_list.rs       # 侧边栏项目列表组件
-    │   ├── project_group.rs      # 项目分组管理
-    │   └── tab_bar.rs            # Tab 栏组件
+    ├── preload/                  # 预加载脚本 (contextBridge)
+    │   └── index.ts              # window.api 类型化 API 暴露 (~110 行)
     │
-    ├── git/                      # Git 操作层
-    │   ├── mod.rs                # GitOps trait 定义、后端枚举、模块导出
-    │   ├── repository.rs         # Repository 抽象 (根据用户配置委派到 git2 或 cmd)
-    │   ├── git2_backend.rs       # git2-rs 后端实现
-    │   ├── cmd_backend.rs        # 系统 git 命令后端实现
-    │   ├── operations.rs         # 高层 Git 操作 (commit, push, pull, merge ...)
-    │   ├── diff.rs               # Diff 解析与数据模型
-    │   ├── graph.rs              # Commit graph 构建 (DAG 拓扑计算)
-    │   ├── blame.rs              # Blame 解析
-    │   ├── search.rs             # Commit / 文件搜索
-    │   ├── hooks.rs              # Git Hooks 管理
-    │   ├── submodule.rs          # Submodule 操作
-    │   ├── worktree.rs           # Worktree 操作
-    │   ├── lfs.rs                # LFS 操作
-    │   ├── sign.rs               # Commit 签名 (GPG / SSH)
-    │   ├── stash.rs              # Stash 操作
-    │   ├── tag.rs                # Tag 操作
-    │   ├── remote.rs             # Remote 操作
-    │   └── model.rs              # Git 数据模型 (Commit, Branch, Remote, Stash ...)
+    ├── renderer/                 # React UI (渲染进程)
+    │   ├── main.tsx              # ReactDOM 入口
+    │   ├── App.tsx               # 根组件：布局 + 视图路由 + onRepoChanged 订阅
+    │   ├── index.html            # HTML 外壳
+    │   ├── assets/
+    │   │   └── index.css         # Tailwind 导入 + 主题 CSS 变量 (Tokyo Night)
+    │   ├── components/
+    │   │   ├── TitleBar.tsx      # 自定义标题栏 (macOS traffic light + 功能按钮)
+    │   │   ├── StatusBar.tsx     # 底部状态栏 (分支/领先落后/变更数)
+    │   │   ├── Sidebar.tsx       # 左侧导航 (8 入口 + Motion 动画指示器)
+    │   │   ├── ToastContainer.tsx # Toast 通知 (AnimatePresence，5 条上限)
+    │   │   └── ui/               # shadcn/ui 风格基础组件
+    │   │       ├── button.tsx    # Button (base-nova 变体)
+    │   │       ├── dialog.tsx    # Dialog (Base UI 弹窗)
+    │   │       ├── input.tsx     # Input (Base UI 输入框)
+    │   │       └── select.tsx    # Select (Base UI 下拉)
+    │   ├── views/                # 13 个功能视图
+    │   │   ├── WelcomeView.tsx   # 欢迎页/无仓库引导
+    │   │   ├── CommitView.tsx    # 暂存区 + 提交信息输入
+    │   │   ├── HistoryView.tsx   # Commit 历史列表 + 筛选
+    │   │   ├── BranchesView.tsx  # 分支管理
+    │   │   ├── DiffView.tsx      # 文件 Diff 查看
+    │   │   ├── StashView.tsx     # Stash 管理
+    │   │   ├── TagsView.tsx      # Tag 管理
+    │   │   ├── GraphView.tsx     # Commit 图可视化 (SVG)
+    │   │   ├── CommitDetailView.tsx  # Commit 详情 + Diff
+    │   │   ├── FileSearchView.tsx    # 文件搜索 + Blame/历史
+    │   │   ├── FileHistoryView.tsx   # 单文件历史
+    │   │   ├── BlameView.tsx         # Blame 视图
+    │   │   └── ReflogView.tsx        # Reflog 查看
+    │   ├── store/
+    │   │   └── index.ts          # Zustand Store (~700 行) — 全局状态 + 50+ Actions
+    │   ├── lib/
+    │   │   └── utils.ts          # cn() 工具 (clsx + tailwind-merge)
+    │   ├── css.d.ts              # CSS 模块类型声明
+    │   └── env.d.ts              # Window.api 类型声明
     │
-    ├── views/                    # 功能视图 (GPUI Render 组件)
-    │   ├── mod.rs
-    │   ├── welcome.rs            # 欢迎页 / 无项目时的引导
-    │   ├── commit.rs             # Commit 视图 (staging area + message 输入)
-    │   ├── history.rs            # Commit 历史列表
-    │   ├── graph.rs              # Git Graph 可视化视图
-    │   ├── diff.rs               # Diff 视图 (inline + side-by-side)
-    │   ├── blame.rs              # Blame 视图
-    │   ├── branches.rs           # 分支管理视图
-    │   ├── remotes.rs            # Remote 管理视图
-    │   ├── stash.rs              # Stash 管理视图
-    │   ├── tags.rs               # Tag 管理视图
-    │   ├── conflict.rs           # 冲突解决视图
-    │   ├── search.rs             # 搜索视图
-    │   ├── settings.rs           # 设置面板
-    │   ├── hooks.rs              # Hooks 管理视图
-    │   ├── submodule.rs          # Submodule 管理视图
-    │   └── worktree.rs           # Worktree 管理视图
-    │
-    ├── ui/                       # 自定义 UI 组件
-    │   ├── mod.rs
-    │   ├── file_tree.rs          # 文件树组件 (带 Git 状态图标)
-    │   ├── diff_editor.rs        # Diff 编辑器组件 (语法高亮 + hunk 操作)
-    │   ├── graph_canvas.rs       # Git Graph 画布 (自定义 Element)
-    │   ├── status_bar.rs         # 底部状态栏
-    │   ├── command_palette.rs    # 命令面板
-    │   ├── sidebar.rs            # 侧边栏容器
-    │   ├── split_panel.rs        # 分割面板 (可拖拽调整大小)
-    │   ├── toolbar.rs            # 工具栏
-    │   └── notification.rs       # 通知 Toast 组件
-    │
-    ├── platform/                 # 远程平台集成
-    │   ├── mod.rs                # PlatformClient trait 定义
-    │   ├── github.rs             # GitHub API (REST + GraphQL)
-    │   ├── gitlab.rs             # GitLab API
-    │   ├── gitea.rs              # Gitea API
-    │   └── auth.rs               # OAuth / Token 认证管理
-    │
-    ├── terminal/                 # 内置终端
-    │   ├── mod.rs                # Terminal Entity
-    │   ├── pty.rs                # PTY 进程管理
-    │   └── view.rs               # 终端渲染视图
-    │
-    ├── ai/                       # AI 功能
-    │   ├── mod.rs                # AiProvider trait 定义
-    │   ├── commit_message.rs     # Commit message 生成逻辑
-    │   ├── openai.rs             # OpenAI Provider
-    │   ├── claude.rs             # Claude Provider
-    │   └── ollama.rs             # Ollama (本地模型) Provider
-    │
-    ├── i18n/                     # 国际化
-    │   ├── mod.rs                # t!() 宏定义、Locale 管理
-    │   └── loader.rs             # 翻译文件加载
-    │
-    └── settings/                 # 配置管理
-        ├── mod.rs                # AppSettings 定义
-        ├── keymap.rs             # 快捷键绑定配置
-        └── persistence.rs        # 配置持久化 (JSON 文件读写)
+    └── shared/                   # 主进程和渲染进程共享
+        ├── types.ts              # 全部 TS 接口定义 (~190 行)
+        │                         #   Commit, Branch, Remote, Tag, Stash, DiffLine,
+        │                         #   DiffHunk, FileDiff, GraphRow, BlameLine,
+        │                         #   ReflogEntry, AppSettings, Toast, ViewType, ...
+        └── ipc.ts                # IPC 通道名称常量 (~80 行)
+                                  #   REPO_OPEN, GIT_STAGE_FILES, GIT_COMMIT, ...
 ```

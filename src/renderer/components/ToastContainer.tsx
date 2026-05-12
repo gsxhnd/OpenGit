@@ -17,10 +17,10 @@ export function ToastContainer() {
             transition={{ duration: 0.2 }}
             className={cn(
               'pointer-events-auto px-4 py-2 rounded-md shadow-lg text-sm cursor-pointer',
-              'border border-[var(--color-border)]',
-              toast.kind === 'success' && 'bg-[var(--color-muted)] text-[var(--color-success)]',
-              toast.kind === 'error' && 'bg-[var(--color-muted)] text-[var(--color-danger)]',
-              toast.kind === 'info' && 'bg-[var(--color-muted)] text-[var(--color-info)]'
+              'border border-border',
+              toast.kind === 'success' && 'bg-muted text-success',
+              toast.kind === 'error' && 'bg-muted text-destructive',
+              toast.kind === 'info' && 'bg-muted text-info'
             )}
             onClick={() => removeToast(toast.id)}
           >

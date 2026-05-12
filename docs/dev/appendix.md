@@ -1,35 +1,49 @@
 # 附录
 
-## A. GPUI 技能参考
+## A. 技术参考
 
-项目 `.agents/skills/` 目录下包含完整的 GPUI 开发参考：
+### shadcn/ui 组件开发
 
-| 技能 | 文件 | 说明 |
-|------|------|------|
-| Action | `gpui-action/SKILL.md` | Action 定义与快捷键绑定 |
-| Async | `gpui-async/SKILL.md` | 异步操作与后台任务 |
-| Context | `gpui-context/SKILL.md` | Context 管理 (App, Window, AsyncApp) |
-| Element | `gpui-element/SKILL.md` | 自定义 Element API (低层) |
-| Entity | `gpui-entity/SKILL.md` | Entity 状态管理 |
-| Event | `gpui-event/SKILL.md` | 事件处理与订阅 |
-| Focus | `gpui-focus-handle/SKILL.md` | 焦点管理与键盘导航 |
-| Global | `gpui-global/SKILL.md` | 全局状态管理 |
-| Layout | `gpui-layout-and-style/SKILL.md` | 布局与样式 (Flexbox) |
-| Component | `gpui-new-component/SKILL.md` | 组件创建指南 |
-| Style Guide | `gpui-style-guide/SKILL.md` | 代码风格指南 |
-| Test | `gpui-test/SKILL.md` | 测试编写指南 |
+项目 `.agents/skills/shadcn/` 目录下包含 shadcn/ui 组件开发参考，涵盖组件的添加、搜索、调试和样式组合。
+
+shadcn/ui 配置 (`components.json`)：
+- 风格：base-nova
+- 基础颜色：slate
+- Tailwind CSS 变量模式
+- 组件路径：`src/renderer/components/ui/`
+
+### 当前使用的 UI 组件 (src/renderer/components/ui/)
+
+| 组件 | 说明 |
+|------|------|
+| Button | base-nova 变体，支持 variant/size |
+| Dialog | Base UI Dialog 封装 |
+| Input | Base UI Input 封装 |
+| Select | Base UI Select 封装 |
 
 ## B. 参考项目
 
 | 项目 | 说明 |
 |------|------|
-| [Zed Editor](https://github.com/zed-industries/zed) | GPUI 框架来源，参考架构设计 |
-| [gpui-component](https://github.com/longbridge/gpui-component) | UI 组件库，参考组件开发模式 |
-| [GitButler](https://github.com/gitbutlerapp/gitbutler) | Rust Git 客户端，参考 Git 操作封装 |
+| [GitHub Desktop](https://desktop.github.com/) | Electron 架构 Git GUI 参考 |
+| [GitButler](https://github.com/gitbutlerapp/gitbutler) | Rust + Tauri Git 客户端，参考虚拟分支设计 |
 | [Lazygit](https://github.com/jesseduffield/lazygit) | TUI Git 客户端，参考功能设计 |
 | [Sourcetree](https://www.sourcetreeapp.com/) | 商业 Git GUI，参考交互设计 |
 | [GitKraken](https://www.gitkraken.com/) | 商业 Git GUI，参考 Graph 可视化 |
+| [Zed Editor](https://github.com/zed-industries/zed) | GPUI 框架来源 (未来可能的 Rust 重写参考) |
 
-## C. 许可证
+## C. Electron 安全模型
 
-MIT License - 详见项目根目录 `LICENSE` 文件
+项目遵循 Electron 安全最佳实践：
+
+1. **Context Isolation**：`contextIsolation: true` — 渲染进程无法直接访问 Node.js
+2. **Preload Bridge**：`contextBridge.exposeInMainWorld` 暴露最小化 API
+3. **Node Integration OFF**：`nodeIntegration: false` — 渲染进程纯 Web 环境
+4. **Sandbox ON**：`sandbox: true` — 渲染进程沙箱隔离
+5. **无 Remote Module**：禁用 `@electron/remote`，全部通过 IPC 通信
+
+## D. 许可证
+
+MIT License — Copyright (c) 2026 伍轻鸣
+
+详见项目根目录 `LICENSE` 文件。

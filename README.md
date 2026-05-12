@@ -4,13 +4,13 @@ A modern Git GUI built with Electron, React, and TypeScript.
 
 ## Tech Stack
 
-- **Runtime**: Electron 33
-- **UI**: React 18 + TypeScript + Tailwind CSS 4
+- **Runtime**: Electron
+- **UI**: React 19+ TypeScript + Tailwind CSS 4
 - **Components**: shadcn/ui patterns + Base UI
 - **Animation**: Motion (Framer Motion)
 - **State**: Zustand
-- **Git**: simple-git (wraps system git CLI)
-- **Build**: electron-vite + Vite 6
+- **Git**:   system git CLI
+- **Build**: Vite + Electron Forge
 
 ## Development
 

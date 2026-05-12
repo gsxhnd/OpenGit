@@ -25,7 +25,7 @@ export function StashView() {
       className="flex flex-col h-full"
     >
       {/* Create stash */}
-      <div className="px-3 py-3 border-b border-[var(--color-border)]">
+      <div className="px-3 py-3 border-b border-border">
         <div className="flex gap-2">
           <input
             type="text"
@@ -33,11 +33,11 @@ export function StashView() {
             onChange={(e) => setStashMessage(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             placeholder="Stash message (optional)..."
-            className="flex-1 px-3 py-1.5 text-sm bg-[var(--color-muted)] border border-[var(--color-input-border)] rounded-md text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
+            className="flex-1 px-3 py-1.5 text-sm bg-muted border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           />
           <button
             onClick={handleCreate}
-            className="px-3 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:opacity-90"
+            className="px-3 py-1.5 text-xs rounded-md bg-primary text-primary-foreground hover:opacity-90"
           >
             Stash
           </button>
@@ -49,32 +49,32 @@ export function StashView() {
         {stashList.map((stash) => (
           <div
             key={stash.id}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-[var(--color-secondary)] border-b border-[var(--color-border)] group"
+            className="flex items-center gap-3 px-3 py-2 hover:bg-secondary border-b border-border group"
           >
-            <span className="text-xs font-mono text-[var(--color-muted-foreground)]">
+            <span className="text-xs font-mono text-muted-foreground">
               stash@{'{'}
               {stash.id}
               {'}'}
             </span>
-            <span className="flex-1 text-sm text-[var(--color-foreground)] truncate">
+            <span className="flex-1 text-sm text-foreground truncate">
               {stash.description}
             </span>
             <div className="hidden group-hover:flex items-center gap-1">
               <button
                 onClick={() => applyStash(stash.id)}
-                className="px-2 py-0.5 text-xs rounded bg-[var(--color-muted)] hover:bg-[var(--color-secondary)] text-[var(--color-success)]"
+                className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-success"
               >
                 Apply
               </button>
               <button
                 onClick={() => popStash(stash.id)}
-                className="px-2 py-0.5 text-xs rounded bg-[var(--color-muted)] hover:bg-[var(--color-secondary)] text-[var(--color-accent)]"
+                className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-accent"
               >
                 Pop
               </button>
               <button
                 onClick={() => deleteStash(stash.id)}
-                className="px-2 py-0.5 text-xs rounded bg-[var(--color-muted)] hover:bg-[var(--color-secondary)] text-[var(--color-danger)]"
+                className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-destructive"
               >
                 Delete
               </button>
@@ -83,7 +83,7 @@ export function StashView() {
         ))}
 
         {stashList.length === 0 && (
-          <p className="px-3 py-8 text-sm text-[var(--color-muted-foreground)] text-center">
+          <p className="px-3 py-8 text-sm text-muted-foreground text-center">
             No stashes
           </p>
         )}

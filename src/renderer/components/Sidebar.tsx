@@ -18,7 +18,7 @@ export function Sidebar() {
   const { currentView, setView } = useAppStore()
 
   return (
-    <aside className="w-48 flex-shrink-0 bg-[var(--color-sidebar)] border-r border-[var(--color-border)] flex flex-col overflow-y-auto">
+    <aside className="w-48 flex-shrink-0 bg-sidebar border-r border-border flex flex-col overflow-y-auto">
       <nav className="flex flex-col gap-0.5 p-2">
         {NAV_ITEMS.map((item) => (
           <button
@@ -27,14 +27,14 @@ export function Sidebar() {
             className={cn(
               'relative flex items-center gap-2 px-3 py-1.5 rounded text-sm text-left transition-colors',
               currentView === item.view
-                ? 'text-[var(--color-foreground)]'
-                : 'text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] hover:bg-[var(--color-secondary)]'
+                ? 'text-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
             )}
           >
             {currentView === item.view && (
               <motion.div
                 layoutId="sidebar-active"
-                className="absolute inset-0 bg-[var(--color-secondary)] rounded"
+                className="absolute inset-0 bg-secondary rounded"
                 transition={{ type: 'spring', duration: 0.3, bounce: 0.15 }}
               />
             )}

@@ -7,17 +7,19 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
+    "ignoreDeprecations": "6.0",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    "jsx": "react-jsx",
     "baseUrl": ".",
     "paths": {
       "@shared/*": ["./src/shared/*"],
       "@renderer/*": ["./src/renderer/*"]
     }
   },
-  "include": ["src/**/*", "electron.vite.config.ts"],
+  "include": ["src/**/*", "forge.config.ts", "vite.*.config.ts"],
   "exclude": ["node_modules", "dist", "release"]
 }

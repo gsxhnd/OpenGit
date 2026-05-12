@@ -22,7 +22,7 @@ export function FileSearchView() {
       className="flex flex-col h-full"
     >
       {/* Search input */}
-      <div className="px-3 py-3 border-b border-[var(--color-border)]">
+      <div className="px-3 py-3 border-b border-border">
         <div className="flex gap-2">
           <input
             type="text"
@@ -30,11 +30,11 @@ export function FileSearchView() {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search files by name..."
-            className="flex-1 px-3 py-1.5 text-sm bg-[var(--color-muted)] border border-[var(--color-input-border)] rounded-md text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
+            className="flex-1 px-3 py-1.5 text-sm bg-muted border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           />
           <button
             onClick={handleSearch}
-            className="px-3 py-1.5 text-xs rounded-md bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:opacity-90"
+            className="px-3 py-1.5 text-xs rounded-md bg-primary text-primary-foreground hover:opacity-90"
           >
             Search
           </button>
@@ -46,9 +46,9 @@ export function FileSearchView() {
         {fileSearchResults.map((filePath) => (
           <div
             key={filePath}
-            className="flex items-center gap-2 px-3 py-1.5 hover:bg-[var(--color-secondary)] group border-b border-[var(--color-border)]"
+            className="flex items-center gap-2 px-3 py-1.5 hover:bg-secondary group border-b border-border"
           >
-            <span className="flex-1 text-sm font-mono text-[var(--color-foreground)] truncate">
+            <span className="flex-1 text-sm font-mono text-foreground truncate">
               {filePath}
             </span>
             <div className="hidden group-hover:flex items-center gap-1">
@@ -57,19 +57,19 @@ export function FileSearchView() {
                   loadFileDiff(filePath)
                   setView('diff')
                 }}
-                className="px-2 py-0.5 text-xs rounded bg-[var(--color-muted)] hover:bg-[var(--color-secondary)] text-[var(--color-accent)]"
+                className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-accent"
               >
                 Diff
               </button>
               <button
                 onClick={() => loadFileHistory(filePath)}
-                className="px-2 py-0.5 text-xs rounded bg-[var(--color-muted)] hover:bg-[var(--color-secondary)] text-[var(--color-info)]"
+                className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-info"
               >
                 History
               </button>
               <button
                 onClick={() => loadBlame(filePath)}
-                className="px-2 py-0.5 text-xs rounded bg-[var(--color-muted)] hover:bg-[var(--color-secondary)] text-[var(--color-warning)]"
+                className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-warning"
               >
                 Blame
               </button>
@@ -78,13 +78,13 @@ export function FileSearchView() {
         ))}
 
         {fileSearchResults.length === 0 && query && (
-          <p className="px-3 py-8 text-sm text-[var(--color-muted-foreground)] text-center">
+          <p className="px-3 py-8 text-sm text-muted-foreground text-center">
             No files found
           </p>
         )}
 
         {!query && (
-          <p className="px-3 py-8 text-sm text-[var(--color-muted-foreground)] text-center">
+          <p className="px-3 py-8 text-sm text-muted-foreground text-center">
             Enter a file name to search
           </p>
         )}

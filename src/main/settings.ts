@@ -4,9 +4,22 @@ import { join } from 'path'
 import { IPC_CHANNELS } from '../shared/ipc'
 import { AppSettings } from '../shared/types'
 
-const CONFIG_DIR = join(app.getPath('userData'))
-const CONFIG_FILE = join(CONFIG_DIR, 'config.json')
-const THEMES_DIR = join(app.getAppPath(), 'themes')
+let _configDir: string | null = null
+let _configFile: string | null = null
+let _themesDir: string | null = null
+
+function getConfigDir(): string {
+  if (!_configDir) _configDir = join(app.getPath('userData'))
+  return _configDir
+}
+function getConfigFile(): string {
+  if (!_configFile) _configFile = join(getConfigDir(), 'config.json')
+  return _configFile
+}
+function getThemesDir(): string {
+  if (!_themesDir) _themesDir = join(app.getAppPath(), 'themes')
+  return _themesDir
+}
 
 const DEFAULT_SETTINGS: AppSettings = {
   window: { width: 1100, height: 720 },
@@ -21,17 +34,17 @@ const DEFAULT_SETTINGS: AppSettings = {
 
 export function loadSettings(): AppSettings {
   try {
-    if (existsSync(CONFIG_FILE)) {
-      const data = readFileSync(CONFIG_FILE, 'utf-8')
+    if (existsSync(getConfigFile())) {
+      const data = readFileSync(getConfigFile(), 'utf-8')
       return { ...DEFAULT_SETTINGS, ...JSON.parse(data) }
     }
   } catch (err) {
     console.error('Failed to load settings:', err)
     // Backup corrupted file
     try {
-      const backupPath = CONFIG_FILE + '.bak'
-      if (existsSync(CONFIG_FILE)) {
-        const data = readFileSync(CONFIG_FILE, 'utf-8')
+      const backupPath = getConfigFile() + '.bak'
+      if (existsSync(getConfigFile())) {
+        const data = readFileSync(getConfigFile(), 'utf-8')
         writeFileSync(backupPath, data)
       }
     } catch {}
@@ -41,10 +54,10 @@ export function loadSettings(): AppSettings {
 
 export function saveSettings(settings: AppSettings) {
   try {
-    if (!existsSync(CONFIG_DIR)) {
-      mkdirSync(CONFIG_DIR, { recursive: true })
+    if (!existsSync(getConfigDir())) {
+      mkdirSync(getConfigDir(), { recursive: true })
     }
-    writeFileSync(CONFIG_FILE, JSON.stringify(settings, null, 2))
+    writeFileSync(getConfigFile(), JSON.stringify(settings, null, 2))
   } catch (err) {
     console.error('Failed to save settings:', err)
   }
@@ -64,10 +77,10 @@ export function registerSettingsHandlers() {
 
   ipcMain.handle(IPC_CHANNELS.SETTINGS_GET_THEMES, () => {
     try {
-      if (!existsSync(THEMES_DIR)) return []
-      const files = readdirSync(THEMES_DIR).filter((f) => f.endsWith('.json'))
+      if (!existsSync(getThemesDir())) return []
+      const files = readdirSync(getThemesDir()).filter((f) => f.endsWith('.json'))
       return files.map((f) => {
-        const data = JSON.parse(readFileSync(join(THEMES_DIR, f), 'utf-8'))
+        const data = JSON.parse(readFileSync(join(getThemesDir(), f), 'utf-8'))
         return data
       })
     } catch {

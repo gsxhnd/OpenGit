@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-:root {
+@theme {
   --color-background: #1a1b26;
   --color-foreground: #c0caf5;
   --color-border: #292e42;
@@ -13,8 +13,8 @@
   --color-secondary-foreground: #c0caf5;
   --color-muted: #24283b;
   --color-muted-foreground: #565f89;
-  --color-danger: #f7768e;
-  --color-danger-foreground: #1a1b26;
+  --color-destructive: #f7768e;
+  --color-destructive-foreground: #1a1b26;
   --color-success: #9ece6a;
   --color-warning: #e0af68;
   --color-info: #7dcfff;

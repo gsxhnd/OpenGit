@@ -1,224 +1,124 @@
 # 3. 功能规划
 
+> 标记说明: ✅ 已实现 | 🚧 开发中 | 📋 计划中
+
 ## 3.1 核心 Git 操作
 
-| 功能 | 说明 |
-|------|------|
-| **Clone** | 克隆远程仓库到本地 |
-| **Init** | 初始化新的 Git 仓库 |
-| **Stage / Unstage** | 暂存/取消暂存，支持 hunk 级别和 line 级别 |
-| **Commit** | 提交变更，支持 amend |
-| **Push** | 推送到远程，支持 force push (需确认) |
-| **Pull** | 拉取并合并远程变更 (merge / rebase 策略可选) |
-| **Fetch** | 获取远程更新 |
-| **Merge** | 分支合并，支持 fast-forward / no-ff / squash |
-| **Rebase** | 变基操作，含交互式 Rebase (reorder, squash, edit, drop) |
-| **Cherry-pick** | 选择性应用 commit |
-| **Reset** | 重置到指定 commit (soft / mixed / hard) |
-| **Revert** | 撤销指定 commit (生成新 commit) |
-
-> Git 后端 (git2-rs / 系统 git) 由用户在设置中选择，详见 [设计决策 - Git 后端策略](06-design-decisions.md#61-git-后端策略)。
+| 功能 | 说明 | 状态 |
+|------|------|------|
+| **Open Repo** | 打开本地 Git 仓库，校验 .git 目录 | ✅ |
+| **Status** | 展示 modified / added / deleted / renamed / untracked / conflicted 文件 | ✅ |
+| **Stage / Unstage** | 暂存/取消暂存，支持全选/单选文件 | ✅ |
+| **Commit** | 提交变更，支持 amend | ✅ |
+| **Push** | 推送到远程，支持 force push (需确认)  | ✅ |
+| **Pull** | 拉取远程变更 | ✅ |
+| **Fetch** | 获取远程更新 | ✅ |
+| **Merge** | 分支合并 | ✅ |
+| **Reset** | 重置到指定 commit (soft / mixed / hard) | ✅ |
+| **Revert** | 撤销指定 commit (生成新 commit) | ✅ |
+| **Clone** | 克隆远程仓库到本地 | 📋 |
+| **Init** | 初始化新的 Git 仓库 | 📋 |
+| **Rebase** | 变基操作，含交互式 Rebase | 📋 |
+| **Cherry-pick** | 选择性应用 commit | 📋 |
+| **Hunk Stage** | Hunk 级别暂存/取消暂存 | 📋 |
+| **Line Stage** | 单行级别暂存/取消暂存 | 📋 |
 
 ## 3.2 分支管理
 
-| 功能 | 说明 |
-|------|------|
-| **分支列表** | 展示本地 + 远程分支，按最近活跃排序 |
-| **创建分支** | 从 HEAD 或指定 commit 创建 |
-| **删除分支** | 本地 + 远程删除 (需确认) |
-| **重命名分支** | 本地分支重命名 |
-| **切换分支** | Checkout 分支，含未提交变更处理提示 |
-| **上游追踪** | 设置/修改分支的上游追踪关系 |
-| **分支比较** | 比较两个分支之间的差异 (commits + files) |
+| 功能 | 说明 | 状态 |
+|------|------|------|
+| **分支列表** | 展示本地和远程分支 | ✅ |
+| **创建分支** | 从 HEAD 创建 | ✅ |
+| **删除分支** | 本地 + 远程删除 | ✅ |
+| **切换分支** | Checkout 分支 | ✅ |
+| **上游追踪** | 设置/修改分支的上游追踪关系 | ✅ |
+| **分支比较** | 比较两个分支之间的差异 | 📋 |
 
-## 3.3 多项目管理
+## 3.3 历史与追溯
 
-这是 OpenGit 的核心差异化功能，交互模式为 **侧边栏项目列表 + Tab 切换**：
-
-```
-┌─────────────────────────────────────────────────────┐
-│  Menu Bar                                           │
-├──────────┬──────────────────────────────────────────┤
-│          │  [Project A] [Project B] [Project C]  ← Tab Bar
-│ Projects │──────────────────────────────────────────│
-│ ──────── │                                          │
-│ ▸ Group1 │  ┌─ Staging Area ──────────────────────┐ │
-│   □ ProjA│  │  Modified: 3 files                  │ │
-│   □ ProjB│  │  ☑ src/main.rs                      │ │
-│ ▸ Group2 │  │  ☐ src/lib.rs                       │ │
-│   □ ProjC│  │  ☑ Cargo.toml                       │ │
-│          │  └─────────────────────────────────────┘ │
-│ ──────── │                                          │
-│ [+ Add]  │  ┌─ Commit Message ────────────────────┐ │
-│          │  │  feat: add new feature               │ │
-│          │  │                                      │ │
-│          │  │  [AI Generate]          [Commit]     │ │
-│          │  └─────────────────────────────────────┘ │
-│          │                                          │
-├──────────┴──────────────────────────────────────────┤
-│  Status Bar: branch:main | ↑2 ↓1 | 3 changes      │
-└─────────────────────────────────────────────────────┘
-```
-
-| 功能 | 说明 |
-|------|------|
-| **项目列表** | 侧边栏展示所有已添加的 Git 项目 |
-| **项目分组** | 支持将项目按文件夹/自定义分组整理 |
-| **Tab 切换** | 点击项目后在主区域以 Tab 形式展示，可同时打开多个 |
-| **状态概览** | 每个项目显示：未提交变更数、领先/落后 commit 数、当前分支 |
-| **快速添加** | 通过文件选择器或拖拽添加项目 |
-| **移除项目** | 从列表移除 (不删除本地文件) |
-| **持久化** | 项目列表和分组配置保存到本地配置文件 |
-| **自动刷新** | 文件系统 watcher 监听变更，自动更新状态 |
+| 功能 | 说明 | 状态 |
+|------|------|------|
+| **Commit 历史** | 分页加载的 commit 列表，展示 hash / message / author / date | ✅ |
+| **历史筛选** | 按作者和文件路径筛选 | ✅ |
+| **Commit 详情** | 点击 commit 查看完整变更 (diff + 文件列表) | ✅ |
+| **Git Graph** | SVG 图形化展示分支和合并拓扑 | ✅ |
+| **File History** | 查看单个文件的完整修改历史 | ✅ |
+| **Blame** | Git porcelain blame 格式解析，逐行展示作者和 commit | ✅ |
+| **Reflog** | 查看 HEAD 操作历史 | ✅ |
+| **文件搜索** | 按文件名搜索工作区文件，支持 blame 和历史跳转 | ✅ |
+| **Commit 搜索** | 按 message / hash / 作者搜索 commit | 📋 |
+| **内容搜索** | 按文件内容搜索 | 📋 |
 
 ## 3.4 Diff 与冲突解决
 
-### Diff 视图
+| 功能 | 说明 | 状态 |
+|------|------|------|
+| **Inline Diff** | 单栏 diff，增删行展示 | ✅ |
+| **文件级 Diff** | 文件级别查看 diff | ✅ |
+| **Side-by-side Diff** | 双栏 diff，左旧右新 | 📋 |
+| **语法高亮** | Diff 内容按语言进行语法高亮 | 📋 |
+| **Word Diff** | 行内变更以单词级别高亮 | 📋 |
+| **冲突解决** | 三方合并视图、冲突标记、手动解决 | 📋 |
+
+## 3.5 Stash 管理
+
+| 功能 | 说明 | 状态 |
+|------|------|------|
+| **Stash 列表** | 展示所有 stash 条目 | ✅ |
+| **创建 Stash** | 暂存当前变更 | ✅ |
+| **应用 Stash** | Apply / Pop stash | ✅ |
+| **删除 Stash** | Drop stash | ✅ |
+| **查看 Stash** | 查看 stash 包含的变更 diff | 📋 |
+| **Stash 部分文件** | 选择性 stash 指定文件 | 📋 |
+
+## 3.6 Tag 管理
+
+| 功能 | 说明 | 状态 |
+|------|------|------|
+| **Tag 列表** | 展示所有 tag | ✅ |
+| **创建 Tag** | Lightweight / Annotated tag | ✅ |
+| **删除 Tag** | 本地删除 | ✅ |
+| **推送 Tag** | 推送 tag 到远程 | ✅ |
+
+## 3.7 Remote 操作
+
+| 功能 | 说明 | 状态 |
+|------|------|------|
+| **Remote 列表** | 展示所有远程仓库 | ✅ |
+| **添加 Remote** | 添加新的远程仓库 | ✅ |
+| **删除 Remote** | 删除远程仓库配置 | ✅ |
+| **编辑 Remote** | 修改 URL / 名称 | ✅ |
+
+## 3.8 用户体验
+
+| 功能 | 说明 | 状态 |
+|------|------|------|
+| **Toast 通知** | 操作成功/失败的动画通知，5 条上限，5 秒自动消失 | ✅ |
+| **状态栏** | 底部状态栏显示当前分支、领先/落后 commit、变更文件数 | ✅ |
+| **自定义标题栏** | macOS traffic light 支持，仓库名和分支展示，功能按钮 | ✅ |
+| **文件系统监听** | 自动检测仓库变更，500ms 防抖，忽略 .git 内部文件 | ✅ |
+| **设置持久化** | 窗口状态、当前视图、项目列表保存到本地 JSON | ✅ |
+| **动画过渡** | Motion AnimatePresence 实现视图切换和通知动画 | ✅ |
+| **主题切换** | 深色主题 (CSS 变量驱动) | ✅ |
+| **Sidebar 导航** | 8 个功能入口，活跃指示器动画 | ✅ |
+| **欢迎页** | 无仓库时的引导页面 | ✅ |
+| **快捷键** | 预定义常用操作快捷键 | 📋 |
+| **命令面板** | Ctrl/Cmd+Shift+P 模糊搜索所有命令 | 📋 |
+| **i18n** | 中文/英文国际化 | 📋 |
+
+## 3.9 高级功能 (计划中)
 
 | 功能 | 说明 |
 |------|------|
-| **Inline Diff** | 单栏 diff，增删行上下排列 |
-| **Side-by-side Diff** | 双栏 diff，左旧右新 |
-| **语法高亮** | Diff 内容按语言进行语法高亮 |
-| **Hunk 操作** | 对单个 hunk 进行 stage / discard / revert |
-| **Line 操作** | 对单行进行 stage / unstage |
-| **Word Diff** | 行内变更以单词级别高亮 |
-| **大文件处理** | 超大 diff 分段加载，避免卡顿 |
-
-### 冲突解决
-
-| 功能 | 说明 |
-|------|------|
-| **冲突标记** | 文件列表中标记冲突文件 |
-| **三方合并视图** | Base / Ours / Theirs 三方对比 |
-| **手动选择** | 逐 hunk 选择采用哪一方 |
-| **合并结果预览** | 实时预览合并后的结果 |
-| **标记已解决** | 手动标记冲突已解决 |
-
-## 3.5 历史与追溯
-
-| 功能 | 说明 |
-|------|------|
-| **Commit 历史** | 分页加载的 commit 列表，展示 message / author / date / hash |
-| **Git Graph** | 图形化展示分支和合并的拓扑关系 (详见 [设计决策 - Git Graph 渲染](06-design-decisions.md#63-git-graph-渲染)) |
-| **Commit 详情** | 点击 commit 查看详细变更 (diff + 文件列表) |
-| **File History** | 查看单个文件的完整修改历史 |
-| **Blame** | 逐行展示每行代码的最后修改者和 commit |
-| **Reflog** | 查看 HEAD 操作历史，支持恢复误操作 |
-| **搜索** | 按 commit message / 作者 / 文件路径 / 文件内容搜索 |
-
-## 3.6 Stash 管理
-
-| 功能 | 说明 |
-|------|------|
-| **Stash 列表** | 展示所有 stash 条目 |
-| **创建 Stash** | 暂存当前变更，支持自定义 message |
-| **应用 Stash** | Apply / Pop stash |
-| **查看 Stash** | 查看 stash 包含的变更 diff |
-| **删除 Stash** | 删除指定 stash 或清空所有 |
-| **Stash 部分文件** | 选择性 stash 指定文件 |
-
-## 3.7 Tag 管理
-
-| 功能 | 说明 |
-|------|------|
-| **Tag 列表** | 展示所有 tag (本地 + 远程) |
-| **创建 Tag** | Lightweight / Annotated tag |
-| **删除 Tag** | 本地 + 远程删除 |
-| **推送 Tag** | 推送指定 tag 或所有 tag 到远程 |
-| **Tag 详情** | 查看 tag 指向的 commit |
-
-## 3.8 Remote 操作与平台集成
-
-### Remote 管理
-
-| 功能 | 说明 |
-|------|------|
-| **Remote 列表** | 展示所有远程仓库 |
-| **添加 Remote** | 添加新的远程仓库 |
-| **删除 Remote** | 删除远程仓库配置 |
-| **编辑 Remote** | 修改 URL / 名称 |
-| **Fetch All** | 一键 fetch 所有 remote |
-
-### 平台集成 (GitHub / GitLab / Gitea)
-
-| 功能 | 说明 | 优先级 |
-|------|------|--------|
-| **认证** | OAuth / Personal Access Token | 必须 |
-| **PR / MR 列表** | 查看当前仓库的 Pull Request / Merge Request | 高 |
-| **创建 PR / MR** | 从当前分支创建 PR/MR，填写标题和描述 | 高 |
-| **Issue 浏览** | 查看 Issue 列表和详情 | 中 |
-| **CI/CD 状态** | 查看 Pipeline / Workflow 运行状态 | 中 |
-| **Review 评论** | 查看 PR 的 review 评论 | 低 |
-
-## 3.9 高级功能
-
-### 内置终端
-
-| 功能 | 说明 |
-|------|------|
-| **PTY 终端** | 底部面板嵌入完整的终端模拟器 |
-| **工作目录** | 自动切换到当前项目目录 |
-| **快速命令** | 支持从 UI 操作直接生成 git 命令到终端 |
-| **多 Tab** | 支持多个终端 Tab |
-
-### AI Commit Message
-
-| 功能 | 说明 |
-|------|------|
-| **自动生成** | 基于 staged diff 自动生成 commit message |
-| **多 Provider** | 支持 OpenAI / Claude / Ollama 等本地/远程模型 |
-| **Conventional Commits** | 遵循 Conventional Commits 规范 (feat/fix/docs/...) |
-| **可编辑** | 生成后用户可编辑修改 |
-| **重新生成** | 不满意可一键重新生成 |
-| **自定义 Prompt** | 用户可自定义生成 prompt 模板 |
-
-### Git Hooks 管理
-
-| 功能 | 说明 |
-|------|------|
-| **Hook 列表** | 展示仓库所有 hooks (pre-commit, commit-msg, pre-push 等) |
-| **编辑 Hook** | 内置编辑器编辑 hook 脚本 |
-| **启用/禁用** | 通过重命名快速启用/禁用 hook |
-| **模板** | 提供常用 hook 模板 |
-
-### Submodule 管理
-
-| 功能 | 说明 |
-|------|------|
-| **Submodule 列表** | 展示所有 submodule 及状态 |
-| **添加** | 添加新的 submodule |
-| **初始化** | `submodule init` + `submodule update` |
-| **更新** | 更新到最新 commit / 指定 commit |
-| **同步** | 同步 submodule URL |
-| **移除** | 完整移除 submodule |
-
-### Worktree 管理
-
-| 功能 | 说明 |
-|------|------|
-| **Worktree 列表** | 展示所有 worktree 及关联分支 |
-| **创建** | 创建新的 worktree (指定路径 + 分支) |
-| **删除** | 删除 worktree |
-| **切换** | 在 OpenGit 中快速切换到另一个 worktree |
-
-### Commit 签名
-
-| 功能 | 说明 |
-|------|------|
-| **GPG 签名** | 使用 GPG key 签名 commit |
-| **SSH 签名** | 使用 SSH key 签名 commit |
-| **签名验证** | 在 commit 历史中展示签名验证状态 |
-| **Key 管理** | 选择/配置签名 key |
-
-### LFS 支持
-
-| 功能 | 说明 |
-|------|------|
-| **LFS Track** | 管理 `.gitattributes` 中的 LFS 追踪规则 |
-| **LFS Status** | 查看 LFS 文件状态 |
-| **LFS Pull / Push** | 拉取/推送 LFS 文件 |
-| **LFS Prune** | 清理本地 LFS 缓存 |
+| **多项目管理** | 侧边栏项目列表 + Tab 切换，一个窗口管理多个仓库 |
+| **AI Commit Message** | 基于 staged diff 自动生成 commit message (OpenAI / Claude / Ollama) |
+| **内置终端** | 底部面板嵌入 PTY 终端模拟器 |
+| **平台集成** | GitHub / GitLab / Gitea PR/MR 列表、创建、CI 状态 |
+| **Git Hooks 管理** | 查看/编辑/启用/禁用 hooks |
+| **Submodule 管理** | 列表、初始化、更新、移除 |
+| **Worktree 管理** | 列表、创建、删除、切换 |
+| **Commit 签名** | GPG / SSH 签名与验证 |
+| **LFS 支持** | Track / Status / Pull / Push / Prune |
 
 ## 3.10 用户体验
 

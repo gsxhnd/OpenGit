@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { motion } from 'motion/react'
 import { useAppStore } from '../store'
 import { cn } from '../lib/utils'
+import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
 import type { FileEntry } from '@shared/types'
 
 function FileRow({
@@ -20,12 +22,12 @@ function FileRow({
   isStaged: boolean
 }) {
   const statusColors: Record<string, string> = {
-    modified: 'text-[var(--color-warning)]',
-    added: 'text-[var(--color-success)]',
-    deleted: 'text-[var(--color-danger)]',
-    renamed: 'text-[var(--color-info)]',
-    untracked: 'text-[var(--color-muted-foreground)]',
-    conflicted: 'text-[var(--color-danger)]',
+    modified: 'text-warning',
+    added: 'text-success',
+    deleted: 'text-destructive',
+    renamed: 'text-info',
+    untracked: 'text-muted-foreground',
+    conflicted: 'text-destructive',
   }
 
   const statusLabels: Record<string, string> = {
@@ -38,45 +40,33 @@ function FileRow({
   }
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1 hover:bg-[var(--color-secondary)] rounded group text-sm">
+    <div className="flex items-center gap-2 px-3 py-1 hover:bg-secondary rounded group text-sm">
       <span className={cn('w-4 text-center font-mono text-xs', statusColors[file.status])}>
         {statusLabels[file.status] || ' '}
       </span>
-      <span className="flex-1 truncate text-[var(--color-foreground)]">{file.path}</span>
+      <span className="flex-1 truncate text-foreground">{file.path}</span>
       <div className="hidden group-hover:flex items-center gap-1">
         {onDiff && (
-          <button
-            onClick={onDiff}
-            className="px-2 py-0.5 text-xs rounded bg-[var(--color-muted)] hover:bg-[var(--color-secondary)] text-[var(--color-muted-foreground)]"
-          >
+          <Button variant="ghost" size="sm" onClick={onDiff} className="h-6 px-2 text-xs">
             Diff
-          </button>
+          </Button>
         )}
         {onDiscard && (
-          <button
-            onClick={onDiscard}
-            className="px-2 py-0.5 text-xs rounded bg-[var(--color-muted)] hover:bg-[var(--color-secondary)] text-[var(--color-danger)]"
-          >
+          <Button variant="ghost" size="sm" onClick={onDiscard} className="h-6 px-2 text-xs text-destructive hover:text-destructive">
             Discard
-          </button>
+          </Button>
         )}
         {isStaged ? (
           onUnstage && (
-            <button
-              onClick={onUnstage}
-              className="px-2 py-0.5 text-xs rounded bg-[var(--color-muted)] hover:bg-[var(--color-secondary)] text-[var(--color-warning)]"
-            >
+            <Button variant="ghost" size="sm" onClick={onUnstage} className="h-6 px-2 text-xs text-warning">
               Unstage
-            </button>
+            </Button>
           )
         ) : (
           onStage && (
-            <button
-              onClick={onStage}
-              className="px-2 py-0.5 text-xs rounded bg-[var(--color-muted)] hover:bg-[var(--color-secondary)] text-[var(--color-success)]"
-            >
+            <Button variant="ghost" size="sm" onClick={onStage} className="h-6 px-2 text-xs text-success">
               Stage
-            </button>
+            </Button>
           )
         )}
       </div>
@@ -99,7 +89,6 @@ export function CommitView() {
     loadFileDiff,
     loadStagedFileDiff,
     setView,
-    diffPreview,
   } = useAppStore()
 
   const [commitMessage, setCommitMessage] = useState('')
@@ -138,17 +127,14 @@ export function CommitView() {
     >
       {/* Unstaged changes */}
       <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)]">
-          <h3 className="text-xs font-medium text-[var(--color-muted-foreground)] uppercase tracking-wide">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Unstaged Changes ({unstaged.length})
           </h3>
           {unstaged.length > 0 && (
-            <button
-              onClick={stageAll}
-              className="text-xs px-2 py-0.5 rounded hover:bg-[var(--color-secondary)] text-[var(--color-success)]"
-            >
+            <Button variant="ghost" size="sm" onClick={stageAll} className="h-6 px-2 text-xs text-success">
               Stage All
-            </button>
+            </Button>
           )}
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -163,7 +149,7 @@ export function CommitView() {
             />
           ))}
           {unstaged.length === 0 && (
-            <p className="px-3 py-4 text-sm text-[var(--color-muted-foreground)] text-center">
+            <p className="px-3 py-4 text-sm text-muted-foreground text-center">
               No unstaged changes
             </p>
           )}
@@ -171,18 +157,15 @@ export function CommitView() {
       </div>
 
       {/* Staged changes */}
-      <div className="flex-1 overflow-hidden flex flex-col border-t border-[var(--color-border)]">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--color-border)]">
-          <h3 className="text-xs font-medium text-[var(--color-muted-foreground)] uppercase tracking-wide">
+      <div className="flex-1 overflow-hidden flex flex-col border-t border-border">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Staged Changes ({staged.length})
           </h3>
           {staged.length > 0 && (
-            <button
-              onClick={unstageAll}
-              className="text-xs px-2 py-0.5 rounded hover:bg-[var(--color-secondary)] text-[var(--color-warning)]"
-            >
+            <Button variant="ghost" size="sm" onClick={unstageAll} className="h-6 px-2 text-xs text-warning">
               Unstage All
-            </button>
+            </Button>
           )}
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -196,7 +179,7 @@ export function CommitView() {
             />
           ))}
           {staged.length === 0 && (
-            <p className="px-3 py-4 text-sm text-[var(--color-muted-foreground)] text-center">
+            <p className="px-3 py-4 text-sm text-muted-foreground text-center">
               No staged changes
             </p>
           )}
@@ -204,9 +187,9 @@ export function CommitView() {
       </div>
 
       {/* Commit form */}
-      <div className="border-t border-[var(--color-border)] p-3">
+      <div className="border-t border-border p-3">
         <div className="flex items-center gap-2 mb-2">
-          <label className="flex items-center gap-1.5 text-xs text-[var(--color-muted-foreground)] cursor-pointer">
+          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
             <input
               type="checkbox"
               checked={commitAmend}
@@ -220,20 +203,20 @@ export function CommitView() {
           value={commitMessage}
           onChange={(e) => setCommitMessage(e.target.value)}
           placeholder="Commit message..."
-          className="w-full h-20 px-3 py-2 text-sm bg-[var(--color-muted)] border border-[var(--color-input-border)] rounded-md resize-none text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--color-ring)]"
+          className="w-full h-20 px-3 py-2 text-sm bg-muted border border-border rounded-md resize-none text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           onKeyDown={(e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
               handleCommit()
             }
           }}
         />
-        <button
+        <Button
           onClick={handleCommit}
           disabled={!commitMessage.trim() || staged.length === 0}
-          className="mt-2 w-full py-1.5 text-sm font-medium rounded-md bg-[var(--color-primary)] text-[var(--color-primary-foreground)] hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+          className="mt-2 w-full"
         >
           {commitAmend ? 'Amend Commit' : 'Commit'}
-        </button>
+        </Button>
       </div>
     </motion.div>
   )

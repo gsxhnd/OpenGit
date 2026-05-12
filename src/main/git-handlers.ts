@@ -1,5 +1,6 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import simpleGit, { SimpleGit, StatusResult, DiffResult } from 'simple-git'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
 import { IPC_CHANNELS } from '../shared/ipc'
 import {
   RepositoryStatus,
@@ -20,12 +21,37 @@ import {
 } from '../shared/types'
 import { setupFileWatcher, stopFileWatcher } from './file-watcher'
 
-let git: SimpleGit | null = null
+const execFileAsync = promisify(execFile)
+
 let currentRepoPath: string | null = null
 
-function getGit(): SimpleGit {
-  if (!git) throw new Error('No repository opened')
-  return git
+function getRepoPath(): string {
+  if (!currentRepoPath) throw new Error('No repository opened')
+  return currentRepoPath
+}
+
+async function git(args: string[]): Promise<string> {
+  const repoPath = getRepoPath()
+  try {
+    const { stdout } = await execFileAsync('git', args, {
+      cwd: repoPath,
+      maxBuffer: 50 * 1024 * 1024,
+      encoding: 'utf-8',
+    })
+    return stdout
+  } catch (err: any) {
+    const stderr = err.stderr || err.message || ''
+    const message = stderr.replace(/\n/g, ' ').trim() || err.message
+    throw new Error(message)
+  }
+}
+
+async function gitSilent(args: string[]): Promise<string> {
+  try {
+    return await git(args)
+  } catch {
+    return ''
+  }
 }
 
 // ============ Helpers ============
@@ -42,108 +68,104 @@ function parseFileStatus(x: string, y: string): FileStatus {
 }
 
 async function getRepoStatus(): Promise<RepositoryStatus> {
-  const g = getGit()
+  const repoPath = getRepoPath()
 
-  const [status, logResult, branchSummary, remotesRaw, tagsResult] = await Promise.all([
-    g.status(),
-    g.log({ maxCount: 1 }).catch(() => null),
-    g.branch(),
-    g.getRemotes(true),
-    g.tags(),
+  const [porcelain, logOut, branchOut, remoteOut, tagOut] = await Promise.all([
+    gitSilent(['status', '--porcelain', '-u']),
+    gitSilent(['log', '-1', '--format=%H%n%s%n%B%n%an <%ae>%n%aI']),
+    gitSilent(['branch', '-a', '--format=%(refname:short)%00%(objectname:short)%00%(HEAD)%00%(upstream:short)']),
+    gitSilent(['remote', '-v']),
+    gitSilent(['tag']),
   ])
 
-  // Parse working tree status
-  const stagedFiles: FileEntry[] = status.staged.map((f) => ({
-    path: f,
-    status: 'modified' as FileStatus,
-    staged: true,
-    unstaged: false,
-  }))
+  // Parse status
+  const stagedFiles: FileEntry[] = []
+  const unstagedFiles: FileEntry[] = []
+  const untrackedFiles: FileEntry[] = []
 
-  const unstagedFiles: FileEntry[] = status.modified
-    .filter((f) => !status.staged.includes(f))
-    .map((f) => ({
-      path: f,
-      status: 'modified' as FileStatus,
-      staged: false,
-      unstaged: true,
-    }))
+  for (const line of porcelain.split('\n').filter(Boolean)) {
+    const x = line[0] || ' '
+    const y = line[1] || ' '
+    let filePath = line.slice(3).trim()
 
-  // Include deleted files
-  status.deleted.forEach((f) => {
-    if (status.staged.includes(f)) {
-      stagedFiles.push({ path: f, status: 'deleted', staged: true, unstaged: false })
-    } else {
-      unstagedFiles.push({ path: f, status: 'deleted', staged: false, unstaged: true })
+    // Handle renamed files (format: "R  old -> new")
+    const renameMatch = filePath.match(/^(.+)\s+->\s+(.+)$/)
+    if (renameMatch) {
+      filePath = renameMatch[2]
     }
-  })
 
-  // Renamed files
-  status.renamed.forEach((r) => {
-    stagedFiles.push({ path: r.to, status: 'renamed', staged: true, unstaged: false })
-  })
+    const status = parseFileStatus(x, y)
+    const inIndex = x !== ' ' && x !== '?' && x !== '!' 
+    const inWorktree = y !== ' ' && y !== '!' 
 
-  // Created (new staged files)
-  status.created.forEach((f) => {
-    if (status.staged.includes(f)) {
-      stagedFiles.push({ path: f, status: 'added', staged: true, unstaged: false })
+    if (status === 'untracked') {
+      untrackedFiles.push({ path: filePath, status, staged: false, unstaged: true })
+    } else if (inIndex && !inWorktree && status !== 'conflicted') {
+      stagedFiles.push({ path: filePath, status, staged: true, unstaged: false })
+    } else if (!inIndex && inWorktree) {
+      unstagedFiles.push({ path: filePath, status, staged: false, unstaged: true })
+    } else if (inIndex && inWorktree) {
+      stagedFiles.push({ path: filePath, status, staged: true, unstaged: false })
+      if (status === 'conflicted') {
+        unstagedFiles.push({ path: filePath, status, staged: false, unstaged: true })
+      }
     }
-  })
-
-  const untrackedFiles: FileEntry[] = status.not_added.map((f) => ({
-    path: f,
-    status: 'untracked' as FileStatus,
-    staged: false,
-    unstaged: true,
-  }))
-
-  // Conflicted files
-  status.conflicted.forEach((f) => {
-    unstagedFiles.push({ path: f, status: 'conflicted', staged: false, unstaged: true })
-  })
-
-  const workingTree: WorkingTreeStatus = {
-    unstagedFiles,
-    stagedFiles,
-    untrackedFiles,
-    currentBranch: status.current || null,
-    mergeHead: null, // TODO: detect merge state
-    rebaseMerge: false,
   }
+
+  // Current branch
+  let currentBranch: string | null = null
+  try {
+    currentBranch = (await git(['rev-parse', '--abbrev-ref', 'HEAD'])).trim()
+    if (currentBranch === 'HEAD') currentBranch = null
+  } catch {}
 
   // Head commit
   let head: Commit | null = null
-  if (logResult && logResult.latest) {
-    const l = logResult.latest
+  const logLines = logOut.split('\n').filter((l) => l)
+  if (logLines.length >= 5) {
     head = {
-      hash: l.hash,
-      summary: l.message.split('\n')[0],
-      message: l.message,
-      author: `${l.author_name} <${l.author_email}>`,
-      committer: `${l.author_name} <${l.author_email}>`,
-      time: l.date,
+      hash: logLines[0],
+      summary: logLines[1],
+      message: logLines.slice(1, 4).join('\n'),
+      author: logLines[3],
+      committer: logLines[3],
+      time: logLines[4],
       parents: [],
     }
   }
 
   // Branches
-  const branches: Branch[] = Object.entries(branchSummary.branches).map(([name, info]) => ({
-    name,
-    target: info.commit,
-    isLocal: !name.startsWith('remotes/'),
-    isHead: info.current,
-    upstream: null,
-  }))
+  const branches: Branch[] = []
+  for (const line of branchOut.split('\n').filter(Boolean)) {
+    const parts = line.split('\0')
+    const name = parts[0]
+    if (!name) continue
+    // Skip symbolic HEAD ref
+    if (name.includes('->')) continue
+    branches.push({
+      name,
+      target: parts[1] || '',
+      isLocal: !name.startsWith('remotes/'),
+      isHead: parts[2] === '*',
+      upstream: parts[3] || null,
+    })
+  }
 
   // Remotes
-  const remotes: Remote[] = remotesRaw.map((r) => ({
-    name: r.name,
-    fetchUrl: r.refs.fetch || '',
-    pushUrl: r.refs.push || '',
-  }))
+  const remotes: Remote[] = []
+  const seenRemotes = new Set<string>()
+  for (const line of remoteOut.split('\n').filter(Boolean)) {
+    const parts = line.split('\t')
+    if (parts.length < 2) continue
+    const name = parts[0]
+    if (seenRemotes.has(name)) continue
+    seenRemotes.add(name)
+    const urlPart = parts[1].replace(' (fetch)', '').replace(' (push)', '')
+    remotes.push({ name, fetchUrl: urlPart, pushUrl: urlPart })
+  }
 
   // Tags
-  const tags: Tag[] = tagsResult.all.map((t) => ({
+  const tags: Tag[] = tagOut.split('\n').filter(Boolean).map((t) => ({
     name: t,
     target: '',
     message: null,
@@ -151,10 +173,60 @@ async function getRepoStatus(): Promise<RepositoryStatus> {
   }))
 
   // Ahead/behind
-  const ahead = status.ahead || 0
-  const behind = status.behind || 0
+  let ahead = 0
+  let behind = 0
+  if (currentBranch) {
+    try {
+      const upstreamBranch = branches.find(
+        (b) => b.name === currentBranch && b.upstream
+      )?.upstream
+      if (upstreamBranch) {
+        const countOut = await gitSilent([
+          'rev-list',
+          '--count',
+          '--left-right',
+          `${upstreamBranch}...HEAD`,
+        ])
+        const parts = countOut.split('\t')
+        ahead = parseInt(parts[1]) || 0
+        behind = parseInt(parts[0]) || 0
+      }
+    } catch {}
+  }
+
+  const workingTree: WorkingTreeStatus = {
+    unstagedFiles,
+    stagedFiles,
+    untrackedFiles,
+    currentBranch,
+    mergeHead: null,
+    rebaseMerge: false,
+  }
 
   return { status: workingTree, head, branches, remotes, tags, ahead, behind }
+}
+
+function parseCommitLogLine(line: string): Commit {
+  const parts = line.split('\x1f')
+  return {
+    hash: parts[0] || '',
+    summary: parts[1] || '',
+    message: (parts[1] || '') + '\n\n' + (parts[2] || ''),
+    author: parts[3] || '',
+    committer: parts[3] || '',
+    time: parts[4] || '',
+    parents: parts[5] ? parts[5].split(' ') : [],
+  }
+}
+
+async function getCommits(count: number, skip: number = 0): Promise<Commit[]> {
+  const out = await gitSilent([
+    'log',
+    `-${count}`,
+    ...(skip > 0 ? [`--skip=${skip}`] : []),
+    '--format=%H\x1f%s\x1f%b\x1f%an <%ae>\x1f%aI\x1f%P',
+  ])
+  return out.split('\n').filter(Boolean).map(parseCommitLogLine)
 }
 
 function parseDiffOutput(diffText: string, filePath: string): FileDiff {
@@ -180,8 +252,8 @@ function parseDiffOutput(diffText: string, filePath: string): FileDiff {
       currentHunk.lines.push({
         prefix,
         content: line.slice(1),
-        oldLine: prefix !== '+' ? null : null, // Line numbers computed by renderer
-        newLine: prefix !== '-' ? null : null,
+        oldLine: null,
+        newLine: null,
       })
     }
   }
@@ -200,18 +272,15 @@ function parseDiffOutput(diffText: string, filePath: string): FileDiff {
 export function registerGitHandlers() {
   // Repository
   ipcMain.handle(IPC_CHANNELS.REPO_OPEN, async (_event, repoPath: string) => {
-    git = simpleGit(repoPath)
-    currentRepoPath = repoPath
-
-    // Verify it's a git repo
-    const isRepo = await git.checkIsRepo()
-    if (!isRepo) {
-      git = null
-      currentRepoPath = null
+    try {
+      // Verify it's a git repo
+      await execFileAsync('git', ['rev-parse', '--is-inside-work-tree'], { cwd: repoPath })
+    } catch {
       throw new Error('Not a git repository')
     }
 
-    // Setup file watcher
+    currentRepoPath = repoPath
+
     const win = BrowserWindow.getAllWindows()[0]
     if (win) {
       setupFileWatcher(repoPath, win)
@@ -222,7 +291,6 @@ export function registerGitHandlers() {
 
   ipcMain.handle(IPC_CHANNELS.REPO_CLOSE, async () => {
     stopFileWatcher()
-    git = null
     currentRepoPath = null
   })
 
@@ -234,46 +302,30 @@ export function registerGitHandlers() {
   ipcMain.handle(
     IPC_CHANNELS.GIT_GET_HISTORY,
     async (_event, count: number = 50, skip: number = 0) => {
-      const g = getGit()
-      const log = await g.log({ maxCount: count, '--skip': skip })
-      return log.all.map((l) => ({
-        hash: l.hash,
-        summary: l.message.split('\n')[0],
-        message: l.message,
-        author: `${l.author_name} <${l.author_email}>`,
-        committer: `${l.author_name} <${l.author_email}>`,
-        time: l.date,
-        parents: l.refs ? l.refs.split(', ') : [],
-      }))
+      return getCommits(count, skip)
     }
   )
 
   ipcMain.handle(IPC_CHANNELS.GIT_GET_COMMIT, async (_event, hash: string) => {
-    const g = getGit()
-    const log = await g.log({ maxCount: 1, from: hash, to: hash })
-    if (!log.latest) throw new Error('Commit not found')
-    const l = log.latest
-    return {
-      hash: l.hash,
-      summary: l.message.split('\n')[0],
-      message: l.message,
-      author: `${l.author_name} <${l.author_email}>`,
-      committer: `${l.author_name} <${l.author_email}>`,
-      time: l.date,
-      parents: [],
-    }
+    const out = await git([
+      'log',
+      '-1',
+      `--format=%H\x1f%s\x1f%b\x1f%an <%ae>\x1f%aI\x1f%P`,
+      hash,
+    ])
+    const commit = parseCommitLogLine(out.trim())
+    if (!commit.hash) throw new Error('Commit not found')
+    return commit
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_GET_COMMIT_DIFF, async (_event, hash: string) => {
-    const g = getGit()
-    const diff = await g.diff([`${hash}~1`, hash])
-    // Parse multi-file diff
+    const diff = await gitSilent(['diff', `${hash}~1`, hash])
     const files: FileDiff[] = []
     const fileSections = diff.split(/^diff --git/m).filter(Boolean)
     for (const section of fileSections) {
-      const pathMatch = section.match(/a\/(.+?)\s+b\/(.+)/)
+      const pathMatch = section.match(/b\/(.+?)(?:\s|$)/m)
       if (pathMatch) {
-        files.push(parseDiffOutput(section, pathMatch[2]))
+        files.push(parseDiffOutput(section, pathMatch[1]))
       }
     }
     return files
@@ -282,42 +334,36 @@ export function registerGitHandlers() {
   ipcMain.handle(
     IPC_CHANNELS.GIT_GET_BRANCH_COMMITS,
     async (_event, branch: string, count: number = 50, skip: number = 0) => {
-      const g = getGit()
-      const log = await g.log({ maxCount: count, '--skip': skip, [branch]: null })
-      return log.all.map((l) => ({
-        hash: l.hash,
-        summary: l.message.split('\n')[0],
-        message: l.message,
-        author: `${l.author_name} <${l.author_email}>`,
-        committer: `${l.author_name} <${l.author_email}>`,
-        time: l.date,
-        parents: [],
-      }))
+      const out = await gitSilent([
+        'log',
+        `-${count}`,
+        ...(skip > 0 ? [`--skip=${skip}`] : []),
+        '--format=%H\x1f%s\x1f%b\x1f%an <%ae>\x1f%aI\x1f%P',
+        branch,
+      ])
+      return out.split('\n').filter(Boolean).map(parseCommitLogLine)
     }
   )
 
   // Diff
   ipcMain.handle(IPC_CHANNELS.GIT_GET_FILE_DIFF, async (_event, filePath: string) => {
-    const g = getGit()
-    const diff = await g.diff([filePath])
+    const diff = await gitSilent(['diff', filePath])
     return parseDiffOutput(diff, filePath)
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_GET_STAGED_FILE_DIFF, async (_event, filePath: string) => {
-    const g = getGit()
-    const diff = await g.diff(['--cached', filePath])
+    const diff = await gitSilent(['diff', '--cached', filePath])
     return parseDiffOutput(diff, filePath)
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_GET_ALL_STAGED_DIFF, async () => {
-    const g = getGit()
-    const diff = await g.diff(['--cached'])
+    const diff = await gitSilent(['diff', '--cached'])
     const files: FileDiff[] = []
     const fileSections = diff.split(/^diff --git/m).filter(Boolean)
     for (const section of fileSections) {
-      const pathMatch = section.match(/a\/(.+?)\s+b\/(.+)/)
+      const pathMatch = section.match(/b\/(.+?)(?:\s|$)/m)
       if (pathMatch) {
-        files.push(parseDiffOutput(section, pathMatch[2]))
+        files.push(parseDiffOutput(section, pathMatch[1]))
       }
     }
     return files
@@ -325,121 +371,112 @@ export function registerGitHandlers() {
 
   // Staging & Commit
   ipcMain.handle(IPC_CHANNELS.GIT_STAGE_FILES, async (_event, paths: string[]) => {
-    const g = getGit()
-    await g.add(paths)
+    await git(['add', ...paths])
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_UNSTAGE_FILES, async (_event, paths: string[]) => {
-    const g = getGit()
-    await g.reset(['HEAD', '--', ...paths])
+    await git(['reset', 'HEAD', '--', ...paths])
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_DISCARD_CHANGES, async (_event, paths: string[]) => {
-    const g = getGit()
-    await g.checkout(['--', ...paths])
+    await git(['checkout', '--', ...paths])
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_COMMIT, async (_event, message: string) => {
-    const g = getGit()
-    await g.commit(message)
+    await git(['commit', '-m', message])
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_AMEND_COMMIT, async (_event, message: string) => {
-    const g = getGit()
-    await g.commit(message, undefined, { '--amend': null })
+    await git(['commit', '--amend', '-m', message])
   })
 
   // Branches
   ipcMain.handle(IPC_CHANNELS.GIT_GET_BRANCHES, async () => {
-    const g = getGit()
-    const summary = await g.branch(['-a'])
-    return Object.entries(summary.branches).map(([name, info]) => ({
-      name,
-      target: info.commit,
-      isLocal: !name.startsWith('remotes/'),
-      isHead: info.current,
-      upstream: null,
-    }))
+    const out = await gitSilent([
+      'branch',
+      '-a',
+      '--format=%(refname:short)%00%(objectname:short)%00%(HEAD)%00%(upstream:short)',
+    ])
+    return out.split('\n').filter(Boolean).map((line) => {
+      const parts = line.split('\0')
+      return {
+        name: parts[0],
+        target: parts[1] || '',
+        isLocal: !parts[0].startsWith('remotes/'),
+        isHead: parts[2] === '*',
+        upstream: parts[3] || null,
+      }
+    })
   })
 
   ipcMain.handle(
     IPC_CHANNELS.GIT_CREATE_BRANCH,
     async (_event, name: string, target?: string) => {
-      const g = getGit()
-      if (target) {
-        await g.branch([name, target])
-      } else {
-        await g.branch([name])
-      }
+      await git(['branch', name, ...(target ? [target] : [])])
     }
   )
 
   ipcMain.handle(
     IPC_CHANNELS.GIT_DELETE_BRANCH,
     async (_event, name: string, force: boolean = false) => {
-      const g = getGit()
-      await g.branch([force ? '-D' : '-d', name])
+      await git(['branch', force ? '-D' : '-d', name])
     }
   )
 
   ipcMain.handle(IPC_CHANNELS.GIT_SWITCH_BRANCH, async (_event, name: string) => {
-    const g = getGit()
-    await g.checkout(name)
+    await git(['checkout', name])
   })
 
   // Remotes
   ipcMain.handle(IPC_CHANNELS.GIT_GET_REMOTES, async () => {
-    const g = getGit()
-    const remotes = await g.getRemotes(true)
-    return remotes.map((r) => ({
-      name: r.name,
-      fetchUrl: r.refs.fetch || '',
-      pushUrl: r.refs.push || '',
-    }))
+    const out = await gitSilent(['remote', '-v'])
+    const remotes: Remote[] = []
+    const seen = new Set<string>()
+    for (const line of out.split('\n').filter(Boolean)) {
+      const parts = line.split('\t')
+      if (parts.length < 2) continue
+      const name = parts[0]
+      if (seen.has(name)) continue
+      seen.add(name)
+      const urlPart = parts[1].replace(' (fetch)', '').replace(' (push)', '')
+      remotes.push({ name, fetchUrl: urlPart, pushUrl: urlPart })
+    }
+    return remotes
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_ADD_REMOTE, async (_event, name: string, url: string) => {
-    const g = getGit()
-    await g.addRemote(name, url)
+    await git(['remote', 'add', name, url])
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_REMOVE_REMOTE, async (_event, name: string) => {
-    const g = getGit()
-    await g.removeRemote(name)
+    await git(['remote', 'remove', name])
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_FETCH, async (_event, remote: string = 'origin') => {
-    const g = getGit()
-    await g.fetch(remote)
+    await git(['fetch', remote])
   })
 
   ipcMain.handle(
     IPC_CHANNELS.GIT_PULL,
     async (_event, remote: string = 'origin', branch?: string) => {
-      const g = getGit()
-      await g.pull(remote, branch)
+      await git(['pull', remote, ...(branch ? [branch] : [])])
     }
   )
 
   ipcMain.handle(
     IPC_CHANNELS.GIT_PUSH,
     async (_event, remote: string = 'origin', branch?: string, force: boolean = false) => {
-      const g = getGit()
-      const options: string[] = []
-      if (force) options.push('--force')
-      if (branch) {
-        await g.push(remote, branch, options)
-      } else {
-        await g.push(remote, undefined, options)
-      }
+      const args = ['push', remote]
+      if (force) args.push('--force')
+      if (branch) args.push(branch)
+      await git(args)
     }
   )
 
   // Tags
   ipcMain.handle(IPC_CHANNELS.GIT_GET_TAGS, async () => {
-    const g = getGit()
-    const tags = await g.tags()
-    return tags.all.map((t) => ({
+    const out = await gitSilent(['tag'])
+    return out.split('\n').filter(Boolean).map((t) => ({
       name: t,
       target: '',
       message: null,
@@ -450,188 +487,175 @@ export function registerGitHandlers() {
   ipcMain.handle(
     IPC_CHANNELS.GIT_CREATE_TAG,
     async (_event, name: string, target?: string, message?: string) => {
-      const g = getGit()
+      const args = ['tag']
       if (message) {
-        await g.tag(['-a', name, '-m', message, ...(target ? [target] : [])])
+        args.push('-a', name, '-m', message)
       } else {
-        await g.tag([name, ...(target ? [target] : [])])
+        args.push(name)
       }
+      if (target) args.push(target)
+      await git(args)
     }
   )
 
   ipcMain.handle(IPC_CHANNELS.GIT_DELETE_TAG, async (_event, name: string) => {
-    const g = getGit()
-    await g.tag(['-d', name])
+    await git(['tag', '-d', name])
   })
 
   // Stash
   ipcMain.handle(IPC_CHANNELS.GIT_GET_STASHES, async () => {
-    const g = getGit()
-    const stashList = await g.stashList()
-    return stashList.all.map((s, i) => ({
-      id: i,
-      description: s.message,
-      commit: s.hash,
-    }))
+    const out = await gitSilent(['stash', 'list', '--format=%H%x1f%s'])
+    return out.split('\n').filter(Boolean).map((line, i) => {
+      const parts = line.split('\x1f')
+      return { id: i, description: parts[1] || '', commit: parts[0] || '' }
+    })
   })
 
-  ipcMain.handle(IPC_CHANNELS.GIT_CREATE_STASH, async (_event, message?: string) => {
-    const g = getGit()
-    if (message) {
-      await g.stash(['push', '-m', message])
-    } else {
-      await g.stash(['push'])
-    }
+  ipcMain.handle(IPC_CHANNELS.GIT_CREATE_STASH, async (_event, msg?: string) => {
+    const args = ['stash', 'push']
+    if (msg) args.push('-m', msg)
+    await git(args)
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_APPLY_STASH, async (_event, stashId: number) => {
-    const g = getGit()
-    await g.stash(['apply', `stash@{${stashId}}`])
+    await git(['stash', 'apply', `stash@{${stashId}}`])
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_POP_STASH, async (_event, stashId: number) => {
-    const g = getGit()
-    await g.stash(['pop', `stash@{${stashId}}`])
+    await git(['stash', 'pop', `stash@{${stashId}}`])
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_DELETE_STASH, async (_event, stashId: number) => {
-    const g = getGit()
-    await g.stash(['drop', `stash@{${stashId}}`])
+    await git(['stash', 'drop', `stash@{${stashId}}`])
   })
 
   // Merge
   ipcMain.handle(IPC_CHANNELS.GIT_MERGE, async (_event, branch: string) => {
-    const g = getGit()
-    await g.merge([branch])
+    await git(['merge', branch])
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_ABORT_MERGE, async () => {
-    const g = getGit()
-    await g.merge(['--abort'])
+    await git(['merge', '--abort'])
   })
 
   // Advanced
   ipcMain.handle(IPC_CHANNELS.GIT_REVERT_COMMIT, async (_event, hash: string) => {
-    const g = getGit()
-    await g.revert(hash)
+    await git(['revert', '--no-edit', hash])
   })
 
   ipcMain.handle(
     IPC_CHANNELS.GIT_RESET,
     async (_event, target: string, mode: ResetMode = 'mixed') => {
-      const g = getGit()
-      await g.reset([`--${mode}`, target])
+      await git(['reset', `--${mode}`, target])
     }
   )
 
   ipcMain.handle(IPC_CHANNELS.GIT_GET_GRAPH, async (_event, count: number = 100) => {
-    const g = getGit()
-    const log = await g.log({
-      maxCount: count,
-      '--graph': null,
-      format: { hash: '%H', summary: '%s', author: '%an <%ae>', time: '%aI', parents: '%P' },
-    })
-    // Return simplified graph data
-    return {
-      rows: log.all.map((l: any) => ({
-        cells: [],
+    const out = await gitSilent([
+      'log',
+      `-${count}`,
+      '--format=%H\x1f%s\x1f%an <%ae>\x1f%aI\x1f%P\x1f%D',
+    ])
+    const rows = out.split('\n').filter(Boolean).map((line) => {
+      const parts = line.split('\x1f')
+      const refs = parts[5] || ''
+      const branchLabels: string[] = []
+      const tagLabels: string[] = []
+      if (refs) {
+        for (const ref of refs.split(',').map((r) => r.trim())) {
+          const m = ref.match(/tag:\s*(.+)/)
+          if (m) {
+            tagLabels.push(m[1])
+          } else if (!ref.startsWith('HEAD')) {
+            const branchMatch = ref.match(/^([^/]+(?:\/[^/]+)*)$/)
+            if (branchMatch) branchLabels.push(branchMatch[1])
+          }
+        }
+      }
+      return {
+        cells: [] as any[],
         commit: {
-          hash: l.hash,
-          summary: l.summary || l.message?.split('\n')[0] || '',
-          message: l.summary || l.message || '',
-          author: l.author || `${l.author_name} <${l.author_email}>`,
-          committer: l.author || `${l.author_name} <${l.author_email}>`,
-          time: l.time || l.date,
-          parents: l.parents ? l.parents.split(' ') : [],
+          hash: parts[0],
+          summary: parts[1],
+          message: parts[1],
+          author: parts[2],
+          committer: parts[2],
+          time: parts[3],
+          parents: parts[4] ? parts[4].split(' ') : [],
         },
-        branchLabels: [],
-        tagLabels: [],
-      })),
-    }
+        branchLabels,
+        tagLabels,
+      }
+    })
+    return { rows }
   })
 
   ipcMain.handle(
     IPC_CHANNELS.GIT_SEARCH_COMMITS,
     async (_event, query: string, count: number = 50) => {
-      const g = getGit()
-      const log = await g.log({ maxCount: count, '--grep': query })
-      return log.all.map((l) => ({
-        hash: l.hash,
-        summary: l.message.split('\n')[0],
-        message: l.message,
-        author: `${l.author_name} <${l.author_email}>`,
-        committer: `${l.author_name} <${l.author_email}>`,
-        time: l.date,
-        parents: [],
-      }))
+      const out = await gitSilent([
+        'log',
+        `-${count}`,
+        '--format=%H\x1f%s\x1f%b\x1f%an <%ae>\x1f%aI\x1f%P',
+        `--grep=${query}`,
+      ])
+      return out.split('\n').filter(Boolean).map(parseCommitLogLine)
     }
   )
 
   ipcMain.handle(
     IPC_CHANNELS.GIT_FILTER_HISTORY_BY_AUTHOR,
     async (_event, author: string, count: number = 50, skip: number = 0) => {
-      const g = getGit()
-      const log = await g.log({ maxCount: count, '--skip': skip, '--author': author })
-      return log.all.map((l) => ({
-        hash: l.hash,
-        summary: l.message.split('\n')[0],
-        message: l.message,
-        author: `${l.author_name} <${l.author_email}>`,
-        committer: `${l.author_name} <${l.author_email}>`,
-        time: l.date,
-        parents: [],
-      }))
+      const out = await gitSilent([
+        'log',
+        `-${count}`,
+        ...(skip > 0 ? [`--skip=${skip}`] : []),
+        '--format=%H\x1f%s\x1f%b\x1f%an <%ae>\x1f%aI\x1f%P',
+        `--author=${author}`,
+      ])
+      return out.split('\n').filter(Boolean).map(parseCommitLogLine)
     }
   )
 
   ipcMain.handle(
     IPC_CHANNELS.GIT_FILTER_HISTORY_BY_FILE,
     async (_event, filePath: string, count: number = 50, skip: number = 0) => {
-      const g = getGit()
-      const log = await g.log({ maxCount: count, '--skip': skip, file: filePath })
-      return log.all.map((l) => ({
-        hash: l.hash,
-        summary: l.message.split('\n')[0],
-        message: l.message,
-        author: `${l.author_name} <${l.author_email}>`,
-        committer: `${l.author_name} <${l.author_email}>`,
-        time: l.date,
-        parents: [],
-      }))
+      const out = await gitSilent([
+        'log',
+        `-${count}`,
+        ...(skip > 0 ? [`--skip=${skip}`] : []),
+        '--format=%H\x1f%s\x1f%b\x1f%an <%ae>\x1f%aI\x1f%P',
+        '--',
+        filePath,
+      ])
+      return out.split('\n').filter(Boolean).map(parseCommitLogLine)
     }
   )
 
   ipcMain.handle(IPC_CHANNELS.GIT_SEARCH_FILES, async (_event, pattern: string) => {
-    const g = getGit()
-    const result = await g.raw(['ls-files', `*${pattern}*`])
-    return result
-      .split('\n')
-      .filter(Boolean)
-      .map((f) => f.trim())
+    const out = await gitSilent(['ls-files', `*${pattern}*`])
+    return out.split('\n').filter(Boolean).map((f) => f.trim())
   })
 
   ipcMain.handle(
     IPC_CHANNELS.GIT_GET_FILE_HISTORY,
     async (_event, filePath: string, count: number = 50, skip: number = 0) => {
-      const g = getGit()
-      const log = await g.log({ maxCount: count, '--skip': skip, file: filePath })
-      return log.all.map((l) => ({
-        hash: l.hash,
-        summary: l.message.split('\n')[0],
-        message: l.message,
-        author: `${l.author_name} <${l.author_email}>`,
-        committer: `${l.author_name} <${l.author_email}>`,
-        time: l.date,
-        parents: [],
-      }))
+      const out = await gitSilent([
+        'log',
+        `-${count}`,
+        ...(skip > 0 ? [`--skip=${skip}`] : []),
+        '--format=%H\x1f%s\x1f%b\x1f%an <%ae>\x1f%aI\x1f%P',
+        '--',
+        filePath,
+      ])
+      return out.split('\n').filter(Boolean).map(parseCommitLogLine)
     }
   )
 
   ipcMain.handle(IPC_CHANNELS.GIT_GET_BLAME, async (_event, filePath: string) => {
-    const g = getGit()
-    const blame = await g.raw(['blame', '--porcelain', filePath])
+    const out = await gitSilent(['blame', '--porcelain', filePath])
     const blameLines: BlameLine[] = []
-    const lines = blame.split('\n')
+    const lines = out.split('\n')
     let currentHash = ''
     let currentAuthor = ''
     let currentTime = ''
@@ -664,30 +688,25 @@ export function registerGitHandlers() {
   })
 
   ipcMain.handle(IPC_CHANNELS.GIT_GET_REFLOG, async (_event, count: number = 100) => {
-    const g = getGit()
-    const reflog = await g.raw([
+    const out = await gitSilent([
       'reflog',
+      `-${count}`,
       '--format=%H %P %an <%ae> %aI %gs',
-      `-n${count}`,
     ])
-    return reflog
-      .split('\n')
-      .filter(Boolean)
-      .map((line) => {
-        const parts = line.split(' ')
-        const newHash = parts[0]
-        const oldHash = parts[1] || ''
-        // Find the email end to split committer from rest
-        const emailEnd = line.indexOf('>') + 1
-        const afterEmail = line.slice(emailEnd).trim()
-        const timeParts = afterEmail.split(' ')
-        return {
-          newHash,
-          oldHash,
-          committer: line.slice(line.indexOf(parts[2]), emailEnd),
-          time: timeParts[0] || '',
-          message: timeParts.slice(1).join(' '),
-        } as ReflogEntry
-      })
+    return out.split('\n').filter(Boolean).map((line) => {
+      const parts = line.split(' ')
+      const newHash = parts[0]
+      const oldHash = parts[1] || ''
+      const emailEnd = line.indexOf('>') + 1
+      const afterEmail = line.slice(emailEnd).trim()
+      const timeParts = afterEmail.split(' ')
+      return {
+        newHash,
+        oldHash,
+        committer: line.slice(line.indexOf(parts[2]), emailEnd),
+        time: timeParts[0] || '',
+        message: timeParts.slice(1).join(' '),
+      } as ReflogEntry
+    })
   })
 }

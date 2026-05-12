@@ -16,8 +16,8 @@ export function GraphView() {
       transition={{ duration: 0.2 }}
       className="flex flex-col h-full"
     >
-      <div className="px-3 py-2 border-b border-[var(--color-border)]">
-        <h3 className="text-xs font-medium text-[var(--color-muted-foreground)] uppercase tracking-wide">
+      <div className="px-3 py-2 border-b border-border">
+        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Commit Graph
         </h3>
       </div>
@@ -26,17 +26,17 @@ export function GraphView() {
         {graphData?.rows.map((row, i) => (
           <div
             key={row.commit.hash}
-            className="flex items-center gap-3 px-3 py-1 hover:bg-[var(--color-secondary)] cursor-pointer border-b border-[var(--color-border)]"
+            className="flex items-center gap-3 px-3 py-1 hover:bg-secondary cursor-pointer border-b border-border"
             onClick={() => loadCommitDetail(row.commit.hash)}
           >
             {/* Graph visualization placeholder */}
-            <span className="text-[var(--color-accent)] w-4">●</span>
+            <span className="text-accent w-4">●</span>
 
-            <span className="text-[var(--color-accent)] w-16 flex-shrink-0">
+            <span className="text-accent w-16 flex-shrink-0">
               {row.commit.hash.slice(0, 7)}
             </span>
 
-            <span className="flex-1 text-[var(--color-foreground)] truncate">
+            <span className="flex-1 text-foreground truncate">
               {row.commit.summary}
             </span>
 
@@ -44,7 +44,7 @@ export function GraphView() {
             {row.branchLabels.map((label) => (
               <span
                 key={label}
-                className="px-1.5 py-0.5 text-[10px] rounded bg-[var(--color-info)] text-[var(--color-background)]"
+                className="px-1.5 py-0.5 text-[10px] rounded bg-info text-background"
               >
                 {label}
               </span>
@@ -54,20 +54,20 @@ export function GraphView() {
             {row.tagLabels.map((label) => (
               <span
                 key={label}
-                className="px-1.5 py-0.5 text-[10px] rounded bg-[var(--color-warning)] text-[var(--color-background)]"
+                className="px-1.5 py-0.5 text-[10px] rounded bg-warning text-background"
               >
                 {label}
               </span>
             ))}
 
-            <span className="text-[var(--color-muted-foreground)] w-20 text-right flex-shrink-0">
+            <span className="text-muted-foreground w-20 text-right flex-shrink-0">
               {new Date(row.commit.time).toLocaleDateString()}
             </span>
           </div>
         ))}
 
         {!graphData && (
-          <p className="px-3 py-8 text-sm text-[var(--color-muted-foreground)] text-center">
+          <p className="px-3 py-8 text-sm text-muted-foreground text-center">
             Loading graph...
           </p>
         )}

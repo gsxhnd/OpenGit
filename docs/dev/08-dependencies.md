@@ -1,71 +1,95 @@
-# 8. 依赖规划
+# 8. 依赖说明
 
-## 8.1 核心依赖
+## 8.1 运行时依赖
 
-```toml
-[dependencies]
-# UI 框架
-gpui = { git = "https://github.com/zed-industries/zed", package = "gpui" }
-gpui_platform = { git = "https://github.com/zed-industries/zed", package = "gpui_platform", features = ["font-kit", "x11", "wayland", "runtime_shaders"] }
-gpui-component = { git = "https://github.com/longbridge/gpui-component" }
-gpui-component-assets = { git = "https://github.com/longbridge/gpui-component" }
-
-# Git 操作
-git2 = "0.19"                     # libgit2 Rust binding
-
-# 异步 & 并发
-tokio = { version = "1", features = ["process", "io-util"] }
-
-# 序列化
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-
-# HTTP (平台 API)
-reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
-
-# 文件系统监听
-notify = "7"
-
-# 终端
-portable-pty = "0.8"
-
-# 错误处理
-anyhow = "1"
-thiserror = "2"
-
-# 日志
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-
-# 国际化
-rust-i18n = "3"
-
-# 时间
-chrono = { version = "0.4", features = ["serde"] }
-
-# 配置目录
-dirs = "5"
-
-# URL 解析
-url = "2"
+```json
+{
+  "dependencies": {
+    "@base-ui/react": "^1.4.1",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.14.0",
+    "motion": "^12.0.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^2.5.0",
+    "zustand": "^5.0.0"
+  }
+}
 ```
 
-## 8.2 平台特定依赖
+| 依赖 | 用途 | 选型理由 |
+|------|------|----------|
+| **react / react-dom** | UI 框架 | React 19 生态成熟，组件化开发效率高 |
+| **zustand** | 状态管理 | 轻量（~1KB），API 简洁，无需 Provider 包裹 |
+| **motion** | 动画库 | Framer Motion v12，支持 AnimatePresence 实现视图切换和 Toast 动画 |
+| **@base-ui/react** | 无头 UI 组件 | 提供 Dialog、Input、Select 等无障碍原语，与 shadcn/ui 模式集成 |
+| **tailwind-merge** | CSS 类合并 | 智能合并 Tailwind 类名（如 `px-2 px-4` → `px-4`） |
+| **clsx** | 条件类名 | 简洁的条件类名组合 |
+| **class-variance-authority** | 组件变体 | 定义 Button、Dialog 等组件的 variant/size 变体 API |
+| **lucide-react** | 图标库 | 开源图标集，React 组件形式 |
 
-```toml
-[target.'cfg(target_os = "linux")'.dependencies]
-gpui_platform = { ..., features = ["font-kit", "x11", "wayland", "runtime_shaders"] }
+## 8.2 开发依赖
 
-[target.'cfg(target_os = "macos")'.dependencies]
-gpui_platform = { ..., features = ["font-kit"] }
-
-[target.'cfg(target_os = "windows")'.dependencies]
-gpui_platform = { ..., features = ["font-kit"] }
+```json
+{
+  "devDependencies": {
+    "@electron-forge/cli": "^7.6.0",
+    "@electron-forge/maker-deb": "^7.6.0",
+    "@electron-forge/maker-dmg": "^7.6.0",
+    "@electron-forge/maker-rpm": "^7.6.0",
+    "@electron-forge/maker-squirrel": "^7.6.0",
+    "@electron-forge/maker-zip": "^7.6.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^25.7.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "electron": "^42.0.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.12"
+  }
+}
 ```
 
-## 8.3 开发依赖
+| 依赖 | 用途 |
+|------|------|
+| **electron** | 桌面运行时 (v42) |
+| **typescript** | 类型系统 (v6) |
+| **vite** | 构建工具，分别构建 main / preload / renderer |
+| **@vitejs/plugin-react** | React JSX/TSX Vite 插件 |
+| **@tailwindcss/vite** | Tailwind CSS 4 Vite 插件 (CSS-first 配置) |
+| **@electron-forge/cli** | Electron 打包工具 |
+| **@electron-forge/maker-*** | 平台打包器：ZIP (macOS)、DMG (macOS)、DEB (Linux)、RPM (Linux)、Squirrel (Windows) |
+| **@types/node** | Node.js 类型定义 |
+| **@types/react** | React 类型定义 |
+| **@types/react-dom** | ReactDOM 类型定义 |
 
-```toml
-[dev-dependencies]
-tempfile = "3"          # 临时目录 (测试用)
+## 8.3 未引入但可能需要的依赖
+
+| 依赖 | 用途 | 适用场景 |
+|------|------|----------|
+| **vitest** | 单元测试 | 测试 Git 输出解析 |
+| **@testing-library/react** | 组件测试 | 测试 UI 行为 |
+| **playwright** | E2E 测试 | 完整工作流测试 |
+| **i18next** | 国际化 | 多语言支持 |
+| **octokit** | GitHub API | 平台集成 |
+
+## 8.4 构建配置
+
+### Vite 三目标构建
+
+```
+vite.main.config.ts     → dist/main/index.js     (CJS, Node externals)
+vite.preload.config.ts  → dist/preload/index.js  (CJS, Node externals)
+vite.renderer.config.ts → dist/renderer/*        (ESM, React + Tailwind)
+```
+
+### Electron Forge 打包
+
+```
+npm run build → Vite 构建 → Electron Forge package/make
+                              ├── macOS: ZIP + DMG (ULFO)
+                              ├── Windows: Squirrel
+                              └── Linux: DEB + RPM
 ```
