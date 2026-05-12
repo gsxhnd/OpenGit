@@ -20,7 +20,7 @@ OpenRemote/
 ├── docs/
 │   ├── dev/                      # 开发文档 (本文档)
 │   │   └── README.md
-│   └── wiki/                     # 用户文档 (计划)
+│   └── wiki/                     # 用户文档 (规划中，尚未创建)
 │
 ├── scripts/
 │   ├── dev.mjs                   # 开发启动脚本 (构建 main/preload → Vite dev server → Electron)

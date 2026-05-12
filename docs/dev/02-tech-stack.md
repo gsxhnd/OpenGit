@@ -47,4 +47,4 @@
 | **[@xterm/xterm](https://github.com/xtermjs/xterm.js)** | SSH / 本地 PTY 终端 UI | 渲染进程内嵌终端模拟器；与主进程 **node-pty**（或等价）配合，经 IPC 转发标准输入输出 |
 | **[monaco-editor](https://github.com/microsoft/monaco-editor)** | 远程文本编辑 | 在 SFTP/远程工作区内打开文本文件时提供语法高亮、多光标、主题与编辑器扩展能力；内容经 IPC 与远端读写衔接 |
 
-依赖版本以根目录 `package.json` 为准；集成细节见 [03-features.md](03-features.md) 与 [09-roadmap.md](09-roadmap.md) Phase 10。
+依赖版本以根目录 `package.json` 为准；集成细节见 [03-features.md](03-features.md) 与 [09-roadmap.md](09-roadmap.md) **Phase 2**。

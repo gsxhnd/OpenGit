@@ -72,6 +72,8 @@ npm run typecheck       # tsc --noEmit
 npm run lint            # eslint . --ext .ts,.tsx
 ```
 
+> **注**：当前项目尚未创建 ESLint 配置文件，`npm run lint` 暂不可用。计划在后续迭代中引入。
+
 ## 10.8 调试
 
 ```bash

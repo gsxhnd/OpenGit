@@ -6,7 +6,7 @@
 
 - **核心方向**：多平台 **SSH** 与 **SFTP** 远程访问（终端、会话、远程文件管理）；终端 UI 规划采用 **xterm.js**，远程文本编辑规划采用 **Monaco Editor**（见 `docs/dev/02-tech-stack.md` §2.3）。
 - **后续规划（路线顺序）**：在 WebDAV 之前优先推进 **Docker** 与 **Kubernetes（kubectl 生态）**；其后为 **WebDAV**，以及 **兼容 S3 API** 的云存储（如 MinIO、R2 等），与远程工作流统一在同一应用中完成。
-- **当前实现**：以**应用壳与通用体验**（窗口、设置、主题、国际化、欢迎页等）为主；远程协议能力按 [09-roadmap.md](09-roadmap.md) 中 Phase 10 起逐步交付。
+- **当前实现**：以**应用壳与通用体验**（窗口、设置、主题、国际化、欢迎页等）为主；远程协议能力按 [09-roadmap.md](09-roadmap.md) 中 **Phase 2** 起逐步交付。
 
 ## 1.2 核心理念
 
@@ -26,4 +26,4 @@
 
 ## 1.4 当前状态
 
-工程基础（Phase 0）与应用壳（Phase 1）持续完善中。**SSH/SFTP**、**Docker / Kubernetes（优先于 WebDAV）**、**WebDAV**、**S3 兼容存储**在路线图中推进；内置终端、命令面板与发布流程等按计划迭代。
+工程基础（Phase 0）与应用壳（Phase 1）持续完善中。**SSH/SFTP/Monaco**（Phase 2）、**打包与发布**（Phase 3）、**Docker / Kubernetes**（优先于 WebDAV，Phase 4–6）在路线图中推进；内置终端、命令面板等按计划迭代。

@@ -41,6 +41,7 @@ src/
 npm run dev          # Dev mode: builds main+preload, starts Vite dev server, launches Electron
 npm run build        # Production build (main → preload → renderer, sequential)
 npm run build:main   # Build only main process
+npm run build:preload # Build only preload script
 npm run build:renderer # Build only renderer process
 npm run make         # Build + package with electron-forge
 npm run typecheck    # tsc --noEmit (all processes)

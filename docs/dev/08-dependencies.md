@@ -42,6 +42,7 @@
 | **tailwind-merge** | CSS 类合并 | 智能合并 Tailwind 类名（如 `px-2 px-4` → `px-4`） |
 | **clsx** | 条件类名 | 简洁的条件类名组合 |
 | **class-variance-authority** | 组件变体 | 定义 Button、Dialog 等组件的 variant/size 变体 API |
+| **lucide-react** | 图标库 | 提供一致的 SVG 图标集，按需导入、Tree-shakable |
 | **sonner** | Toast 通知 | 与现有 UI 栈集成 |
 | **next-themes** | 主题切换辅助 | 与 CSS 变量 / 深色模式协同（若采用） |
 
@@ -62,6 +63,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "electron": "^42.0.1",
+    "sass": "^1.99.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.12"
   }
@@ -80,6 +82,7 @@
 | **@types/node** | Node.js 类型定义 |
 | **@types/react** | React 类型定义 |
 | **@types/react-dom** | ReactDOM 类型定义 |
+| **sass** | SCSS 编译器，支持组件级 `.scss` 样式文件（若有使用） |
 
 ## 8.3 未引入但可能需要的依赖
 

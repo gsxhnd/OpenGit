@@ -14,7 +14,7 @@
 | **WebDAV** | 挂载与文件同步；**里程碑排序在 Docker/K8s 之后** | 📋 |
 | **S3 兼容 API** | 对象存储（含 MinIO、Cloudflare R2 等兼容端点） | 📋 |
 
-**支持程度与路线顺序**：Docker 与 Kubernetes 列为**正式规划能力**，整体交付节奏与能力深度**优先于 WebDAV**。细则见 [09-roadmap.md](09-roadmap.md) Phase 10–13。
+**支持程度与路线顺序**：Docker 与 Kubernetes 列为**正式规划能力**，整体交付节奏与能力深度**优先于 WebDAV**。细则见 [09-roadmap.md](09-roadmap.md)：**Phase 2**（SSH/SFTP/Monaco）、**Phase 3**（打包发布）、**Phase 4–6**（Docker/K8s、WebDAV、S3）。
 
 ## 3.1 应用壳与通用体验
 
