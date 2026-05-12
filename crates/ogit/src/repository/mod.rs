@@ -19,12 +19,16 @@
 //! This module implements the `GitOps` trait using `git2-rs` (Rust bindings for libgit2).
 //! It's split into focused sub-modules for maintainability.
 
+mod blame;
 mod branch;
 mod commit;
 mod diff;
+mod graph;
 mod history;
 mod merge_reset;
+mod reflog;
 mod remote;
+mod search;
 mod staging;
 mod stash;
 mod status;
@@ -350,5 +354,56 @@ impl GitOps for Repository {
 
     fn reset(&self, target: &str, mode: ResetMode) -> Result<(), GitError> {
         self.__reset(target, mode)
+    }
+
+    // ========================================================================
+    // Phase 4: 历史、搜索与可视化 —— History, Search & Visualization
+    // ========================================================================
+
+    fn get_graph(&self, count: usize) -> Result<GraphData, GitError> {
+        self.__get_graph(count)
+    }
+
+    fn filter_history_by_author(
+        &self,
+        author: &str,
+        count: usize,
+        skip: usize,
+    ) -> Result<Vec<Commit>, GitError> {
+        self.__filter_history_by_author(author, count, skip)
+    }
+
+    fn filter_history_by_file(
+        &self,
+        path: &str,
+        count: usize,
+        skip: usize,
+    ) -> Result<Vec<Commit>, GitError> {
+        self.__filter_history_by_file(path, count, skip)
+    }
+
+    fn search_commits(&self, query: &str, count: usize) -> Result<Vec<Commit>, GitError> {
+        self.__search_commits(query, count)
+    }
+
+    fn search_files(&self, pattern: &str) -> Result<Vec<PathBuf>, GitError> {
+        self.__search_files(pattern)
+    }
+
+    fn get_file_history(
+        &self,
+        path: &str,
+        count: usize,
+        skip: usize,
+    ) -> Result<Vec<Commit>, GitError> {
+        self.__get_file_history(path, count, skip)
+    }
+
+    fn get_blame(&self, path: &str) -> Result<Vec<BlameLine>, GitError> {
+        self.__get_blame(path)
+    }
+
+    fn get_reflog(&self, count: usize) -> Result<Vec<ReflogEntry>, GitError> {
+        self.__get_reflog(count)
     }
 }

@@ -19,8 +19,8 @@
 //!
 //! GPUI-based Git GUI client using Entity-Component architecture.
 
-pub mod app_state;
 pub mod app_component;
+pub mod app_state;
 mod commit_editor;
 mod menu;
 mod project;
@@ -28,8 +28,8 @@ pub mod settings;
 pub mod views;
 mod workspace;
 
-pub use app_state::{AppState, ViewType};
 pub use app_component::OpenGitApp;
+pub use app_state::{AppState, ViewType};
 pub use commit_editor::CommitEditor;
 pub use project::Project;
 pub use workspace::Workspace;

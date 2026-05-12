@@ -3,6 +3,7 @@
 //! 包含 `OpenGitApp` 的 Render trait 实现和辅助函数。
 //! 负责构建完整的应用 UI 树：标题栏 → 错误横幅 → 主内容区（项目侧边栏 + 内容面板） → 状态栏。
 //! Phase 3: 多项目工作空间布局。
+//! Phase 4: 新增 Graph、Detail、FileSearch、FileHistory、Blame、Reflog 视图。
 //!
 //! Contains Render trait impl for OpenGitApp and helper functions.
 //! Builds the full UI tree: title bar → error banner → main content → status bar.
@@ -17,8 +18,10 @@ use gpui_component::*;
 
 use crate::app_state::ViewType;
 use crate::views::{
-    StatusBar, TitleBar, render_branches_view, render_commit_view, render_diff_view,
-    render_history_view, render_project_sidebar, render_stash_view, render_tag_view,
+    StatusBar, TitleBar, render_blame_view, render_branches_view, render_commit_detail_view,
+    render_commit_view, render_diff_view, render_file_history_view, render_file_search_view,
+    render_graph_view, render_history_view, render_project_sidebar, render_reflog_view,
+    render_stash_view, render_tag_view,
 };
 
 use super::OpenGitApp;
@@ -62,6 +65,64 @@ impl Render for OpenGitApp {
             s.expire_toasts();
         });
 
+        // Phase 4: 懒加载图数据和 reflog —— Lazy load graph and reflog data
+        let active = self.active_view;
+        if active == ViewType::Graph {
+            let needs_load = self.app_state.read(cx).graph_data.is_none();
+            if needs_load {
+                self.app_state.update(cx, |s, cx| {
+                    if let Err(e) = s.load_graph(100) {
+                        s.set_error(e.to_string());
+                    }
+                    cx.notify();
+                });
+            }
+        }
+        if active == ViewType::Reflog {
+            let needs_load = self.app_state.read(cx).reflog_entries.is_empty();
+            if needs_load {
+                self.app_state.update(cx, |s, cx| {
+                    if let Err(e) = s.load_reflog(100) {
+                        s.set_error(e.to_string());
+                    }
+                    cx.notify();
+                });
+            }
+        }
+
+        // 同步搜索输入 —— Sync search inputs
+        let search_query = self.history_search_input.read(cx).value().to_string();
+        let _filter_text = self.history_filter_input.read(cx).value().to_string();
+        let file_search_query = self.file_search_input.read(cx).value().to_string();
+
+        // 只在输入变化时触发搜索 —— Only trigger search on input change
+        let needs_commit_search = {
+            let state = self.app_state.read(cx);
+            search_query.len() >= 2 && search_query != state.search_query
+        };
+
+        let needs_file_search = {
+            let state = self.app_state.read(cx);
+            file_search_query.len() >= 2 && state.file_search_results.is_empty()
+        };
+
+        if needs_commit_search {
+            self.app_state.update(cx, |s, cx| {
+                if let Err(e) = s.search_commits(&search_query) {
+                    s.set_error(e.to_string());
+                }
+                cx.notify();
+            });
+        }
+        if needs_file_search {
+            self.app_state.update(cx, |s, cx| {
+                if let Err(e) = s.search_files(&file_search_query) {
+                    s.set_error(e.to_string());
+                }
+                cx.notify();
+            });
+        }
+
         // ========================================================================
         // 阶段 1：从 AppState 提取所有数据 —— Extract all data from AppState
         // ========================================================================
@@ -102,6 +163,23 @@ impl Render for OpenGitApp {
         let tag_list = state.tag_list.clone();
         let remote_list = state.remote_list.clone();
 
+        // Phase 4 data
+        let graph_data = state.graph_data.clone();
+        let search_results = state.search_results.clone();
+        let search_query_val = state.search_query.clone();
+        let is_searching = state.is_searching;
+        let filter_branch = state.history_filter_branch.clone();
+        let filter_author = state.history_filter_author.clone();
+        let filter_file = state.history_filter_file.clone();
+        let commit_detail = state.selected_commit_detail.clone();
+        let commit_diff = state.selected_commit_diff.clone();
+        let file_search_results = state.file_search_results.clone();
+        let file_history_path = state.file_history_path.clone();
+        let file_history_commits = state.file_history_commits.clone();
+        let blame_path = state.blame_path.clone();
+        let blame_data = state.blame_data.clone();
+        let reflog_entries = state.reflog_entries.clone();
+
         // 工作空间数据 —— Workspace data for sidebar
         let ws_entries = state.workspace.entries.clone();
         let ws_statuses = state.workspace.entry_statuses.clone();
@@ -112,7 +190,7 @@ impl Render for OpenGitApp {
         let clone_url_input = self.clone_url_input.clone();
         let recent_repos = self.settings.recent_repos.clone();
         let project_search_input = self.project_search_input.clone();
-        let search_query = self.project_search_input.read(cx).value().to_string();
+        let search_query_fs = self.project_search_input.read(cx).value().to_string();
 
         let weak_state = self.app_state.downgrade();
         let weak_self = cx.entity().downgrade();
@@ -271,7 +349,7 @@ impl Render for OpenGitApp {
                                                 &ws_statuses,
                                                 ws_active_index,
                                                 ws_active_path.as_ref(),
-                                                &search_query,
+                                                &search_query_fs,
                                                 weak_self.clone(),
                                             )),
                                     ),
@@ -293,6 +371,7 @@ impl Render for OpenGitApp {
                                                 .bg(gpui::rgb(0x1a1a1a))
                                                 .border_b(px(1.))
                                                 .border_color(gpui::rgb(0x333333))
+                                                .flex_wrap()
                                                 .child(render_content_tab(
                                                     "commit",
                                                     "Commit",
@@ -304,6 +383,13 @@ impl Render for OpenGitApp {
                                                     "history",
                                                     "History",
                                                     ViewType::History,
+                                                    active_view,
+                                                    cx,
+                                                ))
+                                                .child(render_content_tab(
+                                                    "graph",
+                                                    "Graph",
+                                                    ViewType::Graph,
                                                     active_view,
                                                     cx,
                                                 ))
@@ -334,6 +420,27 @@ impl Render for OpenGitApp {
                                                     ViewType::Tags,
                                                     active_view,
                                                     cx,
+                                                ))
+                                                .child(render_content_tab(
+                                                    "filesearch",
+                                                    "Find",
+                                                    ViewType::FileSearch,
+                                                    active_view,
+                                                    cx,
+                                                ))
+                                                .child(render_content_tab(
+                                                    "blame",
+                                                    "Blame",
+                                                    ViewType::Blame,
+                                                    active_view,
+                                                    cx,
+                                                ))
+                                                .child(render_content_tab(
+                                                    "reflog",
+                                                    "Reflog",
+                                                    ViewType::Reflog,
+                                                    active_view,
+                                                    cx,
                                                 )),
                                         )
                                         // 主视图内容 —— Main view content
@@ -344,7 +451,7 @@ impl Render for OpenGitApp {
                                                 .min_w_0()
                                                 .overflow_y_scrollbar()
                                                 .child(
-                                                    div().p_4().v_flex().gap_3().child(
+                                                    div().w_full().p_4().v_flex().gap_3().child(
                                                         match active_view {
                                                             ViewType::Commit => render_commit_view(
                                                                 &unstaged,
@@ -360,6 +467,14 @@ impl Render for OpenGitApp {
                                                                 render_history_view(
                                                                     &history,
                                                                     selected_hist,
+                                                                    &search_results,
+                                                                    &search_query_val,
+                                                                    is_searching,
+                                                                    filter_branch.as_ref(),
+                                                                    filter_author.as_ref(),
+                                                                    filter_file.as_ref(),
+                                                                    &self.history_search_input,
+                                                                    &self.history_filter_input,
                                                                     weak_state.clone(),
                                                                 )
                                                             }
@@ -388,8 +503,43 @@ impl Render for OpenGitApp {
                                                                 &self.tag_message_input,
                                                                 weak_state.clone(),
                                                             ),
-                                                            _ => div()
-                                                                .child("Not implemented")
+                                                            // ---- Phase 4 views ---- //
+                                                            ViewType::Graph => render_graph_view(
+                                                                graph_data.as_ref(),
+                                                                weak_state.clone(),
+                                                            ),
+                                                            ViewType::Detail => {
+                                                                render_commit_detail_view(
+                                                                    commit_detail.as_ref(),
+                                                                    &commit_diff,
+                                                                    weak_state.clone(),
+                                                                )
+                                                            }
+                                                            ViewType::FileSearch => {
+                                                                render_file_search_view(
+                                                                    &file_search_results,
+                                                                    &self.file_search_input,
+                                                                    weak_state.clone(),
+                                                                )
+                                                            }
+                                                            ViewType::FileHistory => {
+                                                                render_file_history_view(
+                                                                    file_history_path.as_ref(),
+                                                                    &file_history_commits,
+                                                                    weak_state.clone(),
+                                                                )
+                                                            }
+                                                            ViewType::Blame => render_blame_view(
+                                                                blame_path.as_ref(),
+                                                                &blame_data,
+                                                                weak_state.clone(),
+                                                            ),
+                                                            ViewType::Reflog => render_reflog_view(
+                                                                &reflog_entries,
+                                                                weak_state.clone(),
+                                                            ),
+                                                            ViewType::Welcome => div()
+                                                                .child("Welcome")
                                                                 .into_any_element(),
                                                         },
                                                     ),

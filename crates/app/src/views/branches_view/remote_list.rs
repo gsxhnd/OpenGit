@@ -32,9 +32,8 @@ pub fn render_remote_form(
                 .label("Add")
                 .primary()
                 .on_click(move |_, window, cx| {
-                    let name: String = cx.read_entity(&inp_name, |i: &InputState, _| {
-                        i.value().to_string()
-                    });
+                    let name: String =
+                        cx.read_entity(&inp_name, |i: &InputState, _| i.value().to_string());
                     let url: String =
                         cx.read_entity(&inp_url, |i: &InputState, _| i.value().to_string());
                     let success = ws

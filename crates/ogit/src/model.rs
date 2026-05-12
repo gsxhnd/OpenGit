@@ -246,3 +246,97 @@ pub struct Stash {
     /// 储藏对应的提交哈希 —— Stash commit hash
     pub commit: String,
 }
+
+// ============================================================================
+// Phase 4 新增模型 —— Phase 4 new model types
+// ============================================================================
+
+/// Git blame 行信息 —— Per-line blame information
+///
+/// 包含单行代码的 blame 信息：提交哈希、作者、时间、行号和内容。
+/// 用于构建 blame 视图，支持跳转到对应 commit。
+///
+/// Contains per-line blame data: commit hash, author, time, line number, and content.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BlameLine {
+    /// 该行对应的提交哈希 —— Commit hash for this line
+    pub hash: String,
+    /// 作者名 —— Author name
+    pub author: String,
+    /// 提交时间（UTC） —— Commit time in UTC
+    pub time: DateTime<Utc>,
+    /// 文件中的行号（1-based） —— Line number in the file (1-based)
+    pub line: usize,
+    /// 该行的原始内容 —— Original content of the line
+    pub content: String,
+    /// 提交摘要（用于快速预览） —— Commit summary for quick preview
+    pub summary: String,
+}
+
+/// 引用日志条目 —— Reflog entry
+///
+/// 记录本地引用（如 HEAD、分支）的变动历史。
+/// 可用于恢复误操作（如误删分支、误 reset）。
+///
+/// Records local reference change history for recovery of mistaken operations.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReflogEntry {
+    /// 移动前的提交哈希 —— Hash before the change
+    pub old_hash: String,
+    /// 移动后的提交哈希 —— Hash after the change
+    pub new_hash: String,
+    /// 引用操作者 —— Who performed the operation
+    pub committer: String,
+    /// 操作时间 —— Operation time
+    pub time: DateTime<Utc>,
+    /// 操作描述（如 "commit: message"、"reset: moving to HEAD~1"） —— Operation description
+    pub message: String,
+}
+
+/// 提交图节点 —— Graph row cell (visual element in commit graph column)
+///
+/// 表示图列中的一个单元格，可以是空、线、提交点或分支标签。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum GraphCell {
+    /// 空单元格 —— Empty cell
+    Empty,
+    /// 垂直线（│） —— Vertical line
+    Pipe,
+    /// 分支线（├─ 或 ├┬） —— Branch line
+    Branch,
+    /// 合并线（─┘ 或 ─┤） —— Merge line
+    Merge,
+    /// 提交节点（●） —— Commit node
+    Dot,
+    /// 左上转角（┌） —— Top-left corner (branch fork start)
+    Fork,
+    /// 右下转角（┘） —— Bottom-right corner (merge end)
+    MergeEnd,
+}
+
+/// 提交图行 —— Single row in the commit graph
+///
+/// 包含一行可视化图单元格、关联的提交信息和分支/标签标记。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphRow {
+    /// 该行左侧的图单元格列表 —— Graph cells for the left decoration
+    pub cells: Vec<GraphCell>,
+    /// 该行对应的提交 —— The commit for this row
+    pub commit: Commit,
+    /// 该行的分支标记列表 —— Branch labels at this row
+    pub branch_labels: Vec<String>,
+    /// 该行的标签标记列表 —— Tag labels at this row
+    pub tag_labels: Vec<String>,
+}
+
+/// 提交图数据 —— Commit graph data
+///
+/// 包含完整的提交拓扑图，每行对应一个提交，附带分支/标签标记。
+/// 用于在 UI 中渲染提交历史图。
+///
+/// Contains complete commit topology, rows with graph cells, branch and tag markers.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GraphData {
+    /// 图行列表（按时间倒序，最新在前） —— Graph rows (reverse chronological)
+    pub rows: Vec<GraphRow>,
+}

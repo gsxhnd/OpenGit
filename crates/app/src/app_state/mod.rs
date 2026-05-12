@@ -22,8 +22,11 @@
 //! Auxiliary types extracted: Project, Workspace, CommitEditor.
 //! Methods split into sub-modules by responsibility.
 
+mod blame_reflog;
 mod branches;
 mod diff;
+mod graph;
+mod phase4;
 mod remotes;
 mod repository;
 mod staging;
@@ -130,6 +133,40 @@ pub struct AppState {
     pub tag_list: Vec<ogit::Tag>,
     /// 缓存的远程列表 —— Cached remote list
     pub remote_list: Vec<ogit::Remote>,
+
+    // ========================================================================
+    // Phase 4: 历史、搜索与可视化 —— History, Search & Visualization
+    // ========================================================================
+    /// 提交图数据 —— Commit graph data
+    pub graph_data: Option<ogit::GraphData>,
+    /// 历史筛选：分支名 —— History filter: branch name
+    pub history_filter_branch: Option<String>,
+    /// 历史筛选：作者 —— History filter: author
+    pub history_filter_author: Option<String>,
+    /// 历史筛选：文件路径 —— History filter: file path
+    pub history_filter_file: Option<String>,
+    /// 提交搜索结果 —— Commit search results
+    pub search_results: Vec<Commit>,
+    /// 当前搜索查询 —— Current search query
+    pub search_query: String,
+    /// 是否正在搜索 —— Search in progress flag
+    pub is_searching: bool,
+    /// 文件搜索结果 —— File search results
+    pub file_search_results: Vec<std::path::PathBuf>,
+    /// 文件历史：当前文件路径 —— File history: current file path
+    pub file_history_path: Option<std::path::PathBuf>,
+    /// 文件历史：提交列表 —— File history: commit list
+    pub file_history_commits: Vec<Commit>,
+    /// 选中的提交详情 —— Selected commit detail
+    pub selected_commit_detail: Option<Commit>,
+    /// 选中提交的文件差异列表 —— Files changed in selected commit
+    pub selected_commit_diff: Vec<ogit::FileDiff>,
+    /// Blame 数据 —— Blame data for a file
+    pub blame_data: Vec<ogit::BlameLine>,
+    /// Blame 文件路径 —— Path of the file being blamed
+    pub blame_path: Option<std::path::PathBuf>,
+    /// 引用日志条目 —— Reflog entries
+    pub reflog_entries: Vec<ogit::ReflogEntry>,
 }
 
 /// 历史分页大小 —— History page size for pagination
@@ -284,8 +321,9 @@ impl AppState {
 /// 视图类型 —— View type tabs
 ///
 /// 定义主面板中可切换的视图标签。
-/// 当前支持：Commit（提交/暂存）、History（提交历史）、Branches（分支管理）、Diff（差异）。
-/// 预留：Stash（储藏）、Tags（标签）、Welcome（欢迎页）。
+/// 当前支持：Commit、History、Branches、Diff、Stash、Tags。
+/// Phase 4 新增：Graph（提交图）、Detail（提交详情）、FileSearch（文件搜索）、
+/// FileHistory（文件历史）、Blame（行注释）、Reflog（引用日志）。
 ///
 /// Defines the view tabs available in the main panel.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -298,13 +336,23 @@ pub enum ViewType {
     Branches,
     /// 差异视图 —— Diff view
     Diff,
-    /// 储藏管理视图 —— Stash management view (reserved)
-    #[allow(dead_code)]
+    /// 储藏管理视图 —— Stash management view
     Stash,
-    /// 标签管理视图 —— Tag management view (reserved)
-    #[allow(dead_code)]
+    /// 标签管理视图 —— Tag management view
     Tags,
-    /// 欢迎/空状态视图 —— Welcome/empty state view (reserved)
+    /// 提交图视图 —— Commit graph view (Phase 4)
+    Graph,
+    /// 提交详情视图 —— Commit detail view (Phase 4)
+    Detail,
+    /// 文件搜索视图 —— File search view (Phase 4)
+    FileSearch,
+    /// 文件历史视图 —— File history view (Phase 4)
+    FileHistory,
+    /// Blame 视图 —— Blame view (Phase 4)
+    Blame,
+    /// 引用日志视图 —— Reflog view (Phase 4)
+    Reflog,
+    /// 欢迎/空状态视图 —— Welcome/empty state view
     #[allow(dead_code)]
     Welcome,
 }

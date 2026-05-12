@@ -12,7 +12,7 @@ use gpui_component::button::Button;
 use gpui_component::*;
 
 use super::window_controls::{ChromeWindowOp, window_control_btn};
-use super::{ChromeDragState, CHROME_BAR_H, TitleBar};
+use super::{CHROME_BAR_H, ChromeDragState, TitleBar};
 
 impl RenderOnce for TitleBar {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {

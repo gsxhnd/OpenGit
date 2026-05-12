@@ -146,7 +146,10 @@ impl OpenGitApp {
             }
             if let Err(e) = s.fetch_origin() {
                 s.set_error(e.to_string());
-                s.add_toast(format!("Fetch failed: {}", e), crate::app_state::ToastKind::Error);
+                s.add_toast(
+                    format!("Fetch failed: {}", e),
+                    crate::app_state::ToastKind::Error,
+                );
             } else {
                 s.add_toast("Fetch completed", crate::app_state::ToastKind::Success);
             }
@@ -169,7 +172,10 @@ impl OpenGitApp {
         self.app_state.update(cx, |s, cx| {
             if let Err(e) = s.pull_origin(&branch) {
                 s.set_error(e.to_string());
-                s.add_toast(format!("Pull failed: {}", e), crate::app_state::ToastKind::Error);
+                s.add_toast(
+                    format!("Pull failed: {}", e),
+                    crate::app_state::ToastKind::Error,
+                );
             } else {
                 s.add_toast("Pull completed", crate::app_state::ToastKind::Success);
             }
@@ -192,7 +198,10 @@ impl OpenGitApp {
         self.app_state.update(cx, |s, cx| {
             if let Err(e) = s.push_origin(&branch) {
                 s.set_error(e.to_string());
-                s.add_toast(format!("Push failed: {}", e), crate::app_state::ToastKind::Error);
+                s.add_toast(
+                    format!("Push failed: {}", e),
+                    crate::app_state::ToastKind::Error,
+                );
             } else {
                 s.add_toast("Push completed", crate::app_state::ToastKind::Success);
             }

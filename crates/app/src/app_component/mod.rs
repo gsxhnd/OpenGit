@@ -76,6 +76,12 @@ pub struct OpenGitApp {
     pub tag_message_input: Entity<InputState>,
     pub remote_name_input: Entity<InputState>,
     pub remote_url_input: Entity<InputState>,
+    /// Phase 4: 文件搜索输入 —— File search input
+    pub file_search_input: Entity<InputState>,
+    /// Phase 4: 历史搜索输入 —— History search input
+    pub history_search_input: Entity<InputState>,
+    /// Phase 4: 历史筛选分支输入 —— History filter branch input
+    pub history_filter_input: Entity<InputState>,
     pub app_menu_bar: Entity<AppMenuBar>,
     _menu_sync: Subscription,
     /// 文件系统监听器 —— Filesystem watcher for auto-refresh
@@ -133,6 +139,14 @@ impl OpenGitApp {
         let remote_url_input = cx
             .new(|cx| InputState::new(window, cx).placeholder("https://github.com/user/repo.git"));
 
+        // Phase 4: 搜索输入 —— Search inputs
+        let file_search_input =
+            cx.new(|cx| InputState::new(window, cx).placeholder("Search files..."));
+        let history_search_input =
+            cx.new(|cx| InputState::new(window, cx).placeholder("hash / msg / author..."));
+        let history_filter_input =
+            cx.new(|cx| InputState::new(window, cx).placeholder("Filter by branch/author/file..."));
+
         cx.bind_keys([
             KeyBinding::new("cmd-o", OpenRepository, None),
             KeyBinding::new("ctrl-o", OpenRepository, None),
@@ -150,6 +164,9 @@ impl OpenGitApp {
             tag_message_input,
             remote_name_input,
             remote_url_input,
+            file_search_input,
+            history_search_input,
+            history_filter_input,
             app_menu_bar,
             _menu_sync,
             _file_watcher: None,

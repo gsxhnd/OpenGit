@@ -6,8 +6,8 @@
 //! and action buttons (Stage/Unstage/Diff).
 
 use gpui::*;
-use gpui_component::button::Button;
 use gpui_component::Sizable;
+use gpui_component::button::Button;
 
 use crate::app_state::{AppState, ViewType};
 use ogit::{FileEntry, FileStatus};

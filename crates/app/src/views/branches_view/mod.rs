@@ -15,9 +15,9 @@ mod branch_list;
 mod remote_list;
 
 use gpui::*;
+use gpui_component::StyledExt;
 use gpui_component::button::{Button, ButtonVariants as _};
 use gpui_component::input::{Input, InputState};
-use gpui_component::StyledExt;
 
 use crate::app_state::AppState;
 use ogit::{Branch, Remote};

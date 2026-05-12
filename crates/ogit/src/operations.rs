@@ -218,6 +218,49 @@ pub trait GitOps {
 
     /// 重置到指定提交 —— Reset to a target commit
     fn reset(&self, target: &str, mode: ResetMode) -> Result<(), GitError>;
+
+    // ========================================================================
+    // Phase 4: 历史、搜索与可视化 —— History, Search & Visualization
+    // ========================================================================
+
+    /// 获取提交图数据（含拓扑、分支/标签标记） —— Get commit graph with topology and markers
+    fn get_graph(&self, count: usize) -> Result<GraphData, GitError>;
+
+    /// 按作者筛选提交历史 —— Filter commit history by author
+    fn filter_history_by_author(
+        &self,
+        author: &str,
+        count: usize,
+        skip: usize,
+    ) -> Result<Vec<Commit>, GitError>;
+
+    /// 按文件路径筛选提交历史 —— Filter commit history by file path
+    fn filter_history_by_file(
+        &self,
+        path: &str,
+        count: usize,
+        skip: usize,
+    ) -> Result<Vec<Commit>, GitError>;
+
+    /// 搜索提交（按 message / hash / author 模糊搜索） —— Search commits by message, hash, or author
+    fn search_commits(&self, query: &str, count: usize) -> Result<Vec<Commit>, GitError>;
+
+    /// 按文件名搜索工作区文件 —— Search files by name in working tree
+    fn search_files(&self, pattern: &str) -> Result<Vec<PathBuf>, GitError>;
+
+    /// 获取单文件提交历史 —— Get commit history for a single file
+    fn get_file_history(
+        &self,
+        path: &str,
+        count: usize,
+        skip: usize,
+    ) -> Result<Vec<Commit>, GitError>;
+
+    /// 获取文件的 blame 信息 —— Get blame information for a file
+    fn get_blame(&self, path: &str) -> Result<Vec<BlameLine>, GitError>;
+
+    /// 获取引用日志 —— Get reflog entries
+    fn get_reflog(&self, count: usize) -> Result<Vec<ReflogEntry>, GitError>;
 }
 
 /// Git 重置模式 —— Git reset mode
