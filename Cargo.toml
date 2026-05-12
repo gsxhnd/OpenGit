@@ -1,3 +1,0 @@
-[workspace]
-members = ["crates/ogit", "crates/app"]
-resolver = "2"

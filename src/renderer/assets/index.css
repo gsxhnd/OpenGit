@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+:root {
+  --color-background: #1a1b26;
+  --color-foreground: #c0caf5;
+  --color-border: #292e42;
+  --color-ring: #7aa2f7;
+  --color-accent: #7aa2f7;
+  --color-accent-foreground: #1a1b26;
+  --color-primary: #7aa2f7;
+  --color-primary-foreground: #1a1b26;
+  --color-secondary: #292e42;
+  --color-secondary-foreground: #c0caf5;
+  --color-muted: #24283b;
+  --color-muted-foreground: #565f89;
+  --color-danger: #f7768e;
+  --color-danger-foreground: #1a1b26;
+  --color-success: #9ece6a;
+  --color-warning: #e0af68;
+  --color-info: #7dcfff;
+  --color-popover: #1f2335;
+  --color-popover-foreground: #c0caf5;
+  --color-card: #1f2335;
+  --color-card-foreground: #c0caf5;
+  --color-input-border: #3b4261;
+  --color-scrollbar: #292e42;
+  --color-scrollbar-thumb: #3b4261;
+  --color-title-bar: #16161e;
+  --color-status-bar: #16161e;
+  --color-sidebar: #1f2335;
+  --color-diff-added: #9ece6a;
+  --color-diff-deleted: #f7768e;
+  --color-diff-added-bg: rgba(158, 206, 106, 0.1);
+  --color-diff-deleted-bg: rgba(247, 118, 142, 0.1);
+
+  --radius: 6px;
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Menlo, monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-scrollbar);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
+}
+
+/* Drag region for title bar */
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
