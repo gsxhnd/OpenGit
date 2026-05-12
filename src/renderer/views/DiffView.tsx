@@ -1,9 +1,20 @@
 import { motion } from 'motion/react'
 import { useAppStore } from '../store'
 import { cn } from '../lib/utils'
+import { Button } from '../components/ui/button'
+import { SideBySideDiffView } from '../components/SideBySideDiffView'
 
 export function DiffView() {
-  const { diffPreview, goBack } = useAppStore()
+  const {
+    diffPreview,
+    goBack,
+    stageHunk,
+    unstageHunk,
+    selectedDiffPath,
+    selectedStagedDiffPath,
+    diffViewMode,
+    setDiffViewMode,
+  } = useAppStore()
 
   if (!diffPreview) {
     return (
@@ -17,6 +28,21 @@ export function DiffView() {
     )
   }
 
+  const isStaged = selectedStagedDiffPath === diffPreview.path
+
+  // Render side-by-side view if selected
+  if (diffViewMode === 'side-by-side') {
+    return (
+      <SideBySideDiffView
+        diff={diffPreview}
+        isStaged={isStaged}
+        onStageHunk={(hunkIndex) => stageHunk(diffPreview.path, hunkIndex)}
+        onUnstageHunk={(hunkIndex) => unstageHunk(diffPreview.path, hunkIndex)}
+        onGoBack={goBack}
+      />
+    )
+  }
+
   if (diffPreview.isBinary) {
     return (
       <motion.div
@@ -24,16 +50,26 @@ export function DiffView() {
         animate={{ opacity: 1, x: 0 }}
         className="flex flex-col h-full"
       >
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-          <button
-            onClick={goBack}
-            className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
+        <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={goBack}
+              className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
+            >
+              ← Back
+            </button>
+            <span className="text-sm font-mono text-foreground">
+              {diffPreview.path}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-6 px-2 text-xs"
+            onClick={() => setDiffViewMode(diffViewMode === 'unified' ? 'side-by-side' : 'unified')}
           >
-            ← Back
-          </button>
-          <span className="text-sm font-mono text-foreground">
-            {diffPreview.path}
-          </span>
+            {diffViewMode === 'unified' ? 'Side-by-side' : 'Unified'}
+          </Button>
         </div>
         <div className="flex items-center justify-center flex-1 text-muted-foreground">
           Binary file
@@ -50,26 +86,59 @@ export function DiffView() {
       className="flex flex-col h-full"
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-        <button
-          onClick={goBack}
-          className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
+      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={goBack}
+            className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
+          >
+            ← Back
+          </button>
+          <span className="text-sm font-mono text-foreground">
+            {diffPreview.path}
+          </span>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-6 px-2 text-xs"
+          onClick={() => setDiffViewMode(diffViewMode === 'unified' ? 'side-by-side' : 'unified')}
         >
-          ← Back
-        </button>
-        <span className="text-sm font-mono text-foreground">
-          {diffPreview.path}
-        </span>
+          {diffViewMode === 'unified' ? 'Side-by-side' : 'Unified'}
+        </Button>
       </div>
 
       {/* Diff content */}
       <div className="flex-1 overflow-auto font-mono text-xs leading-5">
         {diffPreview.hunks.map((hunk, hi) => (
           <div key={hi}>
-            {/* Hunk header */}
-            <div className="px-3 py-1 bg-muted text-info sticky top-0">
-              @@ -{hunk.oldRange.start},{hunk.oldRange.count} +{hunk.newRange.start},
-              {hunk.newRange.count} @@ {hunk.header}
+            {/* Hunk header with controls */}
+            <div className="flex items-center justify-between px-3 py-1 bg-muted text-info sticky top-0 group">
+              <div className="flex-1">
+                @@ -{hunk.oldRange.start},{hunk.oldRange.count} +{hunk.newRange.start},
+                {hunk.newRange.count} @@ {hunk.header}
+              </div>
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {isStaged ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => unstageHunk(diffPreview.path, hi)}
+                  >
+                    Unstage
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => stageHunk(diffPreview.path, hi)}
+                  >
+                    Stage
+                  </Button>
+                )}
+              </div>
             </div>
             {/* Lines */}
             {hunk.lines.map((line, li) => (

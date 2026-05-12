@@ -14,7 +14,11 @@ import type {
   ReflogEntry,
   GraphData,
   AppSettings,
+  WorkspaceEntry,
+  WorkspaceGroup,
+  WorkspaceConfig,
 } from '@shared/types'
+import type { Language } from '../i18n/translations'
 
 interface AppState {
   // Repository
@@ -44,6 +48,7 @@ interface AppState {
   diffPreview: FileDiff | null
   selectedDiffPath: string | null
   selectedStagedDiffPath: string | null
+  diffViewMode: 'unified' | 'side-by-side'
 
   // Commit detail
   selectedCommitDetail: Commit | null
@@ -75,11 +80,19 @@ interface AppState {
   // Commit form
   commitAmend: boolean
 
+  // Merge/Conflict
+  isMerging: boolean
+  conflictFiles: string[]
+
   // Toasts
   toasts: Toast[]
 
   // Settings
   settings: AppSettings | null
+  language: Language
+
+  // Workspace
+  workspaceConfig: WorkspaceConfig | null
 
   // Actions
   openRepo: (path: string) => Promise<void>
@@ -91,6 +104,8 @@ interface AppState {
   // Staging
   stageFiles: (paths: string[]) => Promise<void>
   unstageFiles: (paths: string[]) => Promise<void>
+  stageHunk: (filePath: string, hunkIndex: number) => Promise<void>
+  unstageHunk: (filePath: string, hunkIndex: number) => Promise<void>
   stageAll: () => Promise<void>
   unstageAll: () => Promise<void>
   discardChanges: (paths: string[]) => Promise<void>
@@ -113,6 +128,7 @@ interface AppState {
   loadFileDiff: (path: string) => Promise<void>
   loadStagedFileDiff: (path: string) => Promise<void>
   loadCommitDetail: (hash: string) => Promise<void>
+  setDiffViewMode: (mode: 'unified' | 'side-by-side') => void
 
   // Branches
   createBranch: (name: string, target?: string) => Promise<void>
@@ -141,10 +157,16 @@ interface AppState {
   // Merge
   doMerge: (branch: string) => Promise<void>
   abortMerge: () => Promise<void>
+  resolveConflict: (filePath: string, resolution: 'ours' | 'theirs') => Promise<void>
+  loadConflictFiles: () => Promise<void>
 
   // Advanced
   revertCommit: (hash: string) => Promise<void>
   doReset: (target: string, mode?: string) => Promise<void>
+  doRebase: (target: string) => Promise<void>
+  rebaseContinue: () => Promise<void>
+  rebaseAbort: () => Promise<void>
+  doCherryPick: (hash: string) => Promise<void>
   loadGraph: (count?: number) => Promise<void>
   searchFiles: (pattern: string) => Promise<void>
   loadFileHistory: (path: string) => Promise<void>
@@ -158,6 +180,16 @@ interface AppState {
   // Settings
   loadSettings: () => Promise<void>
   updateSettings: (settings: Partial<AppSettings>) => Promise<void>
+  setLanguage: (language: Language) => Promise<void>
+
+  // Workspace
+  addWorkspaceEntry: (entry: WorkspaceEntry) => Promise<void>
+  removeWorkspaceEntry: (path: string) => Promise<void>
+  updateWorkspaceEntry: (path: string, updates: Partial<WorkspaceEntry>) => Promise<void>
+  reorderWorkspaceEntries: (entries: WorkspaceEntry[]) => Promise<void>
+  switchWorkspace: (index: number) => Promise<void>
+  addWorkspaceGroup: (group: WorkspaceGroup) => Promise<void>
+  removeWorkspaceGroup: (groupId: string) => Promise<void>
 }
 
 let toastCounter = 0
@@ -182,6 +214,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   diffPreview: null,
   selectedDiffPath: null,
   selectedStagedDiffPath: null,
+  diffViewMode: 'unified',
   selectedCommitDetail: null,
   selectedCommitDiff: [],
   stashList: [],
@@ -194,8 +227,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   blamePath: null,
   reflogEntries: [],
   commitAmend: false,
+  isMerging: false,
+  conflictFiles: [],
   toasts: [],
   settings: null,
+  language: 'en',
+  workspaceConfig: null,
 
   // Actions
   openRepo: async (path) => {
@@ -264,6 +301,26 @@ export const useAppStore = create<AppState>((set, get) => ({
       await get().refreshStatus()
     } catch (err: any) {
       get().addToast(`Unstage failed: ${err.message}`, 'error')
+    }
+  },
+
+  stageHunk: async (filePath, hunkIndex) => {
+    try {
+      await window.api.stageHunk(filePath, hunkIndex)
+      await get().refreshStatus()
+      get().addToast('Hunk staged', 'success')
+    } catch (err: any) {
+      get().addToast(`Stage hunk failed: ${err.message}`, 'error')
+    }
+  },
+
+  unstageHunk: async (filePath, hunkIndex) => {
+    try {
+      await window.api.unstageHunk(filePath, hunkIndex)
+      await get().refreshStatus()
+      get().addToast('Hunk unstaged', 'success')
+    } catch (err: any) {
+      get().addToast(`Unstage hunk failed: ${err.message}`, 'error')
     }
   },
 
@@ -419,6 +476,10 @@ export const useAppStore = create<AppState>((set, get) => ({
     } catch (err: any) {
       get().addToast(`Load commit failed: ${err.message}`, 'error')
     }
+  },
+
+  setDiffViewMode: (mode) => {
+    set({ diffViewMode: mode })
   },
 
   // Branches
@@ -600,9 +661,30 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       await window.api.abortMerge()
       await get().refreshStatus()
+      set({ isMerging: false, conflictFiles: [] })
       get().addToast('Merge aborted', 'info')
     } catch (err: any) {
       get().addToast(`Abort merge failed: ${err.message}`, 'error')
+    }
+  },
+
+  loadConflictFiles: async () => {
+    try {
+      const files = await window.api.getConflictFiles()
+      set({ conflictFiles: files.map((f) => f.path), isMerging: files.length > 0 })
+    } catch (err: any) {
+      get().addToast(`Load conflicts failed: ${err.message}`, 'error')
+    }
+  },
+
+  resolveConflict: async (filePath, resolution) => {
+    try {
+      await window.api.resolveConflict(filePath, resolution)
+      await get().refreshStatus()
+      await get().loadConflictFiles()
+      get().addToast(`Conflict resolved with '${resolution}'`, 'success')
+    } catch (err: any) {
+      get().addToast(`Resolve conflict failed: ${err.message}`, 'error')
     }
   },
 
@@ -624,6 +706,46 @@ export const useAppStore = create<AppState>((set, get) => ({
       get().addToast(`Reset to ${target.slice(0, 7)}`, 'success')
     } catch (err: any) {
       get().addToast(`Reset failed: ${err.message}`, 'error')
+    }
+  },
+
+  doRebase: async (target) => {
+    try {
+      await window.api.rebase(target)
+      await get().refreshStatus()
+      get().addToast(`Rebasing onto ${target}`, 'success')
+    } catch (err: any) {
+      get().addToast(`Rebase failed: ${err.message}`, 'error')
+    }
+  },
+
+  rebaseContinue: async () => {
+    try {
+      await window.api.rebaseContinue()
+      await get().refreshStatus()
+      get().addToast('Rebase continued', 'success')
+    } catch (err: any) {
+      get().addToast(`Rebase continue failed: ${err.message}`, 'error')
+    }
+  },
+
+  rebaseAbort: async () => {
+    try {
+      await window.api.rebaseAbort()
+      await get().refreshStatus()
+      get().addToast('Rebase aborted', 'info')
+    } catch (err: any) {
+      get().addToast(`Rebase abort failed: ${err.message}`, 'error')
+    }
+  },
+
+  doCherryPick: async (hash) => {
+    try {
+      await window.api.cherryPick(hash)
+      await get().refreshStatus()
+      get().addToast(`Cherry-picked ${hash.slice(0, 7)}`, 'success')
+    } catch (err: any) {
+      get().addToast(`Cherry-pick failed: ${err.message}`, 'error')
     }
   },
 
@@ -706,11 +828,91 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Settings
   loadSettings: async () => {
     const settings = await window.api.getSettings()
-    set({ settings })
+    set({ settings, workspaceConfig: settings.workspace, language: (settings.language as Language) || 'en' })
   },
 
   updateSettings: async (partial) => {
     const updated = await window.api.setSettings(partial)
-    set({ settings: updated })
+    set({ settings: updated, workspaceConfig: updated.workspace })
+  },
+
+  setLanguage: async (language) => {
+    const settings = get().settings
+    if (settings) {
+      await get().updateSettings({ ...settings, language })
+      set({ language })
+    }
+  },
+
+  addWorkspaceEntry: async (entry) => {
+    try {
+      const workspace = await window.api.addWorkspaceEntry(entry)
+      set({ workspaceConfig: workspace })
+      get().addToast(`Added project '${entry.name}'`, 'success')
+    } catch (err: any) {
+      get().addToast(`Add project failed: ${err.message}`, 'error')
+    }
+  },
+
+  removeWorkspaceEntry: async (path) => {
+    try {
+      const workspace = await window.api.removeWorkspaceEntry(path)
+      set({ workspaceConfig: workspace })
+      get().addToast('Project removed', 'success')
+    } catch (err: any) {
+      get().addToast(`Remove project failed: ${err.message}`, 'error')
+    }
+  },
+
+  updateWorkspaceEntry: async (path, updates) => {
+    try {
+      const workspace = await window.api.updateWorkspaceEntry(path, updates)
+      set({ workspaceConfig: workspace })
+      get().addToast('Project updated', 'success')
+    } catch (err: any) {
+      get().addToast(`Update project failed: ${err.message}`, 'error')
+    }
+  },
+
+  reorderWorkspaceEntries: async (entries) => {
+    try {
+      const workspace = await window.api.reorderWorkspaceEntries(entries)
+      set({ workspaceConfig: workspace })
+    } catch (err: any) {
+      get().addToast(`Reorder failed: ${err.message}`, 'error')
+    }
+  },
+
+  switchWorkspace: async (index) => {
+    try {
+      const workspace = await window.api.setActiveWorkspace(index)
+      set({ workspaceConfig: workspace })
+      const entry = workspace.entries[index]
+      if (entry) {
+        await get().openRepo(entry.path)
+      }
+    } catch (err: any) {
+      get().addToast(`Switch workspace failed: ${err.message}`, 'error')
+    }
+  },
+
+  addWorkspaceGroup: async (group) => {
+    try {
+      const workspace = await window.api.addWorkspaceGroup(group)
+      set({ workspaceConfig: workspace })
+      get().addToast(`Group '${group.name}' created`, 'success')
+    } catch (err: any) {
+      get().addToast(`Create group failed: ${err.message}`, 'error')
+    }
+  },
+
+  removeWorkspaceGroup: async (groupId) => {
+    try {
+      const workspace = await window.api.removeWorkspaceGroup(groupId)
+      set({ workspaceConfig: workspace })
+      get().addToast('Group removed', 'success')
+    } catch (err: any) {
+      get().addToast(`Remove group failed: ${err.message}`, 'error')
+    }
   },
 }))

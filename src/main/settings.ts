@@ -2,7 +2,7 @@ import { app, ipcMain } from 'electron'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs'
 import { join } from 'path'
 import { IPC_CHANNELS } from '../shared/ipc'
-import { AppSettings } from '../shared/types'
+import { AppSettings, WorkspaceEntry, WorkspaceGroup } from '../shared/types'
 
 let _configDir: string | null = null
 let _configFile: string | null = null
@@ -25,6 +25,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   window: { width: 1100, height: 720 },
   recentRepos: [],
   theme: 'Tokyo Night',
+  language: 'en',
   workspace: {
     entries: [],
     groups: [],
@@ -86,5 +87,62 @@ export function registerSettingsHandlers() {
     } catch {
       return []
     }
+  })
+
+  // Workspace management
+  ipcMain.handle(IPC_CHANNELS.WORKSPACE_ADD_ENTRY, (_event, entry: WorkspaceEntry) => {
+    const settings = loadSettings()
+    settings.workspace.entries.push({ ...entry, lastOpened: new Date().toISOString() })
+    saveSettings(settings)
+    return settings.workspace
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WORKSPACE_REMOVE_ENTRY, (_event, path: string) => {
+    const settings = loadSettings()
+    settings.workspace.entries = settings.workspace.entries.filter((e) => e.path !== path)
+    saveSettings(settings)
+    return settings.workspace
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WORKSPACE_UPDATE_ENTRY, (_event, path: string, updates: Partial<WorkspaceEntry>) => {
+    const settings = loadSettings()
+    const entry = settings.workspace.entries.find((e) => e.path === path)
+    if (entry) {
+      Object.assign(entry, updates, { lastOpened: new Date().toISOString() })
+    }
+    saveSettings(settings)
+    return settings.workspace
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WORKSPACE_REORDER_ENTRIES, (_event, entries: WorkspaceEntry[]) => {
+    const settings = loadSettings()
+    settings.workspace.entries = entries
+    saveSettings(settings)
+    return settings.workspace
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WORKSPACE_SET_ACTIVE, (_event, index: number) => {
+    const settings = loadSettings()
+    settings.workspace.activeIndex = index
+    saveSettings(settings)
+    return settings.workspace
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WORKSPACE_ADD_GROUP, (_event, group: WorkspaceGroup) => {
+    const settings = loadSettings()
+    settings.workspace.groups.push(group)
+    saveSettings(settings)
+    return settings.workspace
+  })
+
+  ipcMain.handle(IPC_CHANNELS.WORKSPACE_REMOVE_GROUP, (_event, groupId: string) => {
+    const settings = loadSettings()
+    settings.workspace.groups = settings.workspace.groups.filter((g) => g.id !== groupId)
+    // Remove groupId from entries
+    settings.workspace.entries.forEach((e) => {
+      if (e.groupId === groupId) delete e.groupId
+    })
+    saveSettings(settings)
+    return settings.workspace
   })
 }

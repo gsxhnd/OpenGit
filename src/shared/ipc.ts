@@ -19,6 +19,8 @@ export const IPC_CHANNELS = {
   // Staging & Commit
   GIT_STAGE_FILES: 'git:stage-files',
   GIT_UNSTAGE_FILES: 'git:unstage-files',
+  GIT_STAGE_HUNK: 'git:stage-hunk',
+  GIT_UNSTAGE_HUNK: 'git:unstage-hunk',
   GIT_DISCARD_CHANGES: 'git:discard-changes',
   GIT_COMMIT: 'git:commit',
   GIT_AMEND_COMMIT: 'git:amend-commit',
@@ -52,10 +54,16 @@ export const IPC_CHANNELS = {
   // Merge
   GIT_MERGE: 'git:merge',
   GIT_ABORT_MERGE: 'git:abort-merge',
+  GIT_RESOLVE_CONFLICT: 'git:resolve-conflict',
+  GIT_GET_CONFLICT_FILES: 'git:get-conflict-files',
 
   // Advanced
   GIT_REVERT_COMMIT: 'git:revert-commit',
   GIT_RESET: 'git:reset',
+  GIT_REBASE: 'git:rebase',
+  GIT_REBASE_CONTINUE: 'git:rebase-continue',
+  GIT_REBASE_ABORT: 'git:rebase-abort',
+  GIT_CHERRY_PICK: 'git:cherry-pick',
   GIT_GET_GRAPH: 'git:get-graph',
   GIT_FILTER_HISTORY_BY_AUTHOR: 'git:filter-history-by-author',
   GIT_FILTER_HISTORY_BY_FILE: 'git:filter-history-by-file',
@@ -69,6 +77,13 @@ export const IPC_CHANNELS = {
   SETTINGS_GET: 'settings:get',
   SETTINGS_SET: 'settings:set',
   SETTINGS_GET_THEMES: 'settings:get-themes',
+  WORKSPACE_ADD_ENTRY: 'workspace:add-entry',
+  WORKSPACE_REMOVE_ENTRY: 'workspace:remove-entry',
+  WORKSPACE_UPDATE_ENTRY: 'workspace:update-entry',
+  WORKSPACE_REORDER_ENTRIES: 'workspace:reorder-entries',
+  WORKSPACE_SET_ACTIVE: 'workspace:set-active',
+  WORKSPACE_ADD_GROUP: 'workspace:add-group',
+  WORKSPACE_REMOVE_GROUP: 'workspace:remove-group',
 
   // Window
   WINDOW_MINIMIZE: 'window:minimize',

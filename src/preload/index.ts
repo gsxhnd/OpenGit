@@ -25,6 +25,10 @@ const api = {
   // Staging & Commit
   stageFiles: (paths: string[]) => ipcRenderer.invoke(IPC_CHANNELS.GIT_STAGE_FILES, paths),
   unstageFiles: (paths: string[]) => ipcRenderer.invoke(IPC_CHANNELS.GIT_UNSTAGE_FILES, paths),
+  stageHunk: (filePath: string, hunkIndex: number) =>
+    ipcRenderer.invoke(IPC_CHANNELS.GIT_STAGE_HUNK, filePath, hunkIndex),
+  unstageHunk: (filePath: string, hunkIndex: number) =>
+    ipcRenderer.invoke(IPC_CHANNELS.GIT_UNSTAGE_HUNK, filePath, hunkIndex),
   discardChanges: (paths: string[]) =>
     ipcRenderer.invoke(IPC_CHANNELS.GIT_DISCARD_CHANGES, paths),
   commit: (message: string) => ipcRenderer.invoke(IPC_CHANNELS.GIT_COMMIT, message),
@@ -65,11 +69,18 @@ const api = {
   // Merge
   merge: (branch: string) => ipcRenderer.invoke(IPC_CHANNELS.GIT_MERGE, branch),
   abortMerge: () => ipcRenderer.invoke(IPC_CHANNELS.GIT_ABORT_MERGE),
+  getConflictFiles: () => ipcRenderer.invoke(IPC_CHANNELS.GIT_GET_CONFLICT_FILES),
+  resolveConflict: (filePath: string, resolution: 'ours' | 'theirs') =>
+    ipcRenderer.invoke(IPC_CHANNELS.GIT_RESOLVE_CONFLICT, filePath, resolution),
 
   // Advanced
   revertCommit: (hash: string) => ipcRenderer.invoke(IPC_CHANNELS.GIT_REVERT_COMMIT, hash),
   reset: (target: string, mode?: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.GIT_RESET, target, mode),
+  rebase: (target: string) => ipcRenderer.invoke(IPC_CHANNELS.GIT_REBASE, target),
+  rebaseContinue: () => ipcRenderer.invoke(IPC_CHANNELS.GIT_REBASE_CONTINUE),
+  rebaseAbort: () => ipcRenderer.invoke(IPC_CHANNELS.GIT_REBASE_ABORT),
+  cherryPick: (hash: string) => ipcRenderer.invoke(IPC_CHANNELS.GIT_CHERRY_PICK, hash),
   getGraph: (count?: number) => ipcRenderer.invoke(IPC_CHANNELS.GIT_GET_GRAPH, count),
   filterHistoryByAuthor: (author: string, count?: number, skip?: number) =>
     ipcRenderer.invoke(IPC_CHANNELS.GIT_FILTER_HISTORY_BY_AUTHOR, author, count, skip),
@@ -87,6 +98,17 @@ const api = {
   getSettings: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET),
   setSettings: (settings: any) => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_SET, settings),
   getThemes: () => ipcRenderer.invoke(IPC_CHANNELS.SETTINGS_GET_THEMES),
+
+  // Workspace
+  addWorkspaceEntry: (entry: any) => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_ADD_ENTRY, entry),
+  removeWorkspaceEntry: (path: string) => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_REMOVE_ENTRY, path),
+  updateWorkspaceEntry: (path: string, updates: any) =>
+    ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_UPDATE_ENTRY, path, updates),
+  reorderWorkspaceEntries: (entries: any[]) =>
+    ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_REORDER_ENTRIES, entries),
+  setActiveWorkspace: (index: number) => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_SET_ACTIVE, index),
+  addWorkspaceGroup: (group: any) => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_ADD_GROUP, group),
+  removeWorkspaceGroup: (groupId: string) => ipcRenderer.invoke(IPC_CHANNELS.WORKSPACE_REMOVE_GROUP, groupId),
 
   // Window
   minimize: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MINIMIZE),

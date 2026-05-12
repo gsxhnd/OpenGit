@@ -82,6 +82,11 @@ export interface DiffHunk {
   lines: DiffLine[]
 }
 
+export interface HunkIdentifier {
+  filePath: string
+  hunkIndex: number
+}
+
 export interface FileDiff {
   path: string
   oldPath: string | null
@@ -130,6 +135,13 @@ export interface GraphData {
 
 export type ResetMode = 'soft' | 'mixed' | 'hard'
 
+export type ConflictResolution = 'ours' | 'theirs'
+
+export interface ConflictFile {
+  path: string
+  status: 'conflicted'
+}
+
 export interface RepoEntry {
   path: string
   name: string
@@ -165,6 +177,7 @@ export interface AppSettings {
   window: WindowConfig
   recentRepos: RepoEntry[]
   theme: string
+  language: string
   workspace: WorkspaceConfig
 }
 
@@ -182,6 +195,7 @@ export type ViewType =
   | 'history'
   | 'branches'
   | 'diff'
+  | 'diff-side-by-side'
   | 'stash'
   | 'tags'
   | 'graph'
@@ -190,4 +204,5 @@ export type ViewType =
   | 'file-history'
   | 'blame'
   | 'reflog'
+  | 'settings'
   | 'welcome'

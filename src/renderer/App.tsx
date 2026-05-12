@@ -1,9 +1,14 @@
 import { useEffect } from 'react'
 import { useAppStore } from './store'
+import { useAppKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
+import { useTheme } from './hooks/useTheme'
 import { TitleBar } from './components/TitleBar'
 import { StatusBar } from './components/StatusBar'
 import { Sidebar } from './components/Sidebar'
 import { ToastContainer } from './components/ToastContainer'
+import { ConflictResolutionView } from './components/ConflictResolutionView'
+import { WorkspaceSwitcher } from './components/WorkspaceSwitcher'
+import { CommandPalette } from './components/CommandPalette'
 import { WelcomeView } from './views/WelcomeView'
 import { CommitView } from './views/CommitView'
 import { HistoryView } from './views/HistoryView'
@@ -17,9 +22,16 @@ import { FileSearchView } from './views/FileSearchView'
 import { FileHistoryView } from './views/FileHistoryView'
 import { BlameView } from './views/BlameView'
 import { ReflogView } from './views/ReflogView'
+import { SettingsView } from './views/SettingsView'
 
 export default function App() {
-  const { currentView, repoPath, refreshStatus, loadSettings } = useAppStore()
+  const { currentView, repoPath, refreshStatus, loadSettings, loadConflictFiles } = useAppStore()
+
+  // Setup keyboard shortcuts
+  useAppKeyboardShortcuts()
+
+  // Setup theme
+  useTheme()
 
   useEffect(() => {
     loadSettings()
@@ -27,6 +39,7 @@ export default function App() {
     // Listen for file system changes
     const unsubscribe = window.api.onRepoChanged(() => {
       refreshStatus()
+      loadConflictFiles()
     })
 
     return () => {
@@ -62,6 +75,8 @@ export default function App() {
         return <BlameView />
       case 'reflog':
         return <ReflogView />
+      case 'settings':
+        return <SettingsView />
       default:
         return <WelcomeView />
     }
@@ -70,12 +85,17 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       <TitleBar />
+      {repoPath && <WorkspaceSwitcher />}
       <div className="flex flex-1 overflow-hidden">
         {repoPath && <Sidebar />}
-        <main className="flex-1 overflow-auto">{renderView()}</main>
+        <main className="flex-1 overflow-auto flex flex-col">
+          {repoPath && <ConflictResolutionView />}
+          {renderView()}
+        </main>
       </div>
       {repoPath && <StatusBar />}
       <ToastContainer />
+      <CommandPalette />
     </div>
   )
 }

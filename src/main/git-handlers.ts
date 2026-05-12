@@ -378,6 +378,78 @@ export function registerGitHandlers() {
     await git(['reset', 'HEAD', '--', ...paths])
   })
 
+  ipcMain.handle(IPC_CHANNELS.GIT_STAGE_HUNK, async (_event, filePath: string, hunkIndex: number) => {
+    // Get the diff for the file
+    const diffOutput = await gitSilent(['diff', '--', filePath])
+    const fileDiff = parseDiffOutput(diffOutput, filePath)
+    
+    if (hunkIndex < 0 || hunkIndex >= fileDiff.hunks.length) {
+      throw new Error('Invalid hunk index')
+    }
+
+    const hunk = fileDiff.hunks[hunkIndex]
+    
+    // Build a patch for this specific hunk
+    let patch = `--- a/${filePath}\n+++ b/${filePath}\n`
+    patch += `@@ -${hunk.oldRange.start},${hunk.oldRange.count} +${hunk.newRange.start},${hunk.newRange.count} @@${hunk.header}\n`
+    
+    for (const line of hunk.lines) {
+      patch += line.prefix + line.content + '\n'
+    }
+
+    // Apply the patch to the index
+    const { execFile } = require('child_process')
+    const { promisify } = require('util')
+    const execFileAsync = promisify(execFile)
+    
+    try {
+      await execFileAsync('git', ['apply', '--cached', '--unidiff-zero'], {
+        cwd: getRepoPath(),
+        input: patch,
+        encoding: 'utf-8',
+      })
+    } catch (err: any) {
+      throw new Error(`Failed to stage hunk: ${err.message}`)
+    }
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GIT_UNSTAGE_HUNK, async (_event, filePath: string, hunkIndex: number) => {
+    // Get the staged diff for the file
+    const diffOutput = await gitSilent(['diff', '--cached', '--', filePath])
+    const fileDiff = parseDiffOutput(diffOutput, filePath)
+    
+    if (hunkIndex < 0 || hunkIndex >= fileDiff.hunks.length) {
+      throw new Error('Invalid hunk index')
+    }
+
+    const hunk = fileDiff.hunks[hunkIndex]
+    
+    // Build a reverse patch for this specific hunk
+    let patch = `--- a/${filePath}\n+++ b/${filePath}\n`
+    patch += `@@ -${hunk.oldRange.start},${hunk.oldRange.count} +${hunk.newRange.start},${hunk.newRange.count} @@${hunk.header}\n`
+    
+    for (const line of hunk.lines) {
+      // Reverse the patch: + becomes -, - becomes +
+      const reversedPrefix = line.prefix === '+' ? '-' : line.prefix === '-' ? '+' : ' '
+      patch += reversedPrefix + line.content + '\n'
+    }
+
+    // Apply the reverse patch to unstage
+    const { execFile } = require('child_process')
+    const { promisify } = require('util')
+    const execFileAsync = promisify(execFile)
+    
+    try {
+      await execFileAsync('git', ['apply', '--cached', '--reverse', '--unidiff-zero'], {
+        cwd: getRepoPath(),
+        input: patch,
+        encoding: 'utf-8',
+      })
+    } catch (err: any) {
+      throw new Error(`Failed to unstage hunk: ${err.message}`)
+    }
+  })
+
   ipcMain.handle(IPC_CHANNELS.GIT_DISCARD_CHANGES, async (_event, paths: string[]) => {
     await git(['checkout', '--', ...paths])
   })
@@ -538,6 +610,22 @@ export function registerGitHandlers() {
     await git(['merge', '--abort'])
   })
 
+  ipcMain.handle(IPC_CHANNELS.GIT_GET_CONFLICT_FILES, async () => {
+    const status = await getRepoStatus()
+    return status.status.unstagedFiles.filter((f) => f.status === 'conflicted')
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.GIT_RESOLVE_CONFLICT,
+    async (_event, filePath: string, resolution: 'ours' | 'theirs') => {
+      // Use git checkout to resolve conflicts
+      const strategy = resolution === 'ours' ? '--ours' : '--theirs'
+      await git(['checkout', strategy, '--', filePath])
+      // Stage the resolved file
+      await git(['add', filePath])
+    }
+  )
+
   // Advanced
   ipcMain.handle(IPC_CHANNELS.GIT_REVERT_COMMIT, async (_event, hash: string) => {
     await git(['revert', '--no-edit', hash])
@@ -549,6 +637,22 @@ export function registerGitHandlers() {
       await git(['reset', `--${mode}`, target])
     }
   )
+
+  ipcMain.handle(IPC_CHANNELS.GIT_REBASE, async (_event, target: string) => {
+    await git(['rebase', target])
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GIT_REBASE_CONTINUE, async () => {
+    await git(['rebase', '--continue'])
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GIT_REBASE_ABORT, async () => {
+    await git(['rebase', '--abort'])
+  })
+
+  ipcMain.handle(IPC_CHANNELS.GIT_CHERRY_PICK, async (_event, hash: string) => {
+    await git(['cherry-pick', hash])
+  })
 
   ipcMain.handle(IPC_CHANNELS.GIT_GET_GRAPH, async (_event, count: number = 100) => {
     const out = await gitSilent([
