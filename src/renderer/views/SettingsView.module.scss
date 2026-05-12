@@ -60,6 +60,41 @@
   gap: 1rem;
 }
 
+.full {
+  grid-column: 1 / -1;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: var(--color-muted-foreground);
+  margin-bottom: 0.75rem;
+}
+
+.loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--color-muted-foreground);
+}
+
+.hostList {
+  list-style: none;
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.hostRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius);
+  background: var(--color-muted);
+  font-size: 0.85rem;
+}
+
 .fieldLabel {
   font-size: 0.875rem;
   line-height: 1.25rem;

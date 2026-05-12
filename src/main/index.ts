@@ -1,26 +1,13 @@
 /**
- * Main Process Entry - Electron 主进程入口
- *
- * 负责应用生命周期管理：
- * - 创建主窗口（BrowserWindow）
- * - 注册 IPC 处理器（Git 操作、设置、窗口控制）
- * - 管理窗口状态持久化（位置、尺寸）
- * - 加载渲染进程（开发模式用 URL，生产模式用文件）
- *
- * 窗口配置：
- * - macOS: hiddenInset 标题栏 + traffic light 按钮
- * - 其他平台: 标准窗口框架
- * - contextIsolation: true（安全隔离）
- * - nodeIntegration: false（禁止渲染进程直接访问 Node）
+ * Electron main — window lifecycle, IPC (settings, PTY, SSH/SFTP, dialogs).
  */
-import { app, BrowserWindow, ipcMain, dialog, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
-import { registerGitHandlers } from './git-handlers'
 import { registerSettingsHandlers, loadSettings, saveSettings } from './settings'
-import { setupFileWatcher } from './file-watcher'
+import { registerPtyHandlers } from './pty-handlers'
+import { registerSshSftpHandlers } from './ssh-handlers'
 import { IPC_CHANNELS } from '../shared/ipc'
 
-/** 主窗口实例引用 */
 let mainWindow: BrowserWindow | null = null
 
 function createWindow() {
@@ -52,18 +39,17 @@ function createWindow() {
   mainWindow.on('close', () => {
     if (mainWindow) {
       const bounds = mainWindow.getBounds()
-      const settings = loadSettings()
-      settings.window = {
+      const s = loadSettings()
+      s.window = {
         width: bounds.width,
         height: bounds.height,
         x: bounds.x,
         y: bounds.y,
       }
-      saveSettings(settings)
+      saveSettings(s)
     }
   })
 
-  // Window control IPC
   ipcMain.on(IPC_CHANNELS.WINDOW_MINIMIZE, () => mainWindow?.minimize())
   ipcMain.on(IPC_CHANNELS.WINDOW_MAXIMIZE, () => {
     if (mainWindow?.isMaximized()) {
@@ -74,7 +60,6 @@ function createWindow() {
   })
   ipcMain.on(IPC_CHANNELS.WINDOW_CLOSE, () => mainWindow?.close())
 
-  // Dialog IPC
   ipcMain.handle(IPC_CHANNELS.DIALOG_OPEN_DIRECTORY, async () => {
     const result = await dialog.showOpenDialog(mainWindow!, {
       properties: ['openDirectory'],
@@ -83,7 +68,22 @@ function createWindow() {
     return result.filePaths[0]
   })
 
-  // Load the renderer
+  ipcMain.handle(IPC_CHANNELS.DIALOG_OPEN_FILE, async () => {
+    const result = await dialog.showOpenDialog(mainWindow!, {
+      properties: ['openFile'],
+    })
+    if (result.canceled || !result.filePaths[0]) return null
+    return result.filePaths[0]
+  })
+
+  ipcMain.handle(IPC_CHANNELS.DIALOG_SAVE_FILE, async (_e, suggestedName?: string) => {
+    const result = await dialog.showSaveDialog(mainWindow!, {
+      defaultPath: suggestedName,
+    })
+    if (result.canceled || !result.filePath) return null
+    return result.filePath
+  })
+
   if (process.env.ELECTRON_RENDERER_URL) {
     mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL)
   } else {
@@ -92,8 +92,9 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  registerGitHandlers()
   registerSettingsHandlers()
+  registerPtyHandlers()
+  registerSshSftpHandlers()
   createWindow()
 
   app.on('activate', () => {

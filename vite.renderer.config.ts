@@ -7,6 +7,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   root: resolve(__dirname, 'src/renderer'),
   base: './',
+  worker: {
+    format: 'es',
+  },
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
     emptyOutDir: true,

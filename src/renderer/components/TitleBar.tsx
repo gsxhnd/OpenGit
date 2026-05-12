@@ -1,39 +1,22 @@
-import { useAppStore } from "../store";
-import { Button } from "./ui/button";
-import styles from "./TitleBar.module.scss";
+import { useAppStore } from '../store'
 
 export function TitleBar() {
-  const { repoPath, repoStatus, doFetch, doPull, doPush } = useAppStore();
+  const { activeRemoteSession } = useAppStore()
 
-  const repoName = repoPath ? repoPath.split("/").pop() : "OpenRemote";
+  const title = activeRemoteSession
+    ? `${activeRemoteSession.username}@${activeRemoteSession.host}`
+    : 'OpenRemote'
 
   return (
-    <header className={styles.header}>
-      {/* Left: macOS traffic lights spacer + app name */}
-      <div className={styles.leftSection}>
-        <div className={styles.trafficLightSpacer} />
-        <span className={styles.repoName}>{repoName}</span>
-        {repoStatus?.status.currentBranch && (
-          <span className={styles.branchBadge}>
-            {repoStatus.status.currentBranch}
+    <header className="drag-region flex h-10 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-title-bar)] pl-20 pr-3">
+      <div className="pointer-events-none flex min-w-0 items-center gap-2 pl-1">
+        <span className="truncate text-sm font-medium text-[var(--color-foreground)]">{title}</span>
+        {activeRemoteSession && (
+          <span className="rounded bg-[var(--color-muted)] px-1.5 py-0.5 text-[10px] text-[var(--color-muted-foreground)]">
+            SSH
           </span>
         )}
       </div>
-
-      {/* Right: Actions */}
-      {repoPath && (
-        <div className={styles.actions}>
-          <Button variant="ghost" size="sm" onClick={() => doFetch()}>
-            Fetch1
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => doPull()}>
-            Pull
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => doPush()}>
-            Push
-          </Button>
-        </div>
-      )}
     </header>
-  );
+  )
 }

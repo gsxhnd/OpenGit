@@ -1,0 +1,152 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+  background: var(--color-title-bar);
+}
+
+.headerMain {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.headerActions {
+  flex-shrink: 0;
+}
+
+.badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.35rem;
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--color-primary) 35%, transparent);
+  color: var(--color-foreground);
+}
+
+.sessionTitle {
+  font-size: 0.8rem;
+  color: var(--color-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.sftp {
+  width: 240px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-sidebar);
+  min-height: 0;
+}
+
+.sftpToolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.path {
+  font-size: 0.7rem;
+  color: var(--color-muted-foreground);
+  padding: 0.35rem 0.5rem;
+  word-break: break-all;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: 0.25rem 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.entryBtn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: left;
+}
+
+.entryBtn:hover {
+  background: var(--color-muted);
+}
+
+.entryName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dl {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+}
+
+.mainCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.termArea {
+  flex: 1;
+  min-height: 180px;
+  padding: 0.35rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.editorArea {
+  flex: 1;
+  min-height: 200px;
+  max-height: 55%;
+  display: flex;
+  flex-direction: column;
+}
+
+.muted {
+  padding: 1rem;
+  font-size: 0.85rem;
+  color: var(--color-muted-foreground);
+}

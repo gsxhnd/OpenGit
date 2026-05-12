@@ -1,7 +1,5 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { useAppStore } from '../store'
-import { viewToPath } from '../routes'
 
 export interface KeyboardShortcut {
   key: string
@@ -35,71 +33,23 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
 }
 
 export function useAppKeyboardShortcuts() {
-  const {
-    currentView,
-    goBack,
-    stageAll,
-    unstageAll,
-    doCommit,
-    repoStatus,
-    loadHistory,
-    loadGraph,
-  } = useAppStore()
   const navigate = useNavigate()
 
   const shortcuts: KeyboardShortcut[] = [
     {
       key: '1',
       ctrl: true,
-      action: () => navigate(viewToPath('commit')),
+      action: () => navigate('/'),
     },
     {
       key: '2',
       ctrl: true,
-      action: () => navigate(viewToPath('history')),
+      action: () => navigate('/local-terminal'),
     },
     {
       key: '3',
       ctrl: true,
-      action: () => navigate(viewToPath('branches')),
-    },
-    {
-      key: '4',
-      ctrl: true,
-      action: () => navigate(viewToPath('graph')),
-    },
-    {
-      key: 'Escape',
-      action: () => {
-        if (currentView !== 'commit' && currentView !== 'welcome') {
-          goBack()
-        }
-      },
-    },
-
-    // Staging
-    {
-      key: 'a',
-      ctrl: true,
-      shift: true,
-      action: () => stageAll(),
-    },
-    {
-      key: 'u',
-      ctrl: true,
-      shift: true,
-      action: () => unstageAll(),
-    },
-
-    // Commit
-    {
-      key: 'Enter',
-      ctrl: true,
-      action: () => {
-        if (currentView === 'commit' && repoStatus?.status.stagedFiles.length) {
-          // This will be handled by the CommitView component
-        }
-      },
+      action: () => navigate('/settings'),
     },
   ]
 

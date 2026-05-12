@@ -1,8 +1,9 @@
 import { app, ipcMain } from 'electron'
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'fs'
 import { join } from 'path'
+import { randomUUID } from 'crypto'
 import { IPC_CHANNELS } from '../shared/ipc'
-import { AppSettings, WorkspaceEntry, WorkspaceGroup } from '../shared/types'
+import type { AppSettings, HostProfile } from '../shared/types'
 
 let _configDir: string | null = null
 let _configFile: string | null = null
@@ -21,15 +22,21 @@ function getThemesDir(): string {
   return _themesDir
 }
 
-const DEFAULT_SETTINGS: AppSettings = {
-  window: { width: 1100, height: 720 },
-  recentRepos: [],
+export const DEFAULT_SETTINGS: AppSettings = {
+  window: { width: 1200, height: 760 },
   theme: 'Tokyo Night',
   language: 'en',
-  workspace: {
-    entries: [],
-    groups: [],
-    activeIndex: 0,
+  hosts: [],
+  terminal: {
+    fontSize: 14,
+    scrollback: 5000,
+    fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+  },
+  editor: {
+    fontSize: 14,
+    tabSize: 2,
+    wordWrap: 'on',
+    minimap: true,
   },
 }
 
@@ -37,20 +44,33 @@ export function loadSettings(): AppSettings {
   try {
     if (existsSync(getConfigFile())) {
       const data = readFileSync(getConfigFile(), 'utf-8')
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(data) }
+      const parsed = JSON.parse(data) as Partial<AppSettings>
+      return migrateSettings({ ...DEFAULT_SETTINGS, ...parsed })
     }
   } catch (err) {
     console.error('Failed to load settings:', err)
-    // Backup corrupted file
     try {
       const backupPath = getConfigFile() + '.bak'
       if (existsSync(getConfigFile())) {
         const data = readFileSync(getConfigFile(), 'utf-8')
         writeFileSync(backupPath, data)
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
   }
   return { ...DEFAULT_SETTINGS }
+}
+
+/** Merge legacy OpenGit keys into OpenRemote shape */
+function migrateSettings(s: AppSettings): AppSettings {
+  const any = s as unknown as Record<string, unknown>
+  if (!Array.isArray(s.hosts) && Array.isArray(any.recentRepos)) {
+    s.hosts = []
+  }
+  if (!s.terminal) s.terminal = { ...DEFAULT_SETTINGS.terminal }
+  if (!s.editor) s.editor = { ...DEFAULT_SETTINGS.editor }
+  return s
 }
 
 export function saveSettings(settings: AppSettings) {
@@ -65,13 +85,11 @@ export function saveSettings(settings: AppSettings) {
 }
 
 export function registerSettingsHandlers() {
-  ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, () => {
-    return loadSettings()
-  })
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, () => loadSettings())
 
-  ipcMain.handle(IPC_CHANNELS.SETTINGS_SET, (_event, settings: Partial<AppSettings>) => {
+  ipcMain.handle(IPC_CHANNELS.SETTINGS_SET, (_event, partial: Partial<AppSettings>) => {
     const current = loadSettings()
-    const merged = { ...current, ...settings }
+    const merged = { ...current, ...partial }
     saveSettings(merged)
     return merged
   })
@@ -89,60 +107,28 @@ export function registerSettingsHandlers() {
     }
   })
 
-  // Workspace management
-  ipcMain.handle(IPC_CHANNELS.WORKSPACE_ADD_ENTRY, (_event, entry: WorkspaceEntry) => {
+  ipcMain.handle(IPC_CHANNELS.HOSTS_ADD, (_event, host: Omit<HostProfile, 'id'>) => {
     const settings = loadSettings()
-    settings.workspace.entries.push({ ...entry, lastOpened: new Date().toISOString() })
+    const entry: HostProfile = { ...host, id: randomUUID() }
+    settings.hosts.push(entry)
     saveSettings(settings)
-    return settings.workspace
+    return entry
   })
 
-  ipcMain.handle(IPC_CHANNELS.WORKSPACE_REMOVE_ENTRY, (_event, path: string) => {
+  ipcMain.handle(IPC_CHANNELS.HOSTS_UPDATE, (_event, id: string, updates: Partial<HostProfile>) => {
     const settings = loadSettings()
-    settings.workspace.entries = settings.workspace.entries.filter((e) => e.path !== path)
-    saveSettings(settings)
-    return settings.workspace
-  })
-
-  ipcMain.handle(IPC_CHANNELS.WORKSPACE_UPDATE_ENTRY, (_event, path: string, updates: Partial<WorkspaceEntry>) => {
-    const settings = loadSettings()
-    const entry = settings.workspace.entries.find((e) => e.path === path)
-    if (entry) {
-      Object.assign(entry, updates, { lastOpened: new Date().toISOString() })
+    const i = settings.hosts.findIndex((h) => h.id === id)
+    if (i >= 0) {
+      settings.hosts[i] = { ...settings.hosts[i], ...updates }
+      saveSettings(settings)
     }
-    saveSettings(settings)
-    return settings.workspace
+    return loadSettings().hosts
   })
 
-  ipcMain.handle(IPC_CHANNELS.WORKSPACE_REORDER_ENTRIES, (_event, entries: WorkspaceEntry[]) => {
+  ipcMain.handle(IPC_CHANNELS.HOSTS_REMOVE, (_event, id: string) => {
     const settings = loadSettings()
-    settings.workspace.entries = entries
+    settings.hosts = settings.hosts.filter((h) => h.id !== id)
     saveSettings(settings)
-    return settings.workspace
-  })
-
-  ipcMain.handle(IPC_CHANNELS.WORKSPACE_SET_ACTIVE, (_event, index: number) => {
-    const settings = loadSettings()
-    settings.workspace.activeIndex = index
-    saveSettings(settings)
-    return settings.workspace
-  })
-
-  ipcMain.handle(IPC_CHANNELS.WORKSPACE_ADD_GROUP, (_event, group: WorkspaceGroup) => {
-    const settings = loadSettings()
-    settings.workspace.groups.push(group)
-    saveSettings(settings)
-    return settings.workspace
-  })
-
-  ipcMain.handle(IPC_CHANNELS.WORKSPACE_REMOVE_GROUP, (_event, groupId: string) => {
-    const settings = loadSettings()
-    settings.workspace.groups = settings.workspace.groups.filter((g) => g.id !== groupId)
-    // Remove groupId from entries
-    settings.workspace.entries.forEach((e) => {
-      if (e.groupId === groupId) delete e.groupId
-    })
-    saveSettings(settings)
-    return settings.workspace
+    return settings.hosts
   })
 }

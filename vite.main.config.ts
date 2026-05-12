@@ -15,6 +15,9 @@ export default defineConfig({
       },
       external: [
         'electron',
+        'ssh2',
+        'node-pty',
+        'cpu-features',
         ...builtinModules,
         ...builtinModules.map((m) => `node:${m}`),
       ],

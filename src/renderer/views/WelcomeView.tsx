@@ -1,36 +1,160 @@
 import { motion } from 'motion/react'
+import { useNavigate } from 'react-router'
+import { useState, useEffect } from 'react'
 import { useAppStore } from '../store'
 import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
+import type { HostProfile, SshConnectPayload } from '@shared/types'
 import styles from './WelcomeView.module.scss'
 
 export function WelcomeView() {
-  const { openRepo } = useAppStore()
+  const navigate = useNavigate()
+  const { settings, loadSettings, setActiveRemoteSession, addToast } = useAppStore()
+  const [host, setHost] = useState('')
+  const [port, setPort] = useState('22')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [label, setLabel] = useState('')
+  const [connecting, setConnecting] = useState(false)
 
-  const handleOpen = async () => {
-    const path = await window.api.openDirectory()
-    if (path) {
-      openRepo(path)
+  const hosts = settings?.hosts ?? []
+
+  useEffect(() => {
+    void loadSettings()
+  }, [loadSettings])
+
+  const doConnect = async (payload: SshConnectPayload, meta: { hostLabel: string }) => {
+    setConnecting(true)
+    try {
+      const { connectionId, fingerprint } = await window.api.sshConnect(payload)
+      setActiveRemoteSession({
+        connectionId,
+        hostLabel: meta.hostLabel,
+        username: payload.username,
+        host: payload.host,
+        port: payload.port,
+        fingerprint,
+      })
+      addToast(`Connected · ${fingerprint}`, 'info')
+      navigate(`/session/${connectionId}`)
+    } catch (e: unknown) {
+      addToast(e instanceof Error ? e.message : 'Connection failed', 'error')
+    } finally {
+      setConnecting(false)
     }
   }
 
+  const handleQuickConnect = () => {
+    const p = Number(port) || 22
+    if (!host.trim() || !username.trim()) {
+      addToast('Host and username are required', 'error')
+      return
+    }
+    if (!password.trim()) {
+      addToast('Password or saved host required', 'error')
+      return
+    }
+    void doConnect(
+      { host: host.trim(), port: p, username: username.trim(), password },
+      { hostLabel: label.trim() || host.trim() },
+    )
+  }
+
+  const connectSaved = (h: HostProfile) => {
+    const pass = h.password
+    const pk = h.privateKeyPath
+    if (h.authType === 'password' && !pass) {
+      addToast('No password stored for this host — use quick connect', 'error')
+      return
+    }
+    if (h.authType === 'privateKey' && !pk) {
+      addToast('No key path on this host profile', 'error')
+      return
+    }
+    void doConnect(
+      {
+        host: h.host,
+        port: h.port || 22,
+        username: h.username,
+        password: h.authType === 'password' ? pass : undefined,
+        privateKeyPath: h.authType === 'privateKey' ? pk : undefined,
+        passphrase: h.passphrase,
+        expectedFingerprint: h.trustedFingerprint,
+      },
+      { hostLabel: h.label },
+    )
+  }
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className={styles.container}
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={styles.container}>
       <div className={styles.textCenter}>
-        <h1 className={styles.title}>OpenGit</h1>
-        <p className={styles.subtitle}>A modern Git GUI</p>
+        <h1 className={styles.title}>OpenRemote</h1>
+        <p className={styles.subtitle}>SSH, SFTP, and remote editing</p>
       </div>
 
-      <Button onClick={handleOpen} size="lg">
-        Open Repository
-      </Button>
+      <div className={styles.actions}>
+        <Button variant="secondary" onClick={() => navigate('/local-terminal')}>
+          Local terminal
+        </Button>
+        <Button variant="outline" onClick={() => void loadSettings()}>
+          Refresh hosts
+        </Button>
+      </div>
 
-      <p className={styles.hint}>
-        Or drag and drop a folder here
-      </p>
+      <div className={styles.panel}>
+        <h2 className={styles.panelTitle}>Quick connect</h2>
+        <div className={styles.formGrid}>
+          <label className={styles.label}>
+            Label
+            <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="My server" />
+          </label>
+          <label className={styles.label}>
+            Host
+            <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder="192.168.1.10" />
+          </label>
+          <label className={styles.label}>
+            Port
+            <Input value={port} onChange={(e) => setPort(e.target.value)} />
+          </label>
+          <label className={styles.label}>
+            Username
+            <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="ubuntu" />
+          </label>
+          <label className={`${styles.label} ${styles.fullRow}`}>
+            Password
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+            />
+          </label>
+        </div>
+        <Button className={styles.connectBtn} size="lg" disabled={connecting} onClick={handleQuickConnect}>
+          {connecting ? 'Connecting…' : 'Connect'}
+        </Button>
+      </div>
+
+      {hosts.length > 0 && (
+        <div className={styles.panel}>
+          <h2 className={styles.panelTitle}>Saved hosts</h2>
+          <ul className={styles.hostList}>
+            {hosts.map((h) => (
+              <li key={h.id} className={styles.hostItem}>
+                <div>
+                  <div className={styles.hostName}>{h.label}</div>
+                  <div className={styles.hostMeta}>
+                    {h.username}@{h.host}:{h.port}
+                  </div>
+                </div>
+                <Button size="sm" variant="secondary" disabled={connecting} onClick={() => connectSaved(h)}>
+                  Connect
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </motion.div>
   )
 }
