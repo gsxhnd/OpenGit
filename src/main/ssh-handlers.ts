@@ -7,6 +7,7 @@ import { randomUUID } from 'crypto'
 import { Client, ConnectConfig, SFTPWrapper, ClientChannel } from 'ssh2'
 import { IPC_CHANNELS } from '../shared/ipc'
 import type { SftpListEntry, SshConnectPayload, SshConnectResult } from '../shared/types'
+import { findKnownHost, addKnownHost } from './settings'
 
 const MAX_REMOTE_TEXT_BYTES = 4 * 1024 * 1024
 
@@ -61,6 +62,9 @@ export function registerSshSftpHandlers() {
       const client = new Client()
       const connectionId = randomUUID()
       let fingerprint = ''
+      let hostKeyAccepted = false
+
+      const existing = findKnownHost(payload.host, payload.port)
 
       const config: ConnectConfig = {
         host: payload.host,
@@ -70,9 +74,18 @@ export function registerSshSftpHandlers() {
         tryKeyboard: true,
         hostVerifier: (hashedKey: string) => {
           fingerprint = hashedKey
-          if (payload.expectedFingerprint && payload.expectedFingerprint !== hashedKey) {
-            return false
+          // If user explicitly provided expected fingerprint, use it
+          if (payload.expectedFingerprint) {
+            hostKeyAccepted = hashedKey === payload.expectedFingerprint
+            return hostKeyAccepted
           }
+          // If known host exists, verify matches
+          if (existing) {
+            hostKeyAccepted = hashedKey === existing.fingerprint
+            return hostKeyAccepted
+          }
+          // First time connecting — accept and save later
+          hostKeyAccepted = true
           return true
         },
       }
@@ -113,7 +126,17 @@ export function registerSshSftpHandlers() {
               sshDestroyHooked.delete(wc.id)
             })
           }
-          resolve({ connectionId, fingerprint })
+          // Save fingerprint to known_hosts if new or updated
+          const isNewHost = !existing || existing.fingerprint !== fingerprint
+          if (hostKeyAccepted && fingerprint) {
+            addKnownHost({
+              host: payload.host,
+              port: payload.port || 22,
+              fingerprint,
+              addedAt: Date.now(),
+            })
+          }
+          resolve({ connectionId, fingerprint, isNewHost })
         })
         .on('error', (err) => {
           reject(err)
@@ -272,6 +295,52 @@ export function registerSshSftpHandlers() {
     })
   })
 
+  ipcMain.handle(IPC_CHANNELS.SFTP_RMDIR, async (_event, connectionId: string, remotePath: string) => {
+    const sftp = await getSftp(connectionId)
+    return new Promise<void>((resolve, reject) => {
+      sftp.rmdir(remotePath, (err) => {
+        if (err) reject(err)
+        else resolve()
+      })
+    })
+  })
+
+  ipcMain.handle(
+    IPC_CHANNELS.SFTP_RENAME,
+    async (_event, connectionId: string, oldPath: string, newPath: string) => {
+      const sftp = await getSftp(connectionId)
+      return new Promise<void>((resolve, reject) => {
+        sftp.rename(oldPath, newPath, (err) => {
+          if (err) reject(err)
+          else resolve()
+        })
+      })
+    },
+  )
+
+  ipcMain.handle(IPC_CHANNELS.SFTP_STAT, async (_event, connectionId: string, remotePath: string) => {
+    const sftp = await getSftp(connectionId)
+    return new Promise<SftpListEntry>((resolve, reject) => {
+      sftp.stat(remotePath, (err, stats) => {
+        if (err) {
+          reject(err)
+          return
+        }
+        const mode = stats.mode || 0
+        const isDirectory = (mode & 0o40000) === 0o40000
+        const mtime = stats.mtime
+        const name = remotePath.split('/').pop() || remotePath
+        resolve({
+          name,
+          longname: `-rwxr-xr-x 1 user group ${stats.size ?? 0} Jan 01 1970 ${name}`,
+          isDirectory,
+          size: stats.size ?? 0,
+          mtimeMs: typeof mtime === 'number' ? mtime * 1000 : null,
+        })
+      })
+    })
+  })
+
   ipcMain.handle(IPC_CHANNELS.SFTP_UNLINK, async (_event, connectionId: string, remotePath: string) => {
     const sftp = await getSftp(connectionId)
     return new Promise<void>((resolve, reject) => {
@@ -283,15 +352,57 @@ export function registerSshSftpHandlers() {
   })
 
   ipcMain.handle(
+    IPC_CHANNELS.SFTP_EXISTS,
+    async (_event, connectionId: string, remotePath: string) => {
+      const sftp = await getSftp(connectionId)
+      return new Promise<boolean>((resolve) => {
+        sftp.stat(remotePath, (err) => {
+          resolve(!err)
+        })
+      })
+    },
+  )
+
+  ipcMain.handle(
     IPC_CHANNELS.SFTP_UPLOAD_FROM_LOCAL,
-    async (_event, connectionId: string, remotePath: string, localPath: string) => {
+    async (event, connectionId: string, remotePath: string, localPath: string) => {
       if (!existsSync(localPath)) throw new Error('Local file not found')
+      const wc = event.sender
       const buf = readFileSync(localPath)
+      const total = buf.length
+      wc.send(IPC_CHANNELS.SFTP_TRANSFER_PROGRESS, {
+        connectionId,
+        remotePath,
+        kind: 'upload',
+        bytes: 0,
+        total,
+        done: false,
+      })
       const sftp = await getSftp(connectionId)
       return new Promise<void>((resolve, reject) => {
         sftp.writeFile(remotePath, buf, (err) => {
-          if (err) reject(err)
-          else resolve()
+          if (err) {
+            wc.send(IPC_CHANNELS.SFTP_TRANSFER_PROGRESS, {
+              connectionId,
+              remotePath,
+              kind: 'upload',
+              bytes: total,
+              total,
+              done: true,
+              error: err.message,
+            })
+            reject(err)
+            return
+          }
+          wc.send(IPC_CHANNELS.SFTP_TRANSFER_PROGRESS, {
+            connectionId,
+            remotePath,
+            kind: 'upload',
+            bytes: total,
+            total,
+            done: true,
+          })
+          resolve()
         })
       })
     },
@@ -299,18 +410,54 @@ export function registerSshSftpHandlers() {
 
   ipcMain.handle(
     IPC_CHANNELS.SFTP_DOWNLOAD_TO_LOCAL,
-    async (_event, connectionId: string, remotePath: string, localPath: string) => {
+    async (event, connectionId: string, remotePath: string, localPath: string) => {
+      const wc = event.sender
       const sftp = await getSftp(connectionId)
       return new Promise<void>((resolve, reject) => {
         sftp.readFile(remotePath, (err, data) => {
           if (err) {
+            wc.send(IPC_CHANNELS.SFTP_TRANSFER_PROGRESS, {
+              connectionId,
+              remotePath,
+              kind: 'download',
+              bytes: 0,
+              total: 0,
+              done: true,
+              error: err.message,
+            })
             reject(err)
             return
           }
+          const total = data.length
+          wc.send(IPC_CHANNELS.SFTP_TRANSFER_PROGRESS, {
+            connectionId,
+            remotePath,
+            kind: 'download',
+            bytes: 0,
+            total,
+            done: false,
+          })
           try {
             writeFileSync(localPath, data)
+            wc.send(IPC_CHANNELS.SFTP_TRANSFER_PROGRESS, {
+              connectionId,
+              remotePath,
+              kind: 'download',
+              bytes: total,
+              total,
+              done: true,
+            })
             resolve()
           } catch (e) {
+            wc.send(IPC_CHANNELS.SFTP_TRANSFER_PROGRESS, {
+              connectionId,
+              remotePath,
+              kind: 'download',
+              bytes: 0,
+              total,
+              done: true,
+              error: String(e),
+            })
             reject(e)
           }
         })

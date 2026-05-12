@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { join } from 'path'
 import { randomUUID } from 'crypto'
 import { IPC_CHANNELS } from '../shared/ipc'
-import type { AppSettings, HostProfile } from '../shared/types'
+import type { AppSettings, HostProfile, KnownHostEntry } from '../shared/types'
 
 let _configDir: string | null = null
 let _configFile: string | null = null
@@ -84,6 +84,52 @@ export function saveSettings(settings: AppSettings) {
   }
 }
 
+let _knownHostsFile: string | null = null
+
+function getKnownHostsFile(): string {
+  if (!_knownHostsFile) _knownHostsFile = join(getConfigDir(), 'known_hosts.json')
+  return _knownHostsFile
+}
+
+export function loadKnownHosts(): KnownHostEntry[] {
+  try {
+    if (existsSync(getKnownHostsFile())) {
+      const data = readFileSync(getKnownHostsFile(), 'utf-8')
+      return JSON.parse(data) as KnownHostEntry[]
+    }
+  } catch {
+    /* ignore corrupt file; backup before overwrite */
+  }
+  return []
+}
+
+function saveKnownHosts(hosts: KnownHostEntry[]) {
+  try {
+    if (!existsSync(getConfigDir())) {
+      mkdirSync(getConfigDir(), { recursive: true })
+    }
+    writeFileSync(getKnownHostsFile(), JSON.stringify(hosts, null, 2))
+  } catch (err) {
+    console.error('Failed to save known_hosts:', err)
+  }
+}
+
+export function addKnownHost(entry: KnownHostEntry) {
+  const hosts = loadKnownHosts()
+  // Update existing or append
+  const idx = hosts.findIndex((h) => h.host === entry.host && h.port === entry.port)
+  if (idx >= 0) {
+    hosts[idx] = entry
+  } else {
+    hosts.push(entry)
+  }
+  saveKnownHosts(hosts)
+}
+
+export function findKnownHost(host: string, port: number): KnownHostEntry | undefined {
+  return loadKnownHosts().find((h) => h.host === host && h.port === port)
+}
+
 export function registerSettingsHandlers() {
   ipcMain.handle(IPC_CHANNELS.SETTINGS_GET, () => loadSettings())
 
@@ -130,5 +176,18 @@ export function registerSettingsHandlers() {
     settings.hosts = settings.hosts.filter((h) => h.id !== id)
     saveSettings(settings)
     return settings.hosts
+  })
+
+  ipcMain.handle(IPC_CHANNELS.KNOWN_HOSTS_LIST, () => loadKnownHosts())
+
+  ipcMain.handle(IPC_CHANNELS.KNOWN_HOSTS_REMOVE, (_event, host: string, port: number) => {
+    const hosts = loadKnownHosts().filter((h) => !(h.host === host && h.port === port))
+    saveKnownHosts(hosts)
+    return hosts
+  })
+
+  ipcMain.handle(IPC_CHANNELS.KNOWN_HOSTS_CLEAR, () => {
+    saveKnownHosts([])
+    return []
   })
 }

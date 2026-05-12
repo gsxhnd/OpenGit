@@ -1,6 +1,7 @@
 import { motion } from 'motion/react'
 import { useNavigate } from 'react-router'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -8,8 +9,9 @@ import type { HostProfile, SshConnectPayload } from '@shared/types'
 import styles from './WelcomeView.module.scss'
 
 export function WelcomeView() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
-  const { settings, loadSettings, setActiveRemoteSession, addToast } = useAppStore()
+  const { settings, loadSettings, addSession, addToast } = useAppStore()
   const [host, setHost] = useState('')
   const [port, setPort] = useState('22')
   const [username, setUsername] = useState('')
@@ -26,8 +28,8 @@ export function WelcomeView() {
   const doConnect = async (payload: SshConnectPayload, meta: { hostLabel: string }) => {
     setConnecting(true)
     try {
-      const { connectionId, fingerprint } = await window.api.sshConnect(payload)
-      setActiveRemoteSession({
+      const { connectionId, fingerprint, isNewHost } = await window.api.sshConnect(payload)
+      addSession({
         connectionId,
         hostLabel: meta.hostLabel,
         username: payload.username,
@@ -35,10 +37,14 @@ export function WelcomeView() {
         port: payload.port,
         fingerprint,
       })
-      addToast(`Connected · ${fingerprint}`, 'info')
+      if (isNewHost) {
+        addToast(t('welcome.newHostKey', { fingerprint }), 'info')
+      } else {
+        addToast(t('welcome.connected', { fingerprint }), 'info')
+      }
       navigate(`/session/${connectionId}`)
     } catch (e: unknown) {
-      addToast(e instanceof Error ? e.message : 'Connection failed', 'error')
+      addToast(e instanceof Error ? e.message : t('err.connectionFailed'), 'error')
     } finally {
       setConnecting(false)
     }
@@ -47,11 +53,11 @@ export function WelcomeView() {
   const handleQuickConnect = () => {
     const p = Number(port) || 22
     if (!host.trim() || !username.trim()) {
-      addToast('Host and username are required', 'error')
+      addToast(t('welcome.hostUsernameRequired'), 'error')
       return
     }
     if (!password.trim()) {
-      addToast('Password or saved host required', 'error')
+      addToast(t('welcome.passwordRequired'), 'error')
       return
     }
     void doConnect(
@@ -64,11 +70,11 @@ export function WelcomeView() {
     const pass = h.password
     const pk = h.privateKeyPath
     if (h.authType === 'password' && !pass) {
-      addToast('No password stored for this host — use quick connect', 'error')
+      addToast(t('welcome.noPasswordStored'), 'error')
       return
     }
     if (h.authType === 'privateKey' && !pk) {
-      addToast('No key path on this host profile', 'error')
+      addToast(t('welcome.noKeyPath'), 'error')
       return
     }
     void doConnect(
@@ -88,40 +94,40 @@ export function WelcomeView() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={styles.container}>
       <div className={styles.textCenter}>
-        <h1 className={styles.title}>OpenRemote</h1>
-        <p className={styles.subtitle}>SSH, SFTP, and remote editing</p>
+        <h1 className={styles.title}>{t('welcome.title')}</h1>
+        <p className={styles.subtitle}>{t('welcome.subtitle')}</p>
       </div>
 
       <div className={styles.actions}>
         <Button variant="secondary" onClick={() => navigate('/local-terminal')}>
-          Local terminal
+          {t('welcome.localTerminal')}
         </Button>
         <Button variant="outline" onClick={() => void loadSettings()}>
-          Refresh hosts
+          {t('welcome.refreshHosts')}
         </Button>
       </div>
 
       <div className={styles.panel}>
-        <h2 className={styles.panelTitle}>Quick connect</h2>
+        <h2 className={styles.panelTitle}>{t('welcome.quickConnect')}</h2>
         <div className={styles.formGrid}>
           <label className={styles.label}>
-            Label
+            {t('welcome.label')}
             <Input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="My server" />
           </label>
           <label className={styles.label}>
-            Host
+            {t('welcome.host')}
             <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder="192.168.1.10" />
           </label>
           <label className={styles.label}>
-            Port
+            {t('welcome.port')}
             <Input value={port} onChange={(e) => setPort(e.target.value)} />
           </label>
           <label className={styles.label}>
-            Username
+            {t('welcome.username')}
             <Input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="ubuntu" />
           </label>
           <label className={`${styles.label} ${styles.fullRow}`}>
-            Password
+            {t('welcome.password')}
             <Input
               type="password"
               value={password}
@@ -131,13 +137,13 @@ export function WelcomeView() {
           </label>
         </div>
         <Button className={styles.connectBtn} size="lg" disabled={connecting} onClick={handleQuickConnect}>
-          {connecting ? 'Connecting…' : 'Connect'}
+          {connecting ? t('welcome.connecting') : t('welcome.connect')}
         </Button>
       </div>
 
       {hosts.length > 0 && (
         <div className={styles.panel}>
-          <h2 className={styles.panelTitle}>Saved hosts</h2>
+          <h2 className={styles.panelTitle}>{t('welcome.savedHosts')}</h2>
           <ul className={styles.hostList}>
             {hosts.map((h) => (
               <li key={h.id} className={styles.hostItem}>
@@ -148,7 +154,7 @@ export function WelcomeView() {
                   </div>
                 </div>
                 <Button size="sm" variant="secondary" disabled={connecting} onClick={() => connectSaved(h)}>
-                  Connect
+                  {t('welcome.connect')}
                 </Button>
               </li>
             ))}

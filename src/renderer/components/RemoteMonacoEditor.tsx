@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import * as monaco from 'monaco-editor'
+import { useTranslation } from 'react-i18next'
 import { Button } from './ui/button'
 
 function languageFromPath(remotePath: string): string {
@@ -68,6 +69,7 @@ export function RemoteMonacoEditor({
   onSaved,
   addToast,
 }: RemoteMonacoEditorProps) {
+  const { t } = useTranslation()
   const divRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
 
@@ -98,10 +100,10 @@ export function RemoteMonacoEditor({
     try {
       const text = ed.getValue()
       await window.api.sftpWriteFileText(connectionId, remotePath, text)
-      addToast('Saved to remote', 'success')
+      addToast(t('editor.savedToRemote'), 'success')
       onSaved()
     } catch (e: unknown) {
-      addToast(e instanceof Error ? e.message : 'Save failed', 'error')
+      addToast(e instanceof Error ? e.message : t('editor.saveFailed'), 'error')
     }
   }
 
@@ -111,10 +113,10 @@ export function RemoteMonacoEditor({
         <span className="truncate text-xs text-white/70">{remotePath}</span>
         <div className="flex shrink-0 gap-1">
           <Button size="sm" variant="secondary" onClick={handleSave}>
-            Save
+            {t('editor.save')}
           </Button>
           <Button size="sm" variant="ghost" onClick={onClose}>
-            Close
+            {t('editor.close')}
           </Button>
         </div>
       </div>

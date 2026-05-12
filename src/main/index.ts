@@ -3,6 +3,7 @@
  */
 import { app, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
+import { updateElectronApp } from 'update-electron-app'
 import { registerSettingsHandlers, loadSettings, saveSettings } from './settings'
 import { registerPtyHandlers } from './pty-handlers'
 import { registerSshSftpHandlers } from './ssh-handlers'

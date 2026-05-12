@@ -78,6 +78,14 @@ export interface SftpListEntry {
   mtimeMs: number | null
 }
 
+/** Known host entry (fingerprint store) */
+export interface KnownHostEntry {
+  host: string
+  port: number
+  fingerprint: string
+  addedAt: number
+}
+
 /** One-time connect payload (password may be omitted if saved on host) */
 export interface SshConnectPayload {
   host: string
@@ -92,4 +100,6 @@ export interface SshConnectPayload {
 export interface SshConnectResult {
   connectionId: string
   fingerprint: string
+  /** true when this is the first connection to this host (fingerprint newly saved) */
+  isNewHost: boolean
 }

@@ -36,12 +36,22 @@ export const IPC_CHANNELS = {
   SSH_DATA: 'ssh:data',
   SSH_SHELL_EXIT: 'ssh:shell:exit',
 
+  // Known hosts (Phase 2)
+  KNOWN_HOSTS_LIST: 'known-hosts:list',
+  KNOWN_HOSTS_REMOVE: 'known-hosts:remove',
+  KNOWN_HOSTS_CLEAR: 'known-hosts:clear',
+
   // SFTP (Phase 2)
   SFTP_READDIR: 'sftp:readdir',
   SFTP_READ_FILE_TEXT: 'sftp:read-file-text',
   SFTP_WRITE_FILE_TEXT: 'sftp:write-file-text',
   SFTP_MKDIR: 'sftp:mkdir',
+  SFTP_RMDIR: 'sftp:rmdir',
   SFTP_UNLINK: 'sftp:unlink',
+  SFTP_RENAME: 'sftp:rename',
+  SFTP_STAT: 'sftp:stat',
   SFTP_UPLOAD_FROM_LOCAL: 'sftp:upload-from-local',
   SFTP_DOWNLOAD_TO_LOCAL: 'sftp:download-to-local',
+  SFTP_TRANSFER_PROGRESS: 'sftp:transfer-progress',
+  SFTP_EXISTS: 'sftp:exists',
 } as const

@@ -3,6 +3,7 @@
  */
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'motion/react'
 import { useAppStore } from '../store'
 import { Input } from './ui/input'
@@ -19,18 +20,19 @@ export interface Command {
 }
 
 export function CommandPalette() {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const navigate = useNavigate()
-  const { setActiveRemoteSession } = useAppStore()
+  const { removeSession, sessions } = useAppStore()
 
   const commands: Command[] = useMemo(
     () => [
       {
         id: 'home',
-        label: 'Go to home',
-        category: 'Navigation',
+        label: t('commands.goToHome'),
+        category: t('commands.navigation'),
         action: () => {
           navigate('/')
           setIsOpen(false)
@@ -38,8 +40,8 @@ export function CommandPalette() {
       },
       {
         id: 'local-shell',
-        label: 'Open local terminal',
-        category: 'Navigation',
+        label: t('commands.openLocalTerminal'),
+        category: t('commands.navigation'),
         action: () => {
           navigate('/local-terminal')
           setIsOpen(false)
@@ -47,25 +49,28 @@ export function CommandPalette() {
       },
       {
         id: 'settings',
-        label: 'Open settings',
-        category: 'Navigation',
+        label: t('commands.openSettings'),
+        category: t('commands.navigation'),
         action: () => {
           navigate('/settings')
           setIsOpen(false)
         },
-        shortcut: '⌘,',
+        shortcut: '\u2318,',
       },
       {
-        id: 'clear-session',
-        label: 'Clear remote session state',
-        category: 'Session',
+        id: 'clear-sessions',
+        label: t('commands.clearSession'),
+        category: t('commands.session'),
         action: () => {
-          setActiveRemoteSession(null)
+          for (const s of sessions) {
+            void window.api.sshDisconnect(s.connectionId)
+            removeSession(s.connectionId)
+          }
           setIsOpen(false)
         },
       },
     ],
-    [navigate, setActiveRemoteSession],
+    [navigate, removeSession, sessions, t],
   )
 
   const filtered = useMemo(() => {
@@ -146,7 +151,7 @@ export function CommandPalette() {
                 <Search className={styles.searchIcon} size={18} />
                 <Input
                   autoFocus
-                  placeholder="Type a command…"
+                  placeholder={t('commands.searchPlaceholder')}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="min-w-0 flex-1 border-0 bg-transparent shadow-none outline-none focus-visible:ring-0"

@@ -4,6 +4,9 @@ import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerDMG } from "@electron-forge/maker-dmg";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
+import { join } from "path";
+
+const iconPath = join(__dirname, "assets", "icon");
 
 const config: ForgeConfig = {
   packagerConfig: {
@@ -11,20 +14,90 @@ const config: ForgeConfig = {
     executableName: "openremote",
     appBundleId: "xyz.gsxhnd.openremote",
     asar: true,
+    icon: iconPath,
+    appCopyright: `Copyright © ${new Date().getFullYear()} OpenRemote contributors`,
+    appCategoryType: "public.app-category.developer-tools",
+    extendInfo: {
+      NSMicrophoneUsageDescription: "",
+      NSCameraUsageDescription: "",
+    },
   },
+
   rebuildConfig: {},
+
   makers: [
     new MakerZIP({}, ["darwin", "linux", "win32"]),
-    new MakerDMG({ format: "ULFO" }, ["darwin"]),
-    new MakerSquirrel({ name: "OpenRemote" }, ["win32"]),
+    new MakerDMG(
+      {
+        format: "ULFO",
+        icon: `${iconPath}.icns`,
+        iconSize: 80,
+        contents: [
+          {
+            x: 192,
+            y: 344,
+            type: "file",
+            path: join(
+              __dirname,
+              "out",
+              "OpenRemote-darwin-arm64",
+              "OpenRemote.app",
+            ),
+          },
+          { x: 448, y: 344, type: "link", path: "/Applications" },
+        ],
+      },
+      ["darwin"],
+    ),
+    new MakerSquirrel(
+      {
+        name: "OpenRemote",
+        setupIcon: `${iconPath}.ico`,
+        iconUrl:
+          "https://raw.githubusercontent.com/gsxhnd/OpenRemote/main/assets/icon.ico",
+        loadingGif: undefined,
+        noMsi: false,
+      },
+      ["win32"],
+    ),
     new MakerDeb({
       options: {
         maintainer: "OpenRemote",
         homepage: "https://github.com/gsxhnd/OpenRemote",
+        icon: `${iconPath}.png`,
+        section: "utils",
+        priority: "optional",
+        categories: ["Development", "Network"],
+        description:
+          "Multi-platform SSH, SFTP, and remote editing desktop application",
       },
     }),
-    new MakerRpm({}),
+    new MakerRpm({
+      options: {
+        homepage: "https://github.com/gsxhnd/OpenRemote",
+        icon: `${iconPath}.png`,
+        categories: ["Development", "Network"],
+        description:
+          "Multi-platform SSH, SFTP, and remote editing desktop application",
+      },
+    }),
   ],
+
+  publishers: [
+    {
+      name: "@electron-forge/publisher-github",
+      config: {
+        repository: {
+          owner: "gsxhnd",
+          name: "OpenRemote",
+        },
+        prerelease: false,
+        draft: true,
+      },
+    },
+  ],
+
+  plugins: [],
 };
 
 export default config;

@@ -10,8 +10,11 @@ interface AppState {
   currentView: ViewType
   previousView: ViewType | null
   language: Language
-  /** Set when navigating to session route */
-  activeRemoteSession: RemoteSessionMeta | null
+
+  /** All active remote sessions (Phase 2 multi-session) */
+  sessions: RemoteSessionMeta[]
+  /** Currently selected remote session ID */
+  activeSessionId: string | null
 
   toasts: Toast[]
 
@@ -20,7 +23,10 @@ interface AppState {
   setLanguage: (language: Language) => Promise<void>
   setView: (view: ViewType) => void
   goBack: () => void
-  setActiveRemoteSession: (meta: RemoteSessionMeta | null) => void
+
+  addSession: (meta: RemoteSessionMeta) => void
+  removeSession: (connectionId: string) => void
+  setActiveSessionId: (connectionId: string | null) => void
 
   addToast: (message: string, kind: ToastKind) => void
   removeToast: (id: string) => void
@@ -33,7 +39,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   currentView: 'welcome',
   previousView: null,
   language: 'en',
-  activeRemoteSession: null,
+  sessions: [],
+  activeSessionId: null,
   toasts: [],
 
   loadSettings: async () => {
@@ -69,7 +76,31 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  setActiveRemoteSession: (meta) => set({ activeRemoteSession: meta }),
+  addSession: (meta) => {
+    set((state) => {
+      const existing = state.sessions.find((s) => s.connectionId === meta.connectionId)
+      if (existing) return { activeSessionId: meta.connectionId }
+      return {
+        sessions: [...state.sessions, meta],
+        activeSessionId: meta.connectionId,
+      }
+    })
+  },
+
+  removeSession: (connectionId) => {
+    set((state) => {
+      const sessions = state.sessions.filter((s) => s.connectionId !== connectionId)
+      const activeSessionId =
+        state.activeSessionId === connectionId
+          ? sessions.length > 0
+            ? sessions[0].connectionId
+            : null
+          : state.activeSessionId
+      return { sessions, activeSessionId }
+    })
+  },
+
+  setActiveSessionId: (connectionId) => set({ activeSessionId: connectionId }),
 
   addToast: (message, kind) => {
     const id = `toast-${++toastCounter}`
