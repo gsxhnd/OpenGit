@@ -10,11 +10,11 @@
  *
  * 布局：创建区 → 本地分支列表 → 远程分支列表 → 远程仓库管理
  */
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'motion/react'
 import { useAppStore } from '../store'
-import { cn } from '../lib/utils'
 import { Button } from '../components/ui/button'
+import styles from './BranchesView.module.scss'
 
 export function BranchesView() {
   const {
@@ -78,19 +78,19 @@ export function BranchesView() {
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col h-full overflow-y-auto"
+      className={styles.container}
     >
       {/* Rebase 进行中提示栏 */}
       {isRebasing && (
-        <div className="px-3 py-3 border-b border-warning/30 bg-warning/10">
-          <div className="flex items-center justify-between">
+        <div className={styles.rebaseBanner}>
+          <div className={styles.rebaseBannerInner}>
             <div>
-              <h4 className="text-sm font-semibold text-warning">Rebase in Progress</h4>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <h4 className={styles.rebaseTitle}>Rebase in Progress</h4>
+              <p className={styles.rebaseDescription}>
                 Resolve conflicts and continue, or abort to return to the previous state.
               </p>
             </div>
-            <div className="flex gap-2">
+            <div className={styles.rebaseActions}>
               <Button
                 size="sm"
                 variant="outline"
@@ -113,20 +113,20 @@ export function BranchesView() {
       )}
 
       {/* 创建分支输入区 */}
-      <div className="px-3 py-3 border-b border-border">
-        <div className="flex gap-2">
+      <div className={styles.createSection}>
+        <div className={styles.createRow}>
           <input
             type="text"
             value={newBranchName}
             onChange={(e) => setNewBranchName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreateBranch()}
             placeholder="New branch name..."
-            className="flex-1 px-3 py-1.5 text-sm bg-muted border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            className={styles.input}
           />
           <button
             onClick={handleCreateBranch}
             disabled={!newBranchName.trim()}
-            className="px-3 py-1.5 text-xs rounded-md bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40"
+            className={styles.createButton}
           >
             Create
           </button>
@@ -134,59 +134,54 @@ export function BranchesView() {
       </div>
 
       {/* 本地分支列表 */}
-      <div className="border-b border-border">
-        <h3 className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className={styles.section}>
+        <h3 className={styles.sectionTitle}>
           Local Branches ({localBranches.length})
         </h3>
         {localBranches.map((branch) => (
           <div
             key={branch.name}
-            className="flex items-center gap-2 px-3 py-1.5 hover:bg-secondary group"
+            className={styles.branchRow}
           >
             {/* 当前分支指示器 */}
             {branch.isHead && (
-              <span className="text-success text-xs">●</span>
+              <span className={styles.headIndicator}>●</span>
             )}
             {/* 分支名称 */}
             <span
-              className={cn(
-                'flex-1 text-sm',
-                branch.isHead
-                  ? 'text-foreground font-medium'
-                  : 'text-foreground'
-              )}
+              className={`${styles.branchName} ${branch.isHead ? styles.branchNameHead : ''}`}
             >
               {branch.name}
             </span>
             {/* 目标 commit 短哈希 */}
-            <span className="text-xs font-mono text-muted-foreground">
+            <span className={styles.commitHash}>
               {branch.target.slice(0, 7)}
             </span>
             {/* 操作按钮（非当前分支才显示） */}
-            <div className="hidden group-hover:flex items-center gap-1">
+            <div className={styles.actions}>
               {!branch.isHead && (
                 <>
                   <button
                     onClick={() => switchBranch(branch.name)}
-                    className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-accent"
+                    className={`${styles.actionButton} ${styles.actionCheckout}`}
                   >
                     Checkout
                   </button>
                   <button
                     onClick={() => handleMerge(branch.name)}
-                    className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-info"
+                    className={`${styles.actionButton} ${styles.actionMerge}`}
                   >
                     Merge
                   </button>
                   <button
                     onClick={() => handleRebase(branch.name)}
-                    className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-warning"
+                    className={`${styles.actionButton} ${styles.actionRebase}`}
                   >
                     Rebase
                   </button>
                   <button
                     onClick={() => deleteBranch(branch.name)}
-                    className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-destructive"
+                    className={`${styles.actionButton} ${styles.actionDelete}`}
                   >
                     Delete
                   </button>
@@ -198,32 +193,32 @@ export function BranchesView() {
       </div>
 
       {/* 远程分支列表 */}
-      <div className="border-b border-border">
-        <h3 className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className={styles.section}>
+        <h3 className={styles.sectionTitle}>
           Remote Branches ({remoteBranches.length})
         </h3>
         {remoteBranches.map((branch) => (
           <div
             key={branch.name}
-            className="flex items-center gap-2 px-3 py-1.5 hover:bg-secondary group"
+            className={styles.branchRow}
           >
-            <span className="flex-1 text-sm text-muted-foreground">
+            <span className={`${styles.branchName} ${styles.branchNameRemote}`}>
               {branch.name}
             </span>
-            <span className="text-xs font-mono text-muted-foreground">
+            <span className={styles.commitHash}>
               {branch.target.slice(0, 7)}
             </span>
             {/* 远程分支也支持 merge/rebase 操作 */}
-            <div className="hidden group-hover:flex items-center gap-1">
+            <div className={styles.actions}>
               <button
                 onClick={() => handleMerge(branch.name)}
-                className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-info"
+                className={`${styles.actionButton} ${styles.actionMerge}`}
               >
                 Merge
               </button>
               <button
                 onClick={() => handleRebase(branch.name)}
-                className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-warning"
+                className={`${styles.actionButton} ${styles.actionRebase}`}
               >
                 Rebase
               </button>
@@ -233,24 +228,24 @@ export function BranchesView() {
       </div>
 
       {/* 远程仓库管理 */}
-      <div>
-        <h3 className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className={styles.sectionLast}>
+        <h3 className={styles.sectionTitle}>
           Remotes ({repoStatus.remotes.length})
         </h3>
         {repoStatus.remotes.map((remote) => (
           <div
             key={remote.name}
-            className="flex items-center gap-2 px-3 py-1.5 hover:bg-secondary group"
+            className={styles.branchRow}
           >
-            <span className="text-sm font-medium text-foreground">
+            <span className={styles.remoteName}>
               {remote.name}
             </span>
-            <span className="flex-1 text-xs text-muted-foreground truncate">
+            <span className={styles.remoteUrl}>
               {remote.fetchUrl}
             </span>
             <button
               onClick={() => removeRemote(remote.name)}
-              className="hidden group-hover:block px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-destructive"
+              className={`${styles.actionButton} ${styles.actionRemove}`}
             >
               Remove
             </button>
@@ -258,13 +253,13 @@ export function BranchesView() {
         ))}
 
         {/* 添加远程仓库表单 */}
-        <div className="px-3 py-2 flex gap-2">
+        <div className={styles.addRemoteForm}>
           <input
             type="text"
             value={newRemoteName}
             onChange={(e) => setNewRemoteName(e.target.value)}
             placeholder="Name"
-            className="w-24 px-2 py-1 text-xs bg-muted border border-border rounded text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            className={`${styles.inputSmall} ${styles.inputName}`}
           />
           <input
             type="text"
@@ -272,12 +267,12 @@ export function BranchesView() {
             onChange={(e) => setNewRemoteUrl(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddRemote()}
             placeholder="URL"
-            className="flex-1 px-2 py-1 text-xs bg-muted border border-border rounded text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            className={`${styles.inputSmall} ${styles.inputUrl}`}
           />
           <button
             onClick={handleAddRemote}
             disabled={!newRemoteName.trim() || !newRemoteUrl.trim()}
-            className="px-2 py-1 text-xs rounded bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40"
+            className={styles.addButton}
           >
             Add
           </button>

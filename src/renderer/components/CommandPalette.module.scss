@@ -1,0 +1,115 @@
+/**
+ * CommandPalette - 命令面板样式
+ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.5);
+  z-index: 40;
+}
+
+.panel {
+  position: fixed;
+  top: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 42rem;
+  z-index: 50;
+}
+
+.container {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  overflow: hidden;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.searchIcon {
+  color: var(--color-muted-foreground);
+}
+
+.commandList {
+  max-height: 24rem;
+  overflow-y: auto;
+}
+
+.emptyState {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--color-muted-foreground);
+}
+
+.commandGroup {
+  padding: 0.5rem 0;
+}
+
+.commandItem {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  transition: background-color 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-foreground);
+
+  &:hover {
+    background: var(--color-secondary);
+  }
+
+  &.selected {
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
+}
+
+.commandLabel {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.commandDescription {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.commandMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.commandCategory {
+  font-size: 10px;
+  opacity: 0.5;
+}
+
+.commandShortcut {
+  font-size: 0.75rem;
+  opacity: 0.5;
+  margin-left: 0.5rem;
+}
+
+.footer {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

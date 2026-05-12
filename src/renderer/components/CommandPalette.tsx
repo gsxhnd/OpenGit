@@ -11,10 +11,13 @@
  * - 按分类组织命令
  */
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'motion/react'
 import { useAppStore } from '../store'
+import { viewToPath } from '../routes'
 import { Input } from './ui/input'
 import { Search } from 'lucide-react'
+import styles from './CommandPalette.module.scss'
 
 export interface Command {
   id: string
@@ -29,8 +32,8 @@ export function CommandPalette() {
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const navigate = useNavigate()
   const {
-    setView,
     stageAll,
     unstageAll,
     doFetch,
@@ -45,78 +48,77 @@ export function CommandPalette() {
     closeRepo,
   } = useAppStore()
 
-  // 所有可用命令列表
   const commands: Command[] = [
     // 导航类
     {
       id: 'view-commit',
       label: 'Go to Commit View',
       category: 'Navigation',
-      action: () => { setView('commit'); setIsOpen(false) },
+      action: () => { navigate(viewToPath('commit')); setIsOpen(false) },
       shortcut: 'Ctrl+1',
     },
     {
       id: 'view-history',
       label: 'Go to History View',
       category: 'Navigation',
-      action: () => { setView('history'); setIsOpen(false) },
+      action: () => { navigate(viewToPath('history')); setIsOpen(false) },
       shortcut: 'Ctrl+2',
     },
     {
       id: 'view-branches',
       label: 'Go to Branches View',
       category: 'Navigation',
-      action: () => { setView('branches'); setIsOpen(false) },
+      action: () => { navigate(viewToPath('branches')); setIsOpen(false) },
       shortcut: 'Ctrl+3',
     },
     {
       id: 'view-graph',
       label: 'Go to Graph View',
       category: 'Navigation',
-      action: () => { setView('graph'); setIsOpen(false) },
+      action: () => { navigate(viewToPath('graph')); setIsOpen(false) },
       shortcut: 'Ctrl+4',
     },
     {
       id: 'view-stash',
       label: 'Go to Stash View',
       category: 'Navigation',
-      action: () => { setView('stash'); setIsOpen(false) },
+      action: () => { navigate(viewToPath('stash')); setIsOpen(false) },
     },
     {
       id: 'view-tags',
       label: 'Go to Tags View',
       category: 'Navigation',
-      action: () => { setView('tags'); setIsOpen(false) },
+      action: () => { navigate(viewToPath('tags')); setIsOpen(false) },
     },
     {
       id: 'view-reflog',
       label: 'Go to Reflog View',
       category: 'Navigation',
-      action: () => { setView('reflog'); setIsOpen(false) },
+      action: () => { navigate(viewToPath('reflog')); setIsOpen(false) },
     },
     {
       id: 'view-files',
       label: 'Go to File Search',
       category: 'Navigation',
-      action: () => { setView('file-search'); setIsOpen(false) },
+      action: () => { navigate(viewToPath('file-search')); setIsOpen(false) },
     },
     {
       id: 'view-projects',
       label: 'Go to Projects',
       category: 'Navigation',
-      action: () => { setView('projects'); setIsOpen(false) },
+      action: () => { navigate(viewToPath('projects')); setIsOpen(false) },
     },
     {
       id: 'view-hooks',
       label: 'Go to Git Hooks',
       category: 'Navigation',
-      action: () => { setView('hooks'); setIsOpen(false) },
+      action: () => { navigate(viewToPath('hooks')); setIsOpen(false) },
     },
     {
       id: 'view-settings',
       label: 'Go to Settings',
       category: 'Navigation',
-      action: () => { setView('settings'); setIsOpen(false) },
+      action: () => { navigate(viewToPath('settings')); setIsOpen(false) },
     },
     // 暂存类
     {
@@ -256,19 +258,19 @@ export function CommandPalette() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 bg-black/50 z-40"
+            className={styles.overlay}
           />
           {/* 面板主体 */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            className="fixed top-1/4 left-1/2 -translate-x-1/2 w-full max-w-2xl z-50"
+            className={styles.panel}
           >
-            <div className="bg-background border border-border rounded-lg shadow-lg overflow-hidden">
+            <div className={styles.container}>
               {/* 搜索输入框 */}
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
-                <Search size={18} className="text-muted-foreground" />
+              <div className={styles.searchBar}>
+                <Search size={18} className={styles.searchIcon} />
                 <Input
                   autoFocus
                   placeholder="Type a command..."
@@ -282,13 +284,13 @@ export function CommandPalette() {
               </div>
 
               {/* 命令列表 */}
-              <div className="max-h-96 overflow-y-auto">
+              <div className={styles.commandList}>
                 {filteredCommands.length === 0 ? (
-                  <div className="px-4 py-8 text-center text-muted-foreground">
+                  <div className={styles.emptyState}>
                     No commands found
                   </div>
                 ) : (
-                  <div className="py-2">
+                  <div className={styles.commandGroup}>
                     {filteredCommands.map((cmd, index) => (
                       <button
                         key={cmd.id}
@@ -296,22 +298,18 @@ export function CommandPalette() {
                           cmd.action()
                           setIsOpen(false)
                         }}
-                        className={`w-full px-4 py-2 text-left transition-colors flex items-center justify-between ${
-                          index === selectedIndex
-                            ? 'bg-primary text-primary-foreground'
-                            : 'hover:bg-secondary'
-                        }`}
+                        className={`${styles.commandItem}${index === selectedIndex ? ` ${styles.selected}` : ''}`}
                       >
                         <div>
-                          <div className="font-medium text-sm">{cmd.label}</div>
+                          <div className={styles.commandLabel}>{cmd.label}</div>
                           {cmd.description && (
-                            <div className="text-xs opacity-70">{cmd.description}</div>
+                            <div className={styles.commandDescription}>{cmd.description}</div>
                           )}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] opacity-50">{cmd.category}</span>
+                        <div className={styles.commandMeta}>
+                          <span className={styles.commandCategory}>{cmd.category}</span>
                           {cmd.shortcut && (
-                            <span className="text-xs opacity-50 ml-2">{cmd.shortcut}</span>
+                            <span className={styles.commandShortcut}>{cmd.shortcut}</span>
                           )}
                         </div>
                       </button>
@@ -321,7 +319,7 @@ export function CommandPalette() {
               </div>
 
               {/* 底部提示 */}
-              <div className="px-4 py-2 border-t border-border text-xs text-muted-foreground flex items-center justify-between">
+              <div className={styles.footer}>
                 <span>Use ↑↓ to navigate, Enter to select, Esc to close</span>
                 <span>{filteredCommands.length} commands</span>
               </div>

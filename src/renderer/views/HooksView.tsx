@@ -13,9 +13,11 @@
  * 可执行文件为启用状态，.sample 后缀为模板。
  */
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'motion/react'
 import { useAppStore } from '../store'
 import { Button } from '../components/ui/button'
+import styles from './HooksView.module.scss'
 
 /** 所有标准 Git Hook 类型 */
 const HOOK_TYPES = [
@@ -40,7 +42,8 @@ interface HookInfo {
 }
 
 export function HooksView() {
-  const { repoPath, goBack, addToast } = useAppStore()
+  const { repoPath, addToast } = useAppStore()
+  const navigate = useNavigate()
   const [hooks, setHooks] = useState<HookInfo[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedHook, setExpandedHook] = useState<string | null>(null)
@@ -111,7 +114,7 @@ export function HooksView() {
 
   if (!repoPath) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground">
+      <div className={styles.emptyState}>
         Open a repository to manage hooks
       </div>
     )
@@ -122,29 +125,29 @@ export function HooksView() {
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col h-full"
+      className={styles.container}
     >
       {/* 头部 */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-2">
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
           <button
-            onClick={goBack}
-            className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
+            onClick={() => navigate(-1)}
+            className={styles.backButton}
           >
             ← Back
           </button>
-          <h1 className="text-base font-semibold">Git Hooks</h1>
+          <h1 className={styles.title}>Git Hooks</h1>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className={styles.pathLabel}>
           .git/hooks/
         </p>
       </div>
 
       {/* Hook 列表 */}
-      <div className="flex-1 overflow-y-auto">
+      <div className={styles.listContainer}>
         {loading ? (
-          <div className="flex items-center justify-center py-16 text-muted-foreground">
-            <p className="text-sm">Loading hooks...</p>
+          <div className={styles.loadingState}>
+            <p>Loading hooks...</p>
           </div>
         ) : (
           <div>
@@ -156,45 +159,43 @@ export function HooksView() {
               const isEditing = editingHook === hookType.name
 
               return (
-                <div key={hookType.name} className="border-b border-border">
+                <div key={hookType.name} className={styles.hookItem}>
                   {/* Hook 行 */}
                   <div
-                    className="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary cursor-pointer group"
+                    className={styles.hookRow}
                     onClick={() => setExpandedHook(isExpanded ? null : hookType.name)}
                   >
                     {/* 展开指示器 */}
-                    <span className="text-xs text-muted-foreground w-3">
+                    <span className={styles.expandIndicator}>
                       {isExpanded ? '▼' : '▶'}
                     </span>
                     {/* 状态指示器 */}
                     <span
-                      className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                        enabled ? 'bg-success' : exists ? 'bg-warning' : 'bg-muted-foreground/30'
+                      className={`${styles.statusDot} ${
+                        enabled ? styles.enabled : exists ? styles.disabled : styles.notCreated
                       }`}
                       title={enabled ? 'Enabled' : exists ? 'Disabled' : 'Not created'}
                     />
                     {/* Hook 信息 */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-mono font-medium text-foreground">
+                    <div className={styles.hookInfo}>
+                      <div className={styles.hookNameRow}>
+                        <span className={styles.hookName}>
                           {hookType.name}
                         </span>
                         {exists && (
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                            enabled
-                              ? 'bg-success/20 text-success'
-                              : 'bg-warning/20 text-warning'
+                          <span className={`${styles.badge} ${
+                            enabled ? styles.badgeActive : styles.badgeDisabled
                           }`}>
                             {enabled ? 'Active' : 'Disabled'}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className={styles.hookDescription}>
                         {hookType.description}
                       </p>
                     </div>
                     {/* 操作按钮 */}
-                    <div className="hidden group-hover:flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
                       {exists ? (
                         <>
                           <Button
@@ -235,18 +236,18 @@ export function HooksView() {
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.15 }}
-                        className="overflow-hidden border-t border-border/50"
+                        className={styles.expandedContent}
                       >
                         {isEditing ? (
                           /* 编辑模式 */
-                          <div className="p-3 bg-muted/30">
+                          <div className={styles.editPanel}>
                             <textarea
                               value={editContent}
                               onChange={(e) => setEditContent(e.target.value)}
-                              className="w-full h-48 px-3 py-2 font-mono text-xs bg-background border border-border rounded resize-y text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                              className={styles.textarea}
                               spellCheck={false}
                             />
-                            <div className="flex gap-2 mt-2">
+                            <div className={styles.editActions}>
                               <Button
                                 size="sm"
                                 className="h-7 px-3 text-xs"
@@ -266,9 +267,9 @@ export function HooksView() {
                           </div>
                         ) : exists && hookInfo?.content ? (
                           /* 预览模式 */
-                          <div className="p-3 bg-muted/30">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs text-muted-foreground">Script content:</span>
+                          <div className={styles.previewPanel}>
+                            <div className={styles.previewHeader}>
+                              <span>Script content:</span>
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -281,14 +282,14 @@ export function HooksView() {
                                 Edit
                               </Button>
                             </div>
-                            <pre className="font-mono text-[11px] leading-4 p-3 bg-background border border-border rounded max-h-48 overflow-y-auto text-foreground whitespace-pre-wrap">
+                            <pre className={styles.previewCode}>
                               {hookInfo.content}
                             </pre>
                           </div>
                         ) : !exists ? (
                           /* 未创建状态 */
-                          <div className="p-4 bg-muted/30 text-center">
-                            <p className="text-xs text-muted-foreground mb-2">
+                          <div className={styles.notCreatedPanel}>
+                            <p>
                               This hook has not been created yet.
                             </p>
                             <Button

@@ -13,11 +13,12 @@
  * - Commit / Amend Commit
  */
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'motion/react'
 import { useAppStore } from '../store'
-import { cn } from '../lib/utils'
 import { Button } from '../components/ui/button'
 import type { FileEntry, FileDiff, DiffHunk } from '@shared/types'
+import styles from './CommitView.module.scss'
 
 /**
  * 内联 Hunk 预览组件
@@ -36,7 +37,7 @@ function InlineHunkPreview({
 }) {
   if (diff.isBinary) {
     return (
-      <div className="px-6 py-3 text-xs text-muted-foreground bg-muted/50 border-b border-border">
+      <div className={styles.binaryMessage}>
         Binary file — cannot display diff
       </div>
     )
@@ -44,22 +45,22 @@ function InlineHunkPreview({
 
   if (diff.hunks.length === 0) {
     return (
-      <div className="px-6 py-3 text-xs text-muted-foreground bg-muted/50 border-b border-border">
+      <div className={styles.emptyMessage}>
         No changes to display
       </div>
     )
   }
 
   return (
-    <div className="border-b border-border bg-muted/20">
+    <div className={styles.hunkContainer}>
       {diff.hunks.map((hunk, hi) => (
-        <div key={hi} className="border-b border-border/50 last:border-b-0">
+        <div key={hi} className={styles.hunkBlock}>
           {/* Hunk 头部：显示范围信息和操作按钮 */}
-          <div className="flex items-center justify-between px-4 py-1 bg-muted/60 text-info text-xs font-mono group">
-            <span className="truncate">
+          <div className={styles.hunkHeader}>
+            <span className={styles.hunkHeaderRange}>
               @@ -{hunk.oldRange.start},{hunk.oldRange.count} +{hunk.newRange.start},{hunk.newRange.count} @@ {hunk.header}
             </span>
-            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2 flex-shrink-0">
+            <div className={styles.hunkActions}>
               {isStaged ? (
                 <Button
                   size="sm"
@@ -82,23 +83,22 @@ function InlineHunkPreview({
             </div>
           </div>
           {/* Hunk 内容行 */}
-          <div className="font-mono text-[11px] leading-4 max-h-48 overflow-y-auto">
-            {hunk.lines.map((line, li) => (
-              <div
-                key={li}
-                className={cn(
-                  'px-4 whitespace-pre',
-                  line.prefix === '+' && 'bg-diff-added-bg text-diff-added',
-                  line.prefix === '-' && 'bg-diff-deleted-bg text-diff-deleted',
-                  line.prefix === ' ' && 'text-foreground/80'
-                )}
-              >
-                <span className="inline-block w-3 text-muted-foreground select-none">
-                  {line.prefix}
-                </span>
-                {line.content}
-              </div>
-            ))}
+          <div className={styles.hunkLines}>
+            {hunk.lines.map((line, li) => {
+              const lineClass = line.prefix === '+'
+                ? `${styles.hunkLine} ${styles.hunkLineAdded}`
+                : line.prefix === '-'
+                  ? `${styles.hunkLine} ${styles.hunkLineDeleted}`
+                  : `${styles.hunkLine} ${styles.hunkLineContext}`
+              return (
+                <div key={li} className={lineClass}>
+                  <span className={styles.linePrefix}>
+                    {line.prefix}
+                  </span>
+                  {line.content}
+                </div>
+              )
+            })}
           </div>
         </div>
       ))}
@@ -129,14 +129,14 @@ function FileRow({
   isExpanded: boolean
   onToggleExpand: () => void
 }) {
-  // 文件状态对应的颜色
-  const statusColors: Record<string, string> = {
-    modified: 'text-warning',
-    added: 'text-success',
-    deleted: 'text-destructive',
-    renamed: 'text-info',
-    untracked: 'text-muted-foreground',
-    conflicted: 'text-destructive',
+  // 文件状态对应的样式类
+  const statusStyleMap: Record<string, string> = {
+    modified: styles.statusModified,
+    added: styles.statusAdded,
+    deleted: styles.statusDeleted,
+    renamed: styles.statusRenamed,
+    untracked: styles.statusUntracked,
+    conflicted: styles.statusConflicted,
   }
 
   // 文件状态对应的简写标签
@@ -151,24 +151,21 @@ function FileRow({
 
   return (
     <div
-      className={cn(
-        'flex items-center gap-2 px-3 py-1 hover:bg-secondary rounded group text-sm cursor-pointer',
-        isExpanded && 'bg-secondary/50'
-      )}
+      className={`${styles.fileRow} ${isExpanded ? styles.fileRowExpanded : ''}`}
       onClick={onToggleExpand}
     >
       {/* 展开/折叠指示器 */}
-      <span className="text-muted-foreground text-xs w-3 flex-shrink-0">
+      <span className={styles.expandIndicator}>
         {isExpanded ? '▼' : '▶'}
       </span>
       {/* 文件状态标识 */}
-      <span className={cn('w-4 text-center font-mono text-xs', statusColors[file.status])}>
+      <span className={`${styles.statusBadge} ${statusStyleMap[file.status] || ''}`}>
         {statusLabels[file.status] || ' '}
       </span>
       {/* 文件路径 */}
-      <span className="flex-1 truncate text-foreground">{file.path}</span>
+      <span className={styles.filePath}>{file.path}</span>
       {/* 操作按钮（悬停显示） */}
-      <div className="hidden group-hover:flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+      <div className={styles.fileActions} onClick={(e) => e.stopPropagation()}>
         {onDiff && (
           <Button variant="ghost" size="sm" onClick={onDiff} className="h-6 px-2 text-xs">
             Diff
@@ -213,10 +210,10 @@ export function CommitView() {
     setCommitAmend,
     loadFileDiff,
     loadStagedFileDiff,
-    setView,
     diffPreview,
   } = useAppStore()
 
+  const navigate = useNavigate()
   const [commitMessage, setCommitMessage] = useState('')
   // 当前展开的文件路径（用于内联 diff 预览）
   const [expandedFile, setExpandedFile] = useState<string | null>(null)
@@ -274,7 +271,7 @@ export function CommitView() {
     } else {
       loadFileDiff(path)
     }
-    setView('diff')
+    navigate('/diff')
   }
 
   return (
@@ -282,12 +279,12 @@ export function CommitView() {
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col h-full"
+      className={styles.container}
     >
       {/* 未暂存变更区域 */}
-      <div className="flex-1 overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>
             Unstaged Changes ({unstaged.length})
           </h3>
           {unstaged.length > 0 && (
@@ -296,7 +293,7 @@ export function CommitView() {
             </Button>
           )}
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className={styles.fileList}>
           {unstaged.map((file) => {
             const key = `unstaged:${file.path}`
             const isExpanded = expandedFile === key
@@ -319,7 +316,7 @@ export function CommitView() {
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.15 }}
-                      className="overflow-hidden"
+                      className={styles.overflowHidden}
                     >
                       <InlineHunkPreview
                         diff={inlineDiffs[key]}
@@ -334,7 +331,7 @@ export function CommitView() {
             )
           })}
           {unstaged.length === 0 && (
-            <p className="px-3 py-4 text-sm text-muted-foreground text-center">
+            <p className={styles.emptyState}>
               No unstaged changes
             </p>
           )}
@@ -342,9 +339,9 @@ export function CommitView() {
       </div>
 
       {/* 已暂存变更区域 */}
-      <div className="flex-1 overflow-hidden flex flex-col border-t border-border">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      <div className={`${styles.section} ${styles.sectionStaged}`}>
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>
             Staged Changes ({staged.length})
           </h3>
           {staged.length > 0 && (
@@ -353,7 +350,7 @@ export function CommitView() {
             </Button>
           )}
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className={styles.fileList}>
           {staged.map((file) => {
             const key = `staged:${file.path}`
             const isExpanded = expandedFile === key
@@ -375,7 +372,7 @@ export function CommitView() {
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.15 }}
-                      className="overflow-hidden"
+                      className={styles.overflowHidden}
                     >
                       <InlineHunkPreview
                         diff={inlineDiffs[key]}
@@ -390,7 +387,7 @@ export function CommitView() {
             )
           })}
           {staged.length === 0 && (
-            <p className="px-3 py-4 text-sm text-muted-foreground text-center">
+            <p className={styles.emptyState}>
               No staged changes
             </p>
           )}
@@ -398,14 +395,14 @@ export function CommitView() {
       </div>
 
       {/* 提交表单 */}
-      <div className="border-t border-border p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer">
+      <div className={styles.commitForm}>
+        <div className={styles.amendRow}>
+          <label className={styles.amendLabel}>
             <input
               type="checkbox"
               checked={commitAmend}
               onChange={(e) => setCommitAmend(e.target.checked)}
-              className="rounded"
+              className={styles.amendCheckbox}
             />
             Amend
           </label>
@@ -414,7 +411,7 @@ export function CommitView() {
           value={commitMessage}
           onChange={(e) => setCommitMessage(e.target.value)}
           placeholder="Commit message..."
-          className="w-full h-20 px-3 py-2 text-sm bg-muted border border-border rounded-md resize-none text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          className={styles.commitTextarea}
           onKeyDown={(e) => {
             if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
               handleCommit()
@@ -424,7 +421,7 @@ export function CommitView() {
         <Button
           onClick={handleCommit}
           disabled={!commitMessage.trim() || staged.length === 0}
-          className="mt-2 w-full"
+          className={styles.commitButton}
         >
           {commitAmend ? 'Amend Commit' : 'Commit'}
         </Button>

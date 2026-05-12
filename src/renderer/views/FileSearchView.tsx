@@ -1,10 +1,13 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import { motion } from 'motion/react'
 import { useAppStore } from '../store'
+import styles from './FileSearchView.module.scss'
 
 export function FileSearchView() {
-  const { fileSearchResults, searchFiles, loadFileDiff, loadFileHistory, loadBlame, setView } =
+  const { fileSearchResults, searchFiles, loadFileDiff } =
     useAppStore()
+  const navigate = useNavigate()
 
   const [query, setQuery] = useState('')
 
@@ -19,22 +22,22 @@ export function FileSearchView() {
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col h-full"
+      className={styles.container}
     >
       {/* Search input */}
-      <div className="px-3 py-3 border-b border-border">
-        <div className="flex gap-2">
+      <div className={styles.searchBar}>
+        <div className={styles.searchRow}>
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search files by name..."
-            className="flex-1 px-3 py-1.5 text-sm bg-muted border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            className={styles.searchInput}
           />
           <button
             onClick={handleSearch}
-            className="px-3 py-1.5 text-xs rounded-md bg-primary text-primary-foreground hover:opacity-90"
+            className={styles.searchButton}
           >
             Search
           </button>
@@ -42,34 +45,38 @@ export function FileSearchView() {
       </div>
 
       {/* Results */}
-      <div className="flex-1 overflow-y-auto">
+      <div className={styles.results}>
         {fileSearchResults.map((filePath) => (
           <div
             key={filePath}
-            className="flex items-center gap-2 px-3 py-1.5 hover:bg-secondary group border-b border-border"
+            className={styles.resultRow}
           >
-            <span className="flex-1 text-sm font-mono text-foreground truncate">
+            <span className={styles.filePath}>
               {filePath}
             </span>
-            <div className="hidden group-hover:flex items-center gap-1">
+            <div className={styles.actions}>
               <button
                 onClick={() => {
                   loadFileDiff(filePath)
-                  setView('diff')
+                  navigate('/diff')
                 }}
-                className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-accent"
+                className={`${styles.actionButton} ${styles.actionDiff}`}
               >
                 Diff
               </button>
               <button
-                onClick={() => loadFileHistory(filePath)}
-                className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-info"
+                onClick={() => {
+                  navigate(`/file-history/${encodeURIComponent(filePath)}`)
+                }}
+                className={`${styles.actionButton} ${styles.actionHistory}`}
               >
                 History
               </button>
               <button
-                onClick={() => loadBlame(filePath)}
-                className="px-2 py-0.5 text-xs rounded bg-muted hover:bg-secondary text-warning"
+                onClick={() => {
+                  navigate(`/blame/${encodeURIComponent(filePath)}`)
+                }}
+                className={`${styles.actionButton} ${styles.actionBlame}`}
               >
                 Blame
               </button>
@@ -78,13 +85,13 @@ export function FileSearchView() {
         ))}
 
         {fileSearchResults.length === 0 && query && (
-          <p className="px-3 py-8 text-sm text-muted-foreground text-center">
+          <p className={styles.emptyState}>
             No files found
           </p>
         )}
 
         {!query && (
-          <p className="px-3 py-8 text-sm text-muted-foreground text-center">
+          <p className={styles.emptyState}>
             Enter a file name to search
           </p>
         )}

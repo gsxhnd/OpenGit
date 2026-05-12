@@ -1,52 +1,70 @@
+import { useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router'
 import { motion } from 'motion/react'
 import { useAppStore } from '../store'
+import styles from './FileHistoryView.module.scss'
 
 export function FileHistoryView() {
-  const { fileHistoryPath, fileHistoryCommits, loadCommitDetail, goBack } = useAppStore()
+  const { path } = useParams<{ path?: string }>()
+  const navigate = useNavigate()
+  const { fileHistoryPath, fileHistoryCommits, loadFileHistory } = useAppStore()
+
+  useEffect(() => {
+    if (path) {
+      const decodedPath = decodeURIComponent(path)
+      if (decodedPath !== fileHistoryPath) {
+        loadFileHistory(decodedPath)
+      }
+    }
+  }, [path])
+
+  const handleCommitClick = (hash: string) => {
+    navigate(`/detail/${hash}`)
+  }
 
   return (
     <motion.div
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col h-full"
+      className={styles.container}
     >
-      <div className="px-3 py-2 border-b border-border">
+      <div className={styles.header}>
         <button
-          onClick={goBack}
-          className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground mb-1"
+          onClick={() => navigate(-1)}
+          className={styles.backButton}
         >
           ← Back
         </button>
-        <h3 className="text-sm font-mono text-foreground">
+        <h3 className={styles.title}>
           History: {fileHistoryPath}
         </h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className={styles.list}>
         {fileHistoryCommits.map((commit) => (
           <div
             key={commit.hash}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-secondary cursor-pointer border-b border-border"
-            onClick={() => loadCommitDetail(commit.hash)}
+            className={styles.commitRow}
+            onClick={() => handleCommitClick(commit.hash)}
           >
-            <span className="font-mono text-xs text-accent w-16 flex-shrink-0">
+            <span className={styles.commitHash}>
               {commit.hash.slice(0, 7)}
             </span>
-            <span className="flex-1 text-sm text-foreground truncate">
+            <span className={styles.commitSummary}>
               {commit.summary}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className={styles.commitAuthor}>
               {commit.author.split(' <')[0]}
             </span>
-            <span className="text-xs text-muted-foreground w-20 text-right">
+            <span className={styles.commitDate}>
               {new Date(commit.time).toLocaleDateString()}
             </span>
           </div>
         ))}
 
         {fileHistoryCommits.length === 0 && (
-          <p className="px-3 py-8 text-sm text-muted-foreground text-center">
+          <p className={styles.emptyState}>
             No history for this file
           </p>
         )}

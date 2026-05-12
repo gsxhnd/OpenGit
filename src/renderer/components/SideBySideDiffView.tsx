@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
 import { FileDiff, DiffHunk, DiffLine } from '@shared/types'
-import { cn } from '../lib/utils'
 import { Button } from './ui/button'
+import styles from './SideBySideDiffView.module.scss'
 
 interface SideBySideDiffViewProps {
   diff: FileDiff
@@ -51,6 +51,18 @@ function buildSideBySideLines(hunk: DiffHunk): { left: LineWithNumber[]; right: 
   return { left, right }
 }
 
+function getLeftLineClass(prefix: string): string {
+  if (prefix === '-') return `${styles.line} ${styles.lineDeleted}`
+  if (prefix === '+') return `${styles.line} ${styles.lineFiller}`
+  return `${styles.line} ${styles.lineContext}`
+}
+
+function getRightLineClass(prefix: string): string {
+  if (prefix === '+') return `${styles.line} ${styles.lineAdded}`
+  if (prefix === '-') return `${styles.line} ${styles.lineFiller}`
+  return `${styles.line} ${styles.lineContext}`
+}
+
 export function SideBySideDiffView({
   diff,
   isStaged,
@@ -63,18 +75,15 @@ export function SideBySideDiffView({
       <motion.div
         initial={{ opacity: 0, x: 10 }}
         animate={{ opacity: 1, x: 0 }}
-        className="flex flex-col h-full"
+        className={styles.container}
       >
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-          <button
-            onClick={onGoBack}
-            className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
-          >
+        <div className={styles.header}>
+          <button onClick={onGoBack} className={styles.backButton}>
             ← Back
           </button>
-          <span className="text-sm font-mono text-foreground">{diff.path}</span>
+          <span className={styles.filePath}>{diff.path}</span>
         </div>
-        <div className="flex items-center justify-center flex-1 text-muted-foreground">
+        <div className={styles.binaryMessage}>
           Binary file
         </div>
       </motion.div>
@@ -86,35 +95,32 @@ export function SideBySideDiffView({
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col h-full"
+      className={styles.container}
     >
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onGoBack}
-            className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
-          >
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
+          <button onClick={onGoBack} className={styles.backButton}>
             ← Back
           </button>
-          <span className="text-sm font-mono text-foreground">{diff.path}</span>
+          <span className={styles.filePath}>{diff.path}</span>
         </div>
       </div>
 
       {/* Side-by-side diff content */}
-      <div className="flex-1 overflow-auto font-mono text-xs leading-5">
+      <div className={styles.diffContent}>
         {diff.hunks.map((hunk, hi) => {
           const { left, right } = buildSideBySideLines(hunk)
 
           return (
             <div key={hi}>
               {/* Hunk header with controls */}
-              <div className="flex items-center justify-between px-3 py-1 bg-muted text-info sticky top-0 group">
-                <div className="flex-1">
+              <div className={styles.hunkHeader}>
+                <div className={styles.hunkHeaderText}>
                   @@ -{hunk.oldRange.start},{hunk.oldRange.count} +{hunk.newRange.start},
                   {hunk.newRange.count} @@ {hunk.header}
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className={styles.hunkControls}>
                   {isStaged ? (
                     <Button
                       size="sm"
@@ -138,49 +144,33 @@ export function SideBySideDiffView({
               </div>
 
               {/* Side-by-side lines */}
-              <div className="flex border-b border-border">
+              <div className={styles.sideBySideContainer}>
                 {/* Left side (old) */}
-                <div className="flex-1 border-r border-border">
+                <div className={styles.leftSide}>
                   {left.map((item, li) => (
-                    <div
-                      key={`left-${li}`}
-                      className={cn(
-                        'flex px-2 whitespace-pre',
-                        item.line.prefix === '-' && 'bg-diff-deleted-bg text-diff-deleted',
-                        item.line.prefix === ' ' && 'text-foreground',
-                        item.line.prefix === '+' && 'bg-muted text-muted-foreground'
-                      )}
-                    >
-                      <span className="w-8 text-right text-muted-foreground select-none pr-2">
+                    <div key={`left-${li}`} className={getLeftLineClass(item.line.prefix)}>
+                      <span className={styles.lineNumber}>
                         {item.oldLineNum ?? ''}
                       </span>
-                      <span className="inline-block w-4 text-muted-foreground select-none">
+                      <span className={styles.linePrefix}>
                         {item.line.prefix === '-' ? '-' : item.line.prefix === '+' ? '' : ' '}
                       </span>
-                      <span className="flex-1">{item.line.content}</span>
+                      <span className={styles.lineContent}>{item.line.content}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Right side (new) */}
-                <div className="flex-1">
+                <div className={styles.rightSide}>
                   {right.map((item, li) => (
-                    <div
-                      key={`right-${li}`}
-                      className={cn(
-                        'flex px-2 whitespace-pre',
-                        item.line.prefix === '+' && 'bg-diff-added-bg text-diff-added',
-                        item.line.prefix === ' ' && 'text-foreground',
-                        item.line.prefix === '-' && 'bg-muted text-muted-foreground'
-                      )}
-                    >
-                      <span className="w-8 text-right text-muted-foreground select-none pr-2">
+                    <div key={`right-${li}`} className={getRightLineClass(item.line.prefix)}>
+                      <span className={styles.lineNumber}>
                         {item.newLineNum ?? ''}
                       </span>
-                      <span className="inline-block w-4 text-muted-foreground select-none">
+                      <span className={styles.linePrefix}>
                         {item.line.prefix === '+' ? '+' : item.line.prefix === '-' ? '' : ' '}
                       </span>
-                      <span className="flex-1">{item.line.content}</span>
+                      <span className={styles.lineContent}>{item.line.content}</span>
                     </div>
                   ))}
                 </div>
@@ -190,7 +180,7 @@ export function SideBySideDiffView({
         })}
 
         {diff.hunks.length === 0 && (
-          <p className="px-3 py-8 text-center text-muted-foreground">No changes</p>
+          <p className={styles.emptyState}>No changes</p>
         )}
       </div>
     </motion.div>

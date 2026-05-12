@@ -1,0 +1,122 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.searchBar {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.searchRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.filterRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.filterSelect {
+  height: 2rem;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-foreground);
+}
+
+.activeFilters {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.clearButton {
+  font-size: 0.75rem;
+  color: var(--color-destructive);
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.commitList {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.commitRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-border);
+
+  &:hover {
+    background: var(--color-secondary);
+  }
+}
+
+.commitHash {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-accent);
+  width: 4rem;
+  flex-shrink: 0;
+}
+
+.commitSummary {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--color-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commitAuthor {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  flex-shrink: 0;
+}
+
+.commitDate {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  flex-shrink: 0;
+  width: 5rem;
+  text-align: right;
+}
+
+.loadMore {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-secondary);
+  }
+}
+
+.emptyState {
+  padding: 2rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-muted-foreground);
+  text-align: center;
+}

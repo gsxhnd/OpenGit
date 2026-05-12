@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
+import { useNavigate } from 'react-router'
 import { useAppStore } from '../store'
+import { viewToPath } from '../routes'
 
 export interface KeyboardShortcut {
   key: string
@@ -35,7 +37,6 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
 export function useAppKeyboardShortcuts() {
   const {
     currentView,
-    setView,
     goBack,
     stageAll,
     unstageAll,
@@ -44,28 +45,28 @@ export function useAppKeyboardShortcuts() {
     loadHistory,
     loadGraph,
   } = useAppStore()
+  const navigate = useNavigate()
 
   const shortcuts: KeyboardShortcut[] = [
-    // Navigation
     {
       key: '1',
       ctrl: true,
-      action: () => setView('commit'),
+      action: () => navigate(viewToPath('commit')),
     },
     {
       key: '2',
       ctrl: true,
-      action: () => setView('history'),
+      action: () => navigate(viewToPath('history')),
     },
     {
       key: '3',
       ctrl: true,
-      action: () => setView('branches'),
+      action: () => navigate(viewToPath('branches')),
     },
     {
       key: '4',
       ctrl: true,
-      action: () => setView('graph'),
+      action: () => navigate(viewToPath('graph')),
     },
     {
       key: 'Escape',

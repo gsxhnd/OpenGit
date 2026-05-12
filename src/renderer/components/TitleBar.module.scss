@@ -1,0 +1,42 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 2.75rem;
+  padding: 0 1rem;
+  background-color: var(--color-title-bar);
+  border-bottom: 1px solid var(--color-border);
+  user-select: none;
+  -webkit-app-region: drag;
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.trafficLightSpacer {
+  width: 68px;
+}
+
+.repoName {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-foreground);
+}
+
+.branchBadge {
+  font-size: 0.75rem;
+  color: var(--color-muted-foreground);
+  background-color: var(--color-secondary);
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  -webkit-app-region: no-drag;
+}

@@ -1,0 +1,122 @@
+.emptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-muted-foreground);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.backButton {
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: var(--radius);
+  color: var(--color-muted-foreground);
+
+  &:hover {
+    background-color: var(--color-accent);
+  }
+}
+
+.filePath {
+  font-size: 0.875rem;
+  font-family: var(--font-mono);
+  color: var(--color-foreground);
+}
+
+.binaryContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--color-muted-foreground);
+}
+
+.diffContent {
+  flex: 1;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+}
+
+.hunkHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem 0.75rem;
+  background-color: var(--color-muted);
+  color: var(--color-info);
+  position: sticky;
+  top: 0;
+
+  &:hover {
+    .hunkControls {
+      opacity: 1;
+    }
+  }
+}
+
+.hunkHeaderText {
+  flex: 1;
+}
+
+.hunkControls {
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.line {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  white-space: pre;
+}
+
+.lineAdded {
+  background-color: var(--color-diff-added-bg);
+  color: var(--color-diff-added);
+}
+
+.lineDeleted {
+  background-color: var(--color-diff-deleted-bg);
+  color: var(--color-diff-deleted);
+}
+
+.lineContext {
+  color: var(--color-foreground);
+}
+
+.linePrefix {
+  display: inline-block;
+  width: 1rem;
+  color: var(--color-muted-foreground);
+  user-select: none;
+}
+
+.emptyDiff {
+  padding: 2rem 0.75rem;
+  text-align: center;
+  color: var(--color-muted-foreground);
+}

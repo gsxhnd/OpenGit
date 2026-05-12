@@ -12,11 +12,13 @@
  * - 拖拽排序（通过上下移动按钮模拟）
  */
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router'
 import { motion, AnimatePresence } from 'motion/react'
 import { useAppStore } from '../store'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import type { WorkspaceEntry, WorkspaceGroup } from '@shared/types'
+import styles from './ProjectListView.module.scss'
 
 export function ProjectListView() {
   const {
@@ -28,8 +30,8 @@ export function ProjectListView() {
     addWorkspaceGroup,
     removeWorkspaceGroup,
     repoPath,
-    goBack,
   } = useAppStore()
+  const navigate = useNavigate()
 
   // 搜索过滤
   const [searchFilter, setSearchFilter] = useState('')
@@ -108,21 +110,21 @@ export function ProjectListView() {
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col h-full"
+      className={styles.container}
     >
       {/* 头部：标题 + 操作按钮 */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <div className="flex items-center gap-2">
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
           <button
-            onClick={goBack}
-            className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
+            onClick={() => navigate(-1)}
+            className={styles.backButton}
           >
             ← Back
           </button>
-          <h1 className="text-base font-semibold">Projects</h1>
-          <span className="text-xs text-muted-foreground">({entries.length})</span>
+          <h1 className={styles.title}>Projects</h1>
+          <span className={styles.count}>({entries.length})</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className={styles.headerRight}>
           <Button
             size="sm"
             variant="outline"
@@ -142,7 +144,7 @@ export function ProjectListView() {
       </div>
 
       {/* 搜索栏 */}
-      <div className="px-4 py-2 border-b border-border">
+      <div className={styles.searchBar}>
         <Input
           value={searchFilter}
           onChange={(e) => setSearchFilter(e.target.value)}
@@ -158,9 +160,9 @@ export function ProjectListView() {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden border-b border-border"
+            className={styles.newGroupPanel}
           >
-            <div className="px-4 py-3 bg-muted/30 flex gap-2 items-center">
+            <div className={styles.newGroupInner}>
               <Input
                 autoFocus
                 value={newGroupName}
@@ -186,19 +188,19 @@ export function ProjectListView() {
       </AnimatePresence>
 
       {/* 项目列表 */}
-      <div className="flex-1 overflow-y-auto">
+      <div className={styles.projectList}>
         {/* 分组项目 */}
         {groups.map((group) => {
           const groupEntries = groupedEntries[group.id] || []
           return (
-            <div key={group.id} className="border-b border-border">
-              <div className="flex items-center justify-between px-4 py-2 bg-muted/30">
-                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <div key={group.id} className={styles.groupSection}>
+              <div className={styles.groupHeader}>
+                <h3 className={styles.groupTitle}>
                   {group.name} ({groupEntries.length})
                 </h3>
                 <button
                   onClick={() => removeWorkspaceGroup(group.id)}
-                  className="text-xs text-destructive hover:underline"
+                  className={styles.removeGroupButton}
                 >
                   Remove Group
                 </button>
@@ -220,7 +222,7 @@ export function ProjectListView() {
                 )
               })}
               {groupEntries.length === 0 && (
-                <p className="px-4 py-3 text-xs text-muted-foreground">No projects in this group</p>
+                <p className={styles.emptyGroup}>No projects in this group</p>
               )}
             </div>
           )
@@ -228,10 +230,10 @@ export function ProjectListView() {
 
         {/* 未分组项目 */}
         {groupedEntries['ungrouped']?.length > 0 && (
-          <div>
+          <div className={styles.ungroupedSection}>
             {groups.length > 0 && (
-              <div className="px-4 py-2 bg-muted/30">
-                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <div className={styles.ungroupedHeader}>
+                <h3 className={styles.groupTitle}>
                   Ungrouped ({groupedEntries['ungrouped'].length})
                 </h3>
               </div>
@@ -257,8 +259,8 @@ export function ProjectListView() {
 
         {/* 空状态 */}
         {entries.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-            <p className="text-sm mb-4">No projects added yet</p>
+          <div className={styles.emptyState}>
+            <p className={styles.emptyText}>No projects added yet</p>
             <Button size="sm" onClick={handleAddProject}>
               Add Your First Project
             </Button>
@@ -267,8 +269,8 @@ export function ProjectListView() {
 
         {/* 搜索无结果 */}
         {entries.length > 0 && filteredEntries.length === 0 && (
-          <div className="flex items-center justify-center py-16 text-muted-foreground">
-            <p className="text-sm">No projects match "{searchFilter}"</p>
+          <div className={styles.noResults}>
+            <p>No projects match "{searchFilter}"</p>
           </div>
         )}
       </div>
@@ -300,39 +302,37 @@ function ProjectRow({
 }) {
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-2.5 hover:bg-secondary cursor-pointer group border-b border-border/50 ${
-        isActive ? 'bg-primary/5 border-l-2 border-l-primary' : ''
-      }`}
+      className={`${styles.projectRow} ${isActive ? styles.active : ''}`}
       onClick={onOpen}
     >
       {/* 项目信息 */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground truncate">
+      <div className={styles.projectInfo}>
+        <div className={styles.projectNameRow}>
+          <span className={styles.projectName}>
             {entry.name}
           </span>
           {isActive && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/20 text-primary font-medium">
+            <span className={styles.activeBadge}>
               Active
             </span>
           )}
         </div>
-        <p className="text-xs text-muted-foreground truncate mt-0.5">
+        <p className={styles.projectPath}>
           {entry.path}
         </p>
         {entry.lastOpened && (
-          <p className="text-[10px] text-muted-foreground/70 mt-0.5">
+          <p className={styles.lastOpened}>
             Last opened: {new Date(entry.lastOpened).toLocaleDateString()}
           </p>
         )}
       </div>
 
       {/* 操作按钮 */}
-      <div className="hidden group-hover:flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+      <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
         {index > 0 && (
           <button
             onClick={onMoveUp}
-            className="px-1.5 py-0.5 text-xs rounded hover:bg-muted text-muted-foreground"
+            className={styles.moveButton}
             title="Move up"
           >
             ↑
@@ -341,7 +341,7 @@ function ProjectRow({
         {index < totalCount - 1 && (
           <button
             onClick={onMoveDown}
-            className="px-1.5 py-0.5 text-xs rounded hover:bg-muted text-muted-foreground"
+            className={styles.moveButton}
             title="Move down"
           >
             ↓
@@ -349,7 +349,7 @@ function ProjectRow({
         )}
         <button
           onClick={onRemove}
-          className="px-2 py-0.5 text-xs rounded hover:bg-destructive/10 text-destructive"
+          className={styles.removeButton}
           title="Remove from list"
         >
           Remove

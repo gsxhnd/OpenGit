@@ -1,13 +1,13 @@
 import { motion } from 'motion/react'
+import { useNavigate } from 'react-router'
 import { useAppStore } from '../store'
-import { cn } from '../lib/utils'
 import { Button } from '../components/ui/button'
 import { SideBySideDiffView } from '../components/SideBySideDiffView'
+import styles from './DiffView.module.scss'
 
 export function DiffView() {
   const {
     diffPreview,
-    goBack,
     stageHunk,
     unstageHunk,
     selectedDiffPath,
@@ -15,13 +15,14 @@ export function DiffView() {
     diffViewMode,
     setDiffViewMode,
   } = useAppStore()
+  const navigate = useNavigate()
 
   if (!diffPreview) {
     return (
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex items-center justify-center h-full text-muted-foreground"
+        className={styles.emptyState}
       >
         No diff selected
       </motion.div>
@@ -38,7 +39,7 @@ export function DiffView() {
         isStaged={isStaged}
         onStageHunk={(hunkIndex) => stageHunk(diffPreview.path, hunkIndex)}
         onUnstageHunk={(hunkIndex) => unstageHunk(diffPreview.path, hunkIndex)}
-        onGoBack={goBack}
+        onGoBack={() => navigate(-1)}
       />
     )
   }
@@ -48,17 +49,17 @@ export function DiffView() {
       <motion.div
         initial={{ opacity: 0, x: 10 }}
         animate={{ opacity: 1, x: 0 }}
-        className="flex flex-col h-full"
+        className={styles.container}
       >
-        <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border">
-          <div className="flex items-center gap-2">
+        <div className={styles.header}>
+          <div className={styles.headerLeft}>
             <button
-              onClick={goBack}
-              className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
+              onClick={() => navigate(-1)}
+              className={styles.backButton}
             >
               ← Back
             </button>
-            <span className="text-sm font-mono text-foreground">
+            <span className={styles.filePath}>
               {diffPreview.path}
             </span>
           </div>
@@ -71,7 +72,7 @@ export function DiffView() {
             {diffViewMode === 'unified' ? 'Side-by-side' : 'Unified'}
           </Button>
         </div>
-        <div className="flex items-center justify-center flex-1 text-muted-foreground">
+        <div className={styles.binaryContent}>
           Binary file
         </div>
       </motion.div>
@@ -83,18 +84,18 @@ export function DiffView() {
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col h-full"
+      className={styles.container}
     >
       {/* Header */}
-      <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-border">
-        <div className="flex items-center gap-2">
+      <div className={styles.header}>
+        <div className={styles.headerLeft}>
           <button
-            onClick={goBack}
-            className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
+            onClick={() => navigate(-1)}
+            className={styles.backButton}
           >
             ← Back
           </button>
-          <span className="text-sm font-mono text-foreground">
+          <span className={styles.filePath}>
             {diffPreview.path}
           </span>
         </div>
@@ -109,16 +110,16 @@ export function DiffView() {
       </div>
 
       {/* Diff content */}
-      <div className="flex-1 overflow-auto font-mono text-xs leading-5">
+      <div className={styles.diffContent}>
         {diffPreview.hunks.map((hunk, hi) => (
           <div key={hi}>
             {/* Hunk header with controls */}
-            <div className="flex items-center justify-between px-3 py-1 bg-muted text-info sticky top-0 group">
-              <div className="flex-1">
+            <div className={styles.hunkHeader}>
+              <div className={styles.hunkHeaderText}>
                 @@ -{hunk.oldRange.start},{hunk.oldRange.count} +{hunk.newRange.start},
                 {hunk.newRange.count} @@ {hunk.header}
               </div>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className={styles.hunkControls}>
                 {isStaged ? (
                   <Button
                     size="sm"
@@ -144,14 +145,9 @@ export function DiffView() {
             {hunk.lines.map((line, li) => (
               <div
                 key={li}
-                className={cn(
-                  'px-3 whitespace-pre',
-                  line.prefix === '+' && 'bg-diff-added-bg text-diff-added',
-                  line.prefix === '-' && 'bg-diff-deleted-bg text-diff-deleted',
-                  line.prefix === ' ' && 'text-foreground'
-                )}
+                className={`${styles.line} ${line.prefix === '+' ? styles.lineAdded : ''} ${line.prefix === '-' ? styles.lineDeleted : ''} ${line.prefix === ' ' ? styles.lineContext : ''}`}
               >
-                <span className="inline-block w-4 text-muted-foreground select-none">
+                <span className={styles.linePrefix}>
                   {line.prefix}
                 </span>
                 {line.content}
@@ -161,7 +157,7 @@ export function DiffView() {
         ))}
 
         {diffPreview.hunks.length === 0 && (
-          <p className="px-3 py-8 text-center text-muted-foreground">
+          <p className={styles.emptyDiff}>
             No changes
           </p>
         )}

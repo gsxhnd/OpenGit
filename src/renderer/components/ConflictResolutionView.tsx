@@ -11,7 +11,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { useAppStore } from '../store'
 import { Button } from './ui/button'
-import { cn } from '../lib/utils'
+import styles from './ConflictResolutionView.module.scss'
 import type { FileDiff } from '@shared/types'
 
 /**
@@ -51,18 +51,18 @@ function ConflictFileRow({
   }
 
   return (
-    <div className="border border-border rounded overflow-hidden">
+    <div className={styles.fileRow}>
       {/* 文件头部 */}
       <div
-        className="flex items-center justify-between gap-2 p-2 bg-background cursor-pointer hover:bg-secondary/50"
+        className={styles.fileHeader}
         onClick={handleToggle}
       >
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-xs text-muted-foreground">{expanded ? '▼' : '▶'}</span>
-          <span className="text-destructive text-xs font-bold">C</span>
-          <span className="font-mono text-xs truncate">{file}</span>
+        <div className={styles.fileInfo}>
+          <span className={styles.expandIcon}>{expanded ? '▼' : '▶'}</span>
+          <span className={styles.conflictBadge}>C</span>
+          <span className={styles.fileName}>{file}</span>
         </div>
-        <div className="flex gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
           <Button
             size="sm"
             variant="outline"
@@ -90,33 +90,32 @@ function ConflictFileRow({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="overflow-hidden border-t border-border"
+            className={styles.diffPanel}
           >
             {loading ? (
-              <div className="px-4 py-3 text-xs text-muted-foreground">Loading diff...</div>
+              <div className={styles.loadingText}>Loading diff...</div>
             ) : diffData && diffData.hunks.length > 0 ? (
-              <div className="max-h-48 overflow-y-auto font-mono text-[11px] leading-4">
+              <div className={styles.diffContent}>
                 {diffData.hunks.map((hunk, hi) => (
                   <div key={hi}>
-                    <div className="px-3 py-0.5 bg-muted text-info text-[10px]">
+                    <div className={styles.hunkHeader}>
                       @@ -{hunk.oldRange.start},{hunk.oldRange.count} +{hunk.newRange.start},{hunk.newRange.count} @@
                     </div>
                     {hunk.lines.slice(0, 30).map((line, li) => (
                       <div
                         key={li}
-                        className={cn(
-                          'px-3 whitespace-pre',
-                          line.prefix === '+' && 'bg-diff-added-bg text-diff-added',
-                          line.prefix === '-' && 'bg-diff-deleted-bg text-diff-deleted',
-                          line.prefix === ' ' && 'text-foreground/70'
-                        )}
+                        className={`${styles.diffLine} ${
+                          line.prefix === '+' ? styles.diffLineAdded :
+                          line.prefix === '-' ? styles.diffLineDeleted :
+                          line.prefix === ' ' ? styles.diffLineContext : ''
+                        }`}
                       >
-                        <span className="inline-block w-3 select-none text-muted-foreground">{line.prefix}</span>
+                        <span className={styles.linePrefix}>{line.prefix}</span>
                         {line.content}
                       </div>
                     ))}
                     {hunk.lines.length > 30 && (
-                      <div className="px-3 py-1 text-[10px] text-muted-foreground">
+                      <div className={styles.moreLines}>
                         ... {hunk.lines.length - 30} more lines
                       </div>
                     )}
@@ -124,7 +123,7 @@ function ConflictFileRow({
                 ))}
               </div>
             ) : (
-              <div className="px-4 py-3 text-xs text-muted-foreground">No diff available</div>
+              <div className={styles.noDiff}>No diff available</div>
             )}
           </motion.div>
         )}
@@ -155,15 +154,15 @@ export function ConflictResolutionView() {
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="border-b border-destructive/30 bg-destructive/5 p-4"
+      className={styles.container}
     >
       {/* 标题和中止按钮 */}
-      <div className="flex items-center justify-between mb-3">
+      <div className={styles.header}>
         <div>
-          <h3 className="font-semibold text-sm text-destructive">
+          <h3 className={styles.title}>
             {operationType} Conflict
           </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className={styles.subtitle}>
             {conflictFiles.length} file(s) have conflicts. Resolve each file to continue.
           </p>
         </div>
@@ -178,7 +177,7 @@ export function ConflictResolutionView() {
       </div>
 
       {/* 冲突文件列表 */}
-      <div className="space-y-2 max-h-64 overflow-y-auto">
+      <div className={styles.fileList}>
         {conflictFiles.map((file) => (
           <ConflictFileRow
             key={file}

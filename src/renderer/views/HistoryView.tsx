@@ -1,26 +1,21 @@
 /**
  * HistoryView - 提交历史视图
- *
- * 展示仓库的提交历史列表，支持：
- * - 搜索提交（按消息内容、hash、作者）
- * - 按作者/文件路径筛选
- * - 分页加载（每次 50 条）
- * - 点击提交查看详情（跳转 CommitDetailView）
- * - 右键菜单：Cherry-pick、Revert（通过 CommitDetailView 操作）
  */
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { motion } from 'motion/react'
 import { useAppStore } from '../store'
-import { cn } from '../lib/utils'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
+import { Badge } from '../components/ui/badge'
+import { ScrollArea } from '../components/ui/scroll-area'
+import styles from './HistoryView.module.scss'
 
 export function HistoryView() {
   const {
     historyCommits,
     loadHistory,
     loadMoreHistory,
-    loadCommitDetail,
     searchCommits,
     clearSearch,
     searchQuery,
@@ -32,6 +27,7 @@ export function HistoryView() {
     filterByAuthor,
     filterByFile,
   } = useAppStore()
+  const navigate = useNavigate()
 
   const [search, setSearch] = useState(searchQuery)
   const [filterInput, setFilterInput] = useState('')
@@ -66,29 +62,27 @@ export function HistoryView() {
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col h-full"
+      className={styles.container}
     >
-      {/* Search bar */}
-      <div className="px-3 py-2 border-b border-border space-y-2">
-        <div className="flex gap-2">
+      {/* 搜索和筛选栏 */}
+      <div className={styles.searchBar}>
+        <div className={styles.searchRow}>
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="Search commits (hash, message, author)..."
-            className="h-8 text-sm"
           />
-          <Button variant="secondary" size="sm" onClick={handleSearch} className="h-8">
+          <Button variant="secondary" size="sm" onClick={handleSearch}>
             Search
           </Button>
         </div>
 
-        {/* Filter */}
-        <div className="flex gap-2 items-center">
+        <div className={styles.filterRow}>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as 'author' | 'file')}
-            className="h-8 px-2 text-xs bg-muted border border-border rounded text-foreground"
+            className={styles.filterSelect}
           >
             <option value="author">Author</option>
             <option value="file">File</option>
@@ -98,79 +92,64 @@ export function HistoryView() {
             onChange={(e) => setFilterInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
             placeholder={`Filter by ${filterType}...`}
-            className="h-7 text-xs flex-1"
           />
-          <Button variant="secondary" size="sm" onClick={handleFilter} className="h-7 text-xs">
+          <Button variant="secondary" size="xs" onClick={handleFilter}>
             Filter
           </Button>
         </div>
 
-        {/* Active filters */}
+        {/* 活跃筛选条件 */}
         {(historyFilterAuthor || historyFilterFile) && (
-          <div className="flex gap-2 items-center">
+          <div className={styles.activeFilters}>
             {historyFilterAuthor && (
-              <span className="px-2 py-0.5 text-xs bg-primary text-primary-foreground rounded">
-                Author: {historyFilterAuthor}
-              </span>
+              <Badge variant="default">Author: {historyFilterAuthor}</Badge>
             )}
             {historyFilterFile && (
-              <span className="px-2 py-0.5 text-xs bg-primary text-primary-foreground rounded">
-                File: {historyFilterFile}
-              </span>
+              <Badge variant="default">File: {historyFilterFile}</Badge>
             )}
-            <button
-              onClick={clearFilters}
-              className="text-xs text-destructive hover:underline"
-            >
+            <button onClick={clearFilters} className={styles.clearButton}>
               Clear
             </button>
           </div>
         )}
       </div>
 
-      {/* Commit list */}
-      <div className="flex-1 overflow-y-auto">
+      {/* 提交列表 */}
+      <ScrollArea className={styles.commitList}>
         {isSearching && (
-          <p className="px-3 py-4 text-sm text-muted-foreground text-center">
-            Searching...
-          </p>
+          <p className={styles.emptyState}>Searching...</p>
         )}
         {commits.map((commit) => (
           <div
             key={commit.hash}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-secondary cursor-pointer border-b border-border group"
-            onClick={() => loadCommitDetail(commit.hash)}
+            className={styles.commitRow}
+            onClick={() => navigate(`/detail/${commit.hash}`)}
           >
-            <span className="font-mono text-xs text-accent w-16 flex-shrink-0">
+            <span className={styles.commitHash}>
               {commit.hash.slice(0, 7)}
             </span>
-            <span className="flex-1 text-sm text-foreground truncate">
+            <span className={styles.commitSummary}>
               {commit.summary}
             </span>
-            <span className="text-xs text-muted-foreground flex-shrink-0">
+            <span className={styles.commitAuthor}>
               {commit.author.split(' <')[0]}
             </span>
-            <span className="text-xs text-muted-foreground flex-shrink-0 w-20 text-right">
+            <span className={styles.commitDate}>
               {new Date(commit.time).toLocaleDateString()}
             </span>
           </div>
         ))}
 
         {commits.length > 0 && !searchResults.length && (
-          <button
-            onClick={loadMoreHistory}
-            className="w-full py-3 text-sm text-accent hover:bg-secondary"
-          >
+          <button onClick={loadMoreHistory} className={styles.loadMore}>
             Load more...
           </button>
         )}
 
         {commits.length === 0 && !isSearching && (
-          <p className="px-3 py-8 text-sm text-muted-foreground text-center">
-            No commits found
-          </p>
+          <p className={styles.emptyState}>No commits found</p>
         )}
-      </div>
+      </ScrollArea>
     </motion.div>
   )
 }

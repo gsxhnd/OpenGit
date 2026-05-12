@@ -1,11 +1,14 @@
 import { motion } from 'motion/react'
+import { useNavigate } from 'react-router'
 import { useAppStore } from '../store'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { useState } from 'react'
+import styles from './SettingsView.module.scss'
 
 export function SettingsView() {
-  const { settings, updateSettings, goBack } = useAppStore()
+  const { settings, updateSettings } = useAppStore()
+  const navigate = useNavigate()
   const [theme, setTheme] = useState(settings?.theme || 'Tokyo Night')
 
   const handleThemeChange = (newTheme: string) => {
@@ -20,32 +23,32 @@ export function SettingsView() {
       initial={{ opacity: 0, x: 10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.2 }}
-      className="flex flex-col h-full"
+      className={styles.container}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
+      <div className={styles.header}>
         <button
-          onClick={goBack}
-          className="px-2 py-0.5 text-xs rounded hover:bg-secondary text-muted-foreground"
+          onClick={() => navigate(-1)}
+          className={styles.backButton}
         >
           ← Back
         </button>
-        <h1 className="text-lg font-semibold">Settings</h1>
+        <h1 className={styles.headerTitle}>Settings</h1>
       </div>
 
       {/* Settings content */}
-      <div className="flex-1 overflow-auto p-6">
-        <div className="max-w-2xl space-y-8">
+      <div className={styles.content}>
+        <div className={styles.contentInner}>
           {/* Appearance */}
-          <section>
-            <h2 className="text-base font-semibold mb-4">Appearance</h2>
-            <div className="space-y-4">
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Appearance</h2>
+            <div className={styles.fieldGroup}>
               <div>
-                <label className="text-sm font-medium block mb-2">Theme</label>
+                <label className={styles.fieldLabel}>Theme</label>
                 <select
                   value={theme}
                   onChange={(e) => handleThemeChange(e.target.value)}
-                  className="w-full px-3 py-2 rounded border border-border bg-background text-foreground"
+                  className={styles.select}
                 >
                   <option>Tokyo Night</option>
                   <option>Dracula</option>
@@ -58,11 +61,11 @@ export function SettingsView() {
           </section>
 
           {/* Editor */}
-          <section>
-            <h2 className="text-base font-semibold mb-4">Editor</h2>
-            <div className="space-y-4">
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Editor</h2>
+            <div className={styles.fieldGroup}>
               <div>
-                <label className="text-sm font-medium block mb-2">Font Size</label>
+                <label className={styles.fieldLabel}>Font Size</label>
                 <Input
                   type="number"
                   min="10"
@@ -72,77 +75,77 @@ export function SettingsView() {
                 />
               </div>
               <div>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" defaultChecked className="rounded" />
-                  <span className="text-sm">Word Wrap</span>
+                <label className={styles.checkboxLabel}>
+                  <input type="checkbox" defaultChecked className={styles.checkbox} />
+                  <span className={styles.checkboxText}>Word Wrap</span>
                 </label>
               </div>
             </div>
           </section>
 
           {/* Git */}
-          <section>
-            <h2 className="text-base font-semibold mb-4">Git</h2>
-            <div className="space-y-4">
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Git</h2>
+            <div className={styles.fieldGroup}>
               <div>
-                <label className="text-sm font-medium block mb-2">Default Commit Message</label>
+                <label className={styles.fieldLabel}>Default Commit Message</label>
                 <Input
                   placeholder="Enter default commit message template"
                   className="w-full"
                 />
               </div>
               <div>
-                <label className="flex items-center gap-2">
-                  <input type="checkbox" defaultChecked className="rounded" />
-                  <span className="text-sm">Auto-fetch on startup</span>
+                <label className={styles.checkboxLabel}>
+                  <input type="checkbox" defaultChecked className={styles.checkbox} />
+                  <span className={styles.checkboxText}>Auto-fetch on startup</span>
                 </label>
               </div>
             </div>
           </section>
 
           {/* Keyboard Shortcuts */}
-          <section>
-            <h2 className="text-base font-semibold mb-4">Keyboard Shortcuts</h2>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between py-2 border-b border-border">
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Keyboard Shortcuts</h2>
+            <div className={styles.shortcutList}>
+              <div className={styles.shortcutItem}>
                 <span>Go to Commit View</span>
-                <kbd className="px-2 py-1 bg-secondary rounded">Ctrl+1</kbd>
+                <kbd className={styles.kbd}>Ctrl+1</kbd>
               </div>
-              <div className="flex justify-between py-2 border-b border-border">
+              <div className={styles.shortcutItem}>
                 <span>Go to History View</span>
-                <kbd className="px-2 py-1 bg-secondary rounded">Ctrl+2</kbd>
+                <kbd className={styles.kbd}>Ctrl+2</kbd>
               </div>
-              <div className="flex justify-between py-2 border-b border-border">
+              <div className={styles.shortcutItem}>
                 <span>Go to Branches View</span>
-                <kbd className="px-2 py-1 bg-secondary rounded">Ctrl+3</kbd>
+                <kbd className={styles.kbd}>Ctrl+3</kbd>
               </div>
-              <div className="flex justify-between py-2 border-b border-border">
+              <div className={styles.shortcutItem}>
                 <span>Go to Graph View</span>
-                <kbd className="px-2 py-1 bg-secondary rounded">Ctrl+4</kbd>
+                <kbd className={styles.kbd}>Ctrl+4</kbd>
               </div>
-              <div className="flex justify-between py-2 border-b border-border">
+              <div className={styles.shortcutItem}>
                 <span>Stage All</span>
-                <kbd className="px-2 py-1 bg-secondary rounded">Ctrl+Shift+A</kbd>
+                <kbd className={styles.kbd}>Ctrl+Shift+A</kbd>
               </div>
-              <div className="flex justify-between py-2 border-b border-border">
+              <div className={styles.shortcutItem}>
                 <span>Unstage All</span>
-                <kbd className="px-2 py-1 bg-secondary rounded">Ctrl+Shift+U</kbd>
+                <kbd className={styles.kbd}>Ctrl+Shift+U</kbd>
               </div>
-              <div className="flex justify-between py-2">
+              <div className={styles.shortcutItemLast}>
                 <span>Command Palette</span>
-                <kbd className="px-2 py-1 bg-secondary rounded">Ctrl+Shift+P</kbd>
+                <kbd className={styles.kbd}>Ctrl+Shift+P</kbd>
               </div>
             </div>
           </section>
 
           {/* About */}
-          <section>
-            <h2 className="text-base font-semibold mb-4">About</h2>
-            <div className="space-y-2 text-sm text-muted-foreground">
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>About</h2>
+            <div className={styles.aboutContent}>
               <p>OpenGit v1.0.0</p>
               <p>A modern Git client for developers</p>
-              <p className="pt-2">
-                <a href="#" className="text-primary hover:underline">
+              <p className={styles.aboutLink}>
+                <a href="#">
                   GitHub Repository
                 </a>
               </p>

@@ -50,6 +50,7 @@ import type {
   WorkspaceConfig,
 } from '@shared/types'
 import type { Language } from '../i18n/translations'
+import { viewToPath } from '../routes'
 
 interface AppState {
   // Repository
@@ -274,8 +275,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         repoPath: path,
         repoStatus: status,
         isLoading: false,
-        currentView: 'commit',
       })
+      get().setView('commit')
       get().addToast('Repository opened', 'success')
     } catch (err: any) {
       set({ isLoading: false, error: err.message })
@@ -288,13 +289,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({
       repoPath: null,
       repoStatus: null,
-      currentView: 'welcome',
       historyCommits: [],
       diffPreview: null,
       stashList: [],
       tagList: [],
       graphData: null,
     })
+    get().setView('welcome')
   },
 
   refreshStatus: async () => {
@@ -309,11 +310,22 @@ export const useAppStore = create<AppState>((set, get) => ({
   setView: (view) => {
     const current = get().currentView
     set({ currentView: view, previousView: current })
+    const path = viewToPath(view)
+    const currentHash = window.location.hash.replace(/^#/, '')
+    if (currentHash !== path) {
+      window.location.hash = '#' + path
+    }
   },
 
   goBack: () => {
     const prev = get().previousView
-    if (prev) set({ currentView: prev, previousView: null })
+    if (prev) {
+      set({ currentView: prev, previousView: null })
+      const path = viewToPath(prev)
+      window.location.hash = '#' + path
+    } else {
+      window.history.back()
+    }
   },
 
   // Staging
@@ -501,8 +513,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({
         selectedCommitDetail: commit,
         selectedCommitDiff: diffs,
-        currentView: 'detail',
-        previousView: get().currentView,
       })
     } catch (err: any) {
       get().addToast(`Load commit failed: ${err.message}`, 'error')
@@ -804,8 +814,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({
         fileHistoryPath: path,
         fileHistoryCommits: commits,
-        currentView: 'file-history',
-        previousView: get().currentView,
       })
     } catch (err: any) {
       get().addToast(`File history failed: ${err.message}`, 'error')
@@ -818,8 +826,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       set({
         blameData: data,
         blamePath: path,
-        currentView: 'blame',
-        previousView: get().currentView,
       })
     } catch (err: any) {
       get().addToast(`Blame failed: ${err.message}`, 'error')

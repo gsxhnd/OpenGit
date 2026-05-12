@@ -1,0 +1,42 @@
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 1.5rem;
+  padding: 0 0.75rem;
+  background-color: var(--color-status-bar);
+  border-top: 1px solid var(--color-border);
+  font-size: 10px;
+  color: var(--color-muted-foreground);
+}
+
+.leftSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.branchInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.branchIcon {
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+.syncInfo {
+  // inherits font from footer
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.merging {
+  color: var(--color-warning);
+}

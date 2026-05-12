@@ -1,0 +1,67 @@
+.container {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background-color: color-mix(in srgb, var(--color-muted) 30%, transparent);
+  overflow-x: auto;
+}
+
+.entryWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tabButton {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  border-radius: var(--radius);
+  transition: background-color 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border: none;
+  cursor: pointer;
+
+  &.active {
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
+
+  &.inactive {
+    background-color: var(--color-secondary);
+    color: var(--color-foreground);
+
+    &:hover {
+      background-color: color-mix(in srgb, var(--color-secondary) 80%, transparent);
+    }
+  }
+}
+
+.tabLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.removeButton {
+  padding: 2px;
+  border-radius: var(--radius);
+  color: var(--color-muted-foreground);
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--color-destructive) 20%, transparent);
+    color: var(--color-destructive);
+  }
+}
+
+.addButton {
+  margin-left: auto;
+}

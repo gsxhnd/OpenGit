@@ -6,10 +6,12 @@
  * - 主导航：日常高频操作（Commit、History、Branches 等）
  * - 工具导航：管理和配置类功能（Projects、Hooks、Settings）
  */
-import { motion, AnimatePresence } from 'motion/react'
+import { NavLink } from 'react-router'
+import { motion } from 'motion/react'
 import { useAppStore } from '../store'
 import type { ViewType } from '@shared/types'
-import { cn } from '../lib/utils'
+import { viewToPath } from '../routes'
+import styles from './Sidebar.module.scss'
 
 /** 主导航项 - 日常 Git 操作 */
 const NAV_ITEMS: { view: ViewType; label: string; icon: string }[] = [
@@ -30,53 +32,53 @@ const TOOL_ITEMS: { view: ViewType; label: string; icon: string }[] = [
   { view: 'settings', label: 'Settings', icon: '⚙' },
 ]
 
-export function Sidebar() {
-  const { currentView, setView } = useAppStore()
+function NavButton({ view, label, icon }: { view: ViewType; label: string; icon: string }) {
+  const currentView = useAppStore((s) => s.currentView)
 
   return (
-    <aside className="w-48 flex-shrink-0 bg-sidebar border-r border-border flex flex-col overflow-y-auto">
-      {/* 主导航 */}
-      <nav className="flex flex-col gap-0.5 p-2 flex-1">
+    <NavLink
+      to={viewToPath(view)}
+      className={`${styles.navButton} ${currentView === view ? styles.navButtonActive : ''}`}
+    >
+      {currentView === view && (
+        <motion.div
+          layoutId="sidebar-active"
+          className={styles.navButtonBg}
+          transition={{ type: 'spring', duration: 0.3, bounce: 0.15 }}
+        />
+      )}
+      <span className={styles.navIcon}>{icon}</span>
+      <span className={styles.navLabel}>{label}</span>
+    </NavLink>
+  )
+}
+
+function ToolButton({ view, label, icon }: { view: ViewType; label: string; icon: string }) {
+  const currentView = useAppStore((s) => s.currentView)
+
+  return (
+    <NavLink
+      to={viewToPath(view)}
+      className={`${styles.toolButton} ${currentView === view ? styles.toolButtonActive : ''}`}
+    >
+      <span className={styles.navIcon}>{icon}</span>
+      <span>{label}</span>
+    </NavLink>
+  )
+}
+
+export function Sidebar() {
+  return (
+    <aside className={styles.sidebar}>
+      <nav className={styles.nav}>
         {NAV_ITEMS.map((item) => (
-          <button
-            key={item.view}
-            onClick={() => setView(item.view)}
-            className={cn(
-              'relative flex items-center gap-2 px-3 py-1.5 rounded text-sm text-left transition-colors',
-              currentView === item.view
-                ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-            )}
-          >
-            {currentView === item.view && (
-              <motion.div
-                layoutId="sidebar-active"
-                className="absolute inset-0 bg-secondary rounded"
-                transition={{ type: 'spring', duration: 0.3, bounce: 0.15 }}
-              />
-            )}
-            <span className="relative z-10 w-4 text-center">{item.icon}</span>
-            <span className="relative z-10">{item.label}</span>
-          </button>
+          <NavButton key={item.view} view={item.view} label={item.label} icon={item.icon} />
         ))}
       </nav>
 
-      {/* 分隔线 + 工具导航 */}
-      <div className="border-t border-border p-2">
+      <div className={styles.toolSection}>
         {TOOL_ITEMS.map((item) => (
-          <button
-            key={item.view}
-            onClick={() => setView(item.view)}
-            className={cn(
-              'relative flex items-center gap-2 px-3 py-1.5 rounded text-sm text-left transition-colors w-full',
-              currentView === item.view
-                ? 'text-foreground bg-secondary'
-                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-            )}
-          >
-            <span className="w-4 text-center">{item.icon}</span>
-            <span>{item.label}</span>
-          </button>
+          <ToolButton key={item.view} view={item.view} label={item.label} icon={item.icon} />
         ))}
       </div>
     </aside>

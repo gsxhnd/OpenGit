@@ -3,6 +3,7 @@ import { useAppStore } from '../store'
 import { Button } from './ui/button'
 import { Plus, X } from 'lucide-react'
 import { useState } from 'react'
+import styles from './WorkspaceSwitcher.module.scss'
 
 export function WorkspaceSwitcher() {
   const { workspaceConfig, switchWorkspace, removeWorkspaceEntry, repoPath } = useAppStore()
@@ -15,7 +16,7 @@ export function WorkspaceSwitcher() {
   const activeEntry = workspaceConfig.entries[workspaceConfig.activeIndex]
 
   return (
-    <div className="flex items-center gap-1 px-2 py-1 border-b border-border bg-muted/30 overflow-x-auto">
+    <div className={styles.container}>
       <AnimatePresence>
         {workspaceConfig.entries.map((entry, index) => (
           <motion.div
@@ -23,21 +24,19 @@ export function WorkspaceSwitcher() {
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -10 }}
-            className="flex items-center gap-1"
+            className={styles.entryWrapper}
           >
             <button
               onClick={() => switchWorkspace(index)}
-              className={`px-3 py-1 text-xs rounded-md transition-colors flex items-center gap-2 whitespace-nowrap ${
-                repoPath === entry.path
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+              className={`${styles.tabButton} ${
+                repoPath === entry.path ? styles.active : styles.inactive
               }`}
             >
-              <span className="truncate max-w-[150px]">{entry.name}</span>
+              <span className={styles.tabLabel}>{entry.name}</span>
             </button>
             <button
               onClick={() => removeWorkspaceEntry(entry.path)}
-              className="p-0.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+              className={styles.removeButton}
               title="Remove project"
             >
               <X size={14} />
@@ -49,7 +48,7 @@ export function WorkspaceSwitcher() {
       <Button
         size="sm"
         variant="ghost"
-        className="h-6 px-2 ml-auto"
+        className={styles.addButton}
         onClick={() => setShowAddDialog(true)}
       >
         <Plus size={14} />
