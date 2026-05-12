@@ -1,13 +1,15 @@
 # 4. 系统架构
 
+> **OpenRemote** 采用 Electron 三进程模型。主进程承载**窗口、设置持久化、以及未来的远程协议适配**（SSH/SFTP、Docker/Kubernetes、WebDAV、S3 等）；渲染进程专注 React UI 与 Zustand 状态；预加载脚本提供类型安全的 `window.api` 桥接。
+
 ## 4.1 Electron 三进程架构
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                Renderer Process (渲染进程)               │
-│  React UI (App.tsx → 13 Views + Components)             │
+│  React UI（App、视图、共享组件；规划：xterm 终端、Monaco 远程编辑） │
 │  Zustand Store (全局状态)                                │
-│  Tailwind CSS (样式) + Motion (动画)                    │
+│  Tailwind CSS + Motion                                   │
 ├─────────────────────────────────────────────────────────┤
 │                Preload Script (预加载脚本)                │
 │  contextBridge.exposeInMainWorld('api', { ... })       │
@@ -15,10 +17,9 @@
 ├─────────────────────────────────────────────────────────┤
 │                  Main Process (主进程)                   │
 │  Window Management (BrowserWindow)                      │
-│  Git Handlers (git CLI via child_process.execFile)     │
+│  Remote / protocol handlers（规划中）                    │
 │  Settings Persistence (JSON file I/O)                   │
-│  File Watcher (fs.watch recursive)                      │
-│  IPC Handlers (ipcMain.handle)                          │
+│  IPC Handlers (ipcMain.handle / on)                     │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -26,18 +27,16 @@
 
 | 模块 | 位置 | 职责 |
 |------|------|------|
-| **Window & App** | `src/main/index.ts` | BrowserWindow 创建、生命周期、IPC 注册、窗口状态保存 |
-| **Git Operations** | `src/main/git-handlers.ts` | 所有 Git 操作，通过 `child_process.execFile` 调用系统 git，解析输出 |
-| **Settings** | `src/main/settings.ts` | JSON 配置文件读写、损坏恢复、主题发现 |
-| **File Watcher** | `src/main/file-watcher.ts` | 递归监听文件变更，500ms 防抖，忽略 .git 内部噪音，通知渲染进程刷新 |
-| **Preload API** | `src/preload/index.ts` | contextBridge 暴露类型化 window.api，隔离 Node.js 环境 |
-| **UI Store** | `src/renderer/store/index.ts` | Zustand Store，管理全部 UI 状态和 50+ Action 方法 |
-| **UI Views** | `src/renderer/views/` | 13 个功能视图组件 |
-| **UI Components** | `src/renderer/components/` | 标题栏、状态栏、侧边栏、Toast 等共享组件 |
-| **Shared Types** | `src/shared/types.ts` | 所有 TypeScript 接口定义 |
+| **Window & App** | `src/main/index.ts` | BrowserWindow、生命周期、窗口控制 IPC、对话框 |
+| **Settings** | `src/main/settings.ts` | JSON 配置读写、损坏恢复、主题发现 |
+| **Preload API** | `src/preload/index.ts` | contextBridge 暴露类型化 `window.api` |
+| **UI Store** | `src/renderer/store/index.ts` | Zustand 全局状态与异步 Action |
+| **UI Views** | `src/renderer/views/` | 各功能视图（随里程碑增减） |
+| **UI Components** | `src/renderer/components/` | 标题栏、Toast 等共享组件 |
+| **Shared Types** | `src/shared/types.ts` | 跨进程类型定义 |
 | **IPC Channels** | `src/shared/ipc.ts` | IPC 通道名称常量 |
 
-## 4.3 模块依赖关系
+## 4.3 模块依赖关系（示意）
 
 ```
                     ┌──────────────────┐
@@ -48,10 +47,8 @@
             ▼                ▼                ▼
    ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
    │  components/  │  │   views/     │  │  store/      │
-   │  TitleBar     │  │  CommitView  │  │  Zustand     │
-   │  StatusBar    │  │  HistoryView │  │  Store       │
-   │  Sidebar      │  │  GraphView   │  │              │
-   │  ToastContainer│ │  ... (13)    │  │              │
+   │  TitleBar     │  │  Welcome…    │  │  Zustand     │
+   │  Toast…       │  │  Settings…  │  │              │
    └──────────────┘  └──────┬───────┘  └──────┬───────┘
                              │                 │
                              ▼                 ▼
@@ -59,72 +56,21 @@
                              │                 │
                              ▼                 ▼
                    ┌──────────────────────────────────┐
-                   │    Main Process (ipcMain)         │
-                   │    git-handlers / settings /      │
-                   │    file-watcher                   │
-                   │    child_process.execFile(git)    │
+                   │    Main Process (ipcMain)       │
+                   │    settings / 远程适配（规划）   │
                    └──────────────────────────────────┘
 ```
 
 ## 4.4 状态管理模型
 
-### Zustand Store 结构
+### Zustand Store（示意）
 
 ```typescript
 interface AppStore {
-  // 仓库状态
-  repoPath: string | null
-  repoName: string
-  repoStatus: RepositoryStatus
-
-  // 当前视图
-  currentView: ViewType
-
-  // 提交相关
-  stagedFiles: FileEntry[]
-  unstagedFiles: FileEntry[]
-  commitMessage: string
-
-  // 历史相关
-  commits: Commit[]
-  commitPage: number
-  historySearch: string
-  historyFilter: { author?: string; file?: string }
-
-  // 分支
-  branches: Branch[]
-  currentBranch: string
-
-  // 远端 / Tag / Stash
-  remotes: Remote[]
-  tags: Tag[]
-  stashes: Stash[]
-
-  // Diff
-  diff: FileDiff | null
-
-  // Graph
-  graphData: GraphData
-
-  // 搜索结果
-  fileSearchResults: FileEntry[]
-
-  // Blame / Reflog
-  blameLines: BlameLine[]
-  reflogEntries: ReflogEntry[]
-
-  // Toast 通知
+  // 当前视图、设置、Toast 等
+  settings: AppSettings | null
   toasts: Toast[]
-
-  // 设置
-  settings: AppSettings
-
-  // 50+ Action 方法
-  openRepo(path: string): Promise<void>
-  refreshStatus(): Promise<void>
-  stageFiles(paths: string[]): Promise<void>
-  commit(message: string): Promise<void>
-  // ...
+  // 未来：sessions、transferQueue、activeHostId …
 }
 ```
 
@@ -134,46 +80,28 @@ interface AppStore {
 用户操作 (Click/Input)
     │
     ▼
-React 事件处理函数 (View 组件)
+React 事件处理
     │
     ▼
-Store Action 方法 (Zustand)
+Store Action（Zustand）
     │
-    ├── 同步操作 → 更新 Store State → React 自动重渲染
+    ├── 纯本地 → set() → 重渲染
     │
-    └── 异步操作 → window.api.xxx()
+    └── 需系统能力 → window.api.xxx()
                          │
                          ▼
-                    IPC invoke (preload)
+                    IPC invoke（preload）
                          │
                          ▼
-                    ipcMain.handle (main process)
+                    ipcMain.handle（main）
                          │
                          ▼
-                    Git CLI 调用 / 文件 I/O
+                    子进程 / 网络 / 文件 I/O
                          │
                          ▼
-                    返回结果 → Store 更新 → React 重渲染
+                    结果 → Store 更新 → 重渲染
 ```
 
-## 4.5 文件监听与自动刷新
+## 4.5 事件推送（规划）
 
-```
-fs.watch (recursive, main process)
-    │
-    ▼ 忽略 .git/ 内部文件 (HEAD、refs/ 除外)
-    │
-    ▼ 500ms 防抖
-    │
-    ▼
-main process → webContents.send('repo-changed')
-    │
-    ▼
-preload → window.api.onRepoChanged(callback)
-    │
-    ▼
-App.tsx 订阅 → store.refreshStatus()
-    │
-    ▼
-React 重渲染所有视图
-```
+主进程在**传输进度、会话输出流、连接状态变化**等场景下，通过 `webContents.send` 经 preload 转发到渲染进程；渲染进程在 Store 或专用 hook 中订阅并更新 UI。

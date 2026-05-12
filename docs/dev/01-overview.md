@@ -2,24 +2,28 @@
 
 ## 1.1 定位
 
-OpenGit 是一个使用 Electron、React 和 TypeScript 构建的**跨平台 Git GUI 客户端**。它的目标是在单一窗口中提供完整的日常 Git 操作体验，面向需要高效管理 Git 仓库的开发者。
+**OpenRemote** 是一个使用 Electron、React 和 TypeScript 构建的**跨平台客户端**。
+
+- **核心方向**：多平台 **SSH** 与 **SFTP** 远程访问（终端、会话、远程文件管理）；终端 UI 规划采用 **xterm.js**，远程文本编辑规划采用 **Monaco Editor**（见 `docs/dev/02-tech-stack.md` §2.3）。
+- **后续规划（路线顺序）**：在 WebDAV 之前优先推进 **Docker** 与 **Kubernetes（kubectl 生态）**；其后为 **WebDAV**，以及 **兼容 S3 API** 的云存储（如 MinIO、R2 等），与远程工作流统一在同一应用中完成。
+- **当前实现**：以**应用壳与通用体验**（窗口、设置、主题、国际化、欢迎页等）为主；远程协议能力按 [09-roadmap.md](09-roadmap.md) 中 Phase 10 起逐步交付。
 
 ## 1.2 核心理念
 
 | 理念 | 说明 |
 |------|------|
-| **功能完整** | 覆盖日常 Git 操作：暂存、提交、分支管理、远程同步、Tag、Stash、Merge、Reset 等 |
-| **即时响应** | 文件系统监听实现仓库变更自动刷新，操作即时反馈 |
+| **远程优先** | 以 SSH/SFTP 为产品主线；Docker/K8s 运维向能力优先于 WebDAV，再扩展 WebDAV 与 S3 兼容存储 |
+| **安全默认** | 凭据与通道安全优先；避免不安全 shell 拼接与过度权限 |
+| **即时反馈** | 传输进度、会话输出与错误信息对用户可见、可诊断 |
 | **现代化 UI** | React 19 + Tailwind CSS 4 + Motion 动画，深色主题默认 |
 | **跨平台** | 支持 Linux (DEB/RPM)、macOS (DMG/ZIP)、Windows (Squirrel) |
-| **安全设计** | Electron contextBridge 隔离主进程与渲染进程 |
+| **进程隔离** | Electron contextBridge 隔离主进程与渲染进程 |
 
 ## 1.3 目标用户
 
-- 需要可视化 Git 操作的开发者
-- 偏好 GUI 但希望保留完整 Git 命令行能力的用户
-- 需要快速查看提交历史与分支图可视化的团队
+- 需要通过 **SSH/SFTP** 管理服务器与远程文件的开发者与运维人员
+- 希望后续在同一应用中接入 **Docker / Kubernetes**、**WebDAV**、**S3 兼容存储** 的团队
 
 ## 1.4 当前状态
 
-项目已实现单仓库的基础 Git GUI 功能，处于内部使用阶段。支持 13 个功能视图，覆盖日常增删改查操作。多项目管理、AI 辅助提交、内置终端、平台集成等高级功能在规划中。
+工程基础（Phase 0）与应用壳（Phase 1）持续完善中。**SSH/SFTP**、**Docker / Kubernetes（优先于 WebDAV）**、**WebDAV**、**S3 兼容存储**在路线图中推进；内置终端、命令面板与发布流程等按计划迭代。

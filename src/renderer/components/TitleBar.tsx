@@ -5,7 +5,7 @@ import styles from "./TitleBar.module.scss";
 export function TitleBar() {
   const { repoPath, repoStatus, doFetch, doPull, doPush } = useAppStore();
 
-  const repoName = repoPath ? repoPath.split("/").pop() : "OpenGit";
+  const repoName = repoPath ? repoPath.split("/").pop() : "OpenRemote";
 
   return (
     <header className={styles.header}>

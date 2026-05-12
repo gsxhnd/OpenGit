@@ -1,7 +1,7 @@
 {
-  "name": "opengit",
+  "name": "openremote",
   "version": "1.0.0",
-  "description": "A modern Git GUI built with Electron + React",
+  "description": "OpenRemote — multi-platform SSH & SFTP client (Electron + React). Docker & Kubernetes before WebDAV; WebDAV and S3-compatible storage planned.",
   "main": "./dist/main/index.js",
   "scripts": {
     "dev": "node scripts/dev.mjs",

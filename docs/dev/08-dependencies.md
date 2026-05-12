@@ -6,17 +6,27 @@
 {
   "dependencies": {
     "@base-ui/react": "^1.4.1",
+    "@xterm/xterm": "^6.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "i18next": "^26.1.0",
     "lucide-react": "^1.14.0",
+    "monaco-editor": "^0.55.1",
     "motion": "^12.0.0",
+    "next-themes": "^0.4.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "tailwind-merge": "^2.5.0",
+    "react-i18next": "^17.0.7",
+    "react-router": "^7.15.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.0",
     "zustand": "^5.0.0"
   }
 }
 ```
+
+（摘录自 `package.json`；版本随仓库更新。）
 
 | 依赖 | 用途 | 选型理由 |
 |------|------|----------|
@@ -24,10 +34,16 @@
 | **zustand** | 状态管理 | 轻量（~1KB），API 简洁，无需 Provider 包裹 |
 | **motion** | 动画库 | Framer Motion v12，支持 AnimatePresence 实现视图切换和 Toast 动画 |
 | **@base-ui/react** | 无头 UI 组件 | 提供 Dialog、Input、Select 等无障碍原语，与 shadcn/ui 模式集成 |
+| **@xterm/xterm** | 终端模拟器 | SSH/PTY 会话的终端 UI 标准选型，可扩展 addon（fit、webgl 等） |
+| **monaco-editor** | 代码编辑器 | 远程文本/配置文件编辑：语法高亮、主题、多光标与 VS Code 同源编辑体验 |
+| **i18next / react-i18next** | 国际化 | 运行时切换语言 |
+| **react-router** | 路由 | 视图级路由与 Hash 模式桌面分发 |
+| **tailwindcss** | 样式系统 | Tailwind CSS v4（`@tailwindcss/vite`） |
 | **tailwind-merge** | CSS 类合并 | 智能合并 Tailwind 类名（如 `px-2 px-4` → `px-4`） |
 | **clsx** | 条件类名 | 简洁的条件类名组合 |
 | **class-variance-authority** | 组件变体 | 定义 Button、Dialog 等组件的 variant/size 变体 API |
-| **lucide-react** | 图标库 | 开源图标集，React 组件形式 |
+| **sonner** | Toast 通知 | 与现有 UI 栈集成 |
+| **next-themes** | 主题切换辅助 | 与 CSS 变量 / 深色模式协同（若采用） |
 
 ## 8.2 开发依赖
 
@@ -69,11 +85,10 @@
 
 | 依赖 | 用途 | 适用场景 |
 |------|------|----------|
-| **vitest** | 单元测试 | 测试 Git 输出解析 |
+| **vitest** | 单元测试 | 测试纯函数与协议解析逻辑 |
 | **@testing-library/react** | 组件测试 | 测试 UI 行为 |
 | **playwright** | E2E 测试 | 完整工作流测试 |
-| **i18next** | 国际化 | 多语言支持 |
-| **octokit** | GitHub API | 平台集成 |
+| **node-pty**（或等价） | 主进程 PTY | 与 xterm 配合实现本地/SSH 终端（需按平台评估原生模块打包） |
 
 ## 8.4 构建配置
 

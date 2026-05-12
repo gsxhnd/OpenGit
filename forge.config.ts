@@ -7,20 +7,20 @@ import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 
 const config: ForgeConfig = {
   packagerConfig: {
-    name: "OpenGit",
-    executableName: "opengit",
-    appBundleId: "xyz.gsxhnd.opengit",
+    name: "OpenRemote",
+    executableName: "openremote",
+    appBundleId: "xyz.gsxhnd.openremote",
     asar: true,
   },
   rebuildConfig: {},
   makers: [
     new MakerZIP({}, ["darwin", "linux", "win32"]),
     new MakerDMG({ format: "ULFO" }, ["darwin"]),
-    new MakerSquirrel({ name: "OpenGit" }, ["win32"]),
+    new MakerSquirrel({ name: "OpenRemote" }, ["win32"]),
     new MakerDeb({
       options: {
-        maintainer: "OpenGit",
-        homepage: "https://github.com/gsxhnd/OpenGit",
+        maintainer: "OpenRemote",
+        homepage: "https://github.com/gsxhnd/OpenRemote",
       },
     }),
     new MakerRpm({}),

@@ -17,31 +17,34 @@
 
 ### Electron 三进程架构
 
-- **Main Process (主进程)**：窗口管理、系统级 IPC、文件系统监听、Git CLI 调用。运行在 Node.js 环境，可直接访问系统 API。
+- **Main Process (主进程)**：窗口管理、系统级 IPC、设置持久化；后续承载 SSH/SFTP、Docker/Kubernetes（优先于 WebDAV）、WebDAV、S3 等适配。运行在 Node.js 环境，可直接访问系统 API。
 - **Renderer Process (渲染进程)**：React UI 渲染，运行在 Chromium 沙箱环境，通过 contextBridge 与主进程通信。
 - **Preload Script (预加载脚本)**：contextBridge 暴露安全的类型化 API 给渲染进程，隔离 Node.js 环境。
 
 ### React 19 + Tailwind CSS 4
 
 - 函数组件 + Hooks 模式
-- 13 个功能视图组件
+- 功能视图按里程碑扩展（欢迎页、设置、远程会话等）
 - CSS 变量驱动主题系统 (Tokyo Night 深色主题)
 - Tailwind v4 CSS-first 配置 (无需 tailwind.config.js)
 
 ### Zustand 5
 
-- 单一 Store 管理全部应用状态 (~700 行)
+- 单一 Store 管理全局应用状态（规模随功能增长）
 - 内置 subscribe 机制支持视图自动刷新
 - 无 Provider 包裹，组件直接引用
-
-### 系统 Git CLI
-
-- 通过 `child_process.execFile` 调用系统安装的 `git` 命令
-- 解析 Git 输出 (使用 `\x1f`、`\0` 等分隔符)
-- 完整支持所有 Git 功能（LFS、Hooks、签名等自动继承）
 
 ### Vite 8 + Electron Forge
 
 - Vite 分别构建 main / preload / renderer 三个目标
-- 开发模式：Vite dev server + Electron 热启动 + preload/main 构建监听
+- 开发模式：Vite dev server + Electron 热启动 + main/preload 监听重建
 - 生产构建：Vite CJS/ESM 输出 + Electron Forge 打包 (ZIP/DMG/DEB/RPM/Squirrel)
+
+## 2.3 终端与远程编辑（规划）
+
+| 技术 | 用途 | 说明 |
+|------|------|------|
+| **[@xterm/xterm](https://github.com/xtermjs/xterm.js)** | SSH / 本地 PTY 终端 UI | 渲染进程内嵌终端模拟器；与主进程 **node-pty**（或等价）配合，经 IPC 转发标准输入输出 |
+| **[monaco-editor](https://github.com/microsoft/monaco-editor)** | 远程文本编辑 | 在 SFTP/远程工作区内打开文本文件时提供语法高亮、多光标、主题与编辑器扩展能力；内容经 IPC 与远端读写衔接 |
+
+依赖版本以根目录 `package.json` 为准；集成细节见 [03-features.md](03-features.md) 与 [09-roadmap.md](09-roadmap.md) Phase 10。

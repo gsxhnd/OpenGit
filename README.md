@@ -1,6 +1,8 @@
-# OpenGit
+# OpenRemote
 
-A modern Git GUI built with Electron, React, and TypeScript.
+**Multi-platform SSH & SFTP client.** **Docker** and **Kubernetes** workflows are planned with **milestone priority before WebDAV**; WebDAV and S3-compatible cloud storage follow on the roadmap.
+
+OpenRemote is built with Electron, React, and TypeScript. The app shell (window, settings, themes, i18n, welcome flow) is in place; **SSH, SFTP, and subsequent protocol work** land per the roadmap in `docs/dev/09-roadmap.md`.
 
 ## Tech Stack
 
@@ -9,7 +11,8 @@ A modern Git GUI built with Electron, React, and TypeScript.
 - **Components**: shadcn/ui patterns + Base UI
 - **Animation**: Motion (Framer Motion)
 - **State**: Zustand
-- **Git**:   system git CLI
+- **Terminal (planned)**: [xterm.js](https://xtermjs.org/) (`@xterm/xterm`) in the renderer for SSH/PTY sessions
+- **Remote editing (planned)**: [Monaco Editor](https://microsoft.github.io/monaco-editor/) for text files over SFTP (or equivalent remote I/O)
 - **Build**: Vite + Electron Forge
 
 ## Development
@@ -34,9 +37,7 @@ npm run typecheck
 src/
 ├── main/           # Electron main process
 │   ├── index.ts        # Window creation, app lifecycle
-│   ├── git-handlers.ts # IPC handlers for all git operations
-│   ├── settings.ts     # Settings persistence
-│   └── file-watcher.ts # FS watcher for auto-refresh
+│   └── settings.ts     # Settings persistence
 ├── preload/        # Context bridge (secure IPC)
 │   └── index.ts
 ├── renderer/       # React UI
@@ -53,19 +54,18 @@ src/
 themes/             # Theme JSON files
 ```
 
-## Features
+## Current capabilities (app shell)
 
-- Commit staging/unstaging with per-file diff
-- Commit history with search and filters (author, file)
-- Branch management (create, delete, checkout)
-- Remote management (add, remove, fetch, pull, push)
-- Tag management (lightweight and annotated)
-- Stash management (create, apply, pop, delete)
-- Commit graph visualization
-- File search with blame and per-file history
-- Reflog viewer
-- Commit detail with full diff
 - Toast notifications
-- Custom title bar with traffic light support
-- File system watcher for auto-refresh
-- Settings persistence (window state, theme, workspace)
+- Custom title bar with traffic light support (macOS)
+- Settings persistence (window state, theme, language)
+- Welcome screen and product positioning copy
+
+## Roadmap (remote & cloud)
+
+- SSH sessions (**xterm.js** terminal UI) and SFTP file browsing (planned); **Monaco Editor** for remote text files (planned)
+- **Docker** and **Kubernetes** (contexts, containers/pods, logs, port-forward/exec — **scheduled before WebDAV**)
+- WebDAV support
+- S3-compatible object storage (e.g. MinIO, R2)
+
+Chinese-language developer docs live under `docs/dev/`.

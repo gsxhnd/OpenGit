@@ -1,120 +1,82 @@
 # 6. 关键设计决策
 
-## 6.1 Git 后端策略：纯系统 Git CLI
+## 6.1 远程能力与安全执行
 
-OpenGit **仅使用系统安装的 `git` CLI**，通过 Node.js `child_process.execFile` 调用。
+OpenRemote 中涉及 **SSH / SFTP / 本地 CLI（如 Docker、kubectl）** 的能力，在主进程侧通过 **子进程或经审计的原生模块** 调用实现；**禁止**将未校验的用户输入拼进 shell 字符串执行。
 
-**不引入 libgit2/isomorphic-git 的原因：**
+**原则：**
 
-- 系统 Git 是用户已安装且信任的工具，功能完整（LFS、Hooks、签名等自动继承）
-- 复用系统 Git 的凭证管理（SSH Agent、credential.helper），无需额外处理认证
-- 避免重复实现核心 Git 逻辑，降低维护成本
-- 解析 Git 输出比直接操作 Git 对象数据库更安全（不会破坏 .git 目录）
-
-**实现要点：**
-
-- 所有 Git 操作在 `src/main/git-handlers.ts` 中统一实现（~710 行）
-- 使用 `git status --porcelain`、`git log`、`git diff` 等标准命令
-- 自定义分隔符（`\x1f`、`\0`）解析批量输出，防止文件名中包含空白等边界情况
-- 异步操作使用 `child_process.execFile` 的 Promise 包装
+- 优先使用参数数组形式调用（如 `execFile` + argv），避免 `exec` 式拼接
+- 凭据与私钥不落盘明文；优先系统钥匙串 / OS 凭据 API（随里程碑接入）
+- 网络超时、并发连接数与传输队列需可配置，避免拖垮本机
+- **终端 UI**：渲染进程使用 **xterm.js**（`@xterm/xterm`），与主进程 PTY / SSH 通道经 IPC 双向转发字节流
+- **远程文本编辑**：使用 **Monaco Editor** 打开与保存远端文本文件（与 SFTP 或等价协议对接）；大文件采用分块读取、防抖保存等策略（里程碑细化）
 
 ## 6.2 状态管理：单一 Zustand Store
 
 ```typescript
-// src/renderer/store/index.ts — 单一 Store (~700 行)
+// src/renderer/store/index.ts — 单一 Store（规模随功能增长）
 const useStore = create<AppStore>()((set, get) => ({
-  // 50+ 状态字段
-  repoPath: null, currentView: 'commit', stagedFiles: [], // ...
-  // 50+ Action 方法
-  openRepo: async (path) => { /* IPC 调用 → set() */ },
-  stageFiles: async (paths) => { /* IPC 调用 → set() */ },
-  // ...
+  // 会话、传输队列、UI 布局等
+  // Action：通过 window.api.* 与主进程交互
 }))
 ```
 
 **单 Store 模式的理由：**
 
-- 当前为单仓库应用，状态量适中（单 Store ~700 行可维护）
+- 远程会话与传输队列存在大量跨视图共享状态
 - 避免 Provider 嵌套，组件直接 `useStore()` 引用
-- 状态变更自动触发所有订阅组件的重渲染
-- 未来扩展多项目管理时，可能需要拆分为多个 Store
+- 后续若子域膨胀，可按「会话 / 传输 / 设置」拆分为多个 slice 或 store
 
 ## 6.3 IPC 通信模式
 
 ```
 Renderer (React)          Preload                 Main (Node.js)
      │                       │                        │
-     ├─ window.api.xxx() ──→ ├─ ipcRenderer.invoke ─→ ├─ ipcMain.handle ──→ Git CLI
+     ├─ window.api.xxx() ──→ ├─ ipcRenderer.invoke ─→ ├─ ipcMain.handle ──→ 远程适配层 / 子进程
      │                       │                        │        │
      │  ←─ Promise<T> ────── ├─  ←─────────── ────── ├─  ←─── result
 ```
 
 **设计要点：**
 
-- **Invoke 模式**（请求-响应）：用于所有 Git 操作，渲染进程等待主进程执行完成
-- **Send 模式**（事件推送）：用于文件监听通知，主进程推送给渲染进程
-- **Type Safety**：`src/shared/types.ts` 定义所有共享类型，`src/shared/ipc.ts` 定义 IPC 通道名常量
-- **Security**：`contextBridge.exposeInMainWorld` 严格限制暴露的 API，不暴露 `ipcRenderer` 直接访问
+- **Invoke 模式**（请求-响应）：用于打开连接、列出目录、发起传输等
+- **Send / on 模式**（事件推送）：用于进度、日志流、会话状态变更
+- **Type Safety**：`src/shared/types.ts` 与 `src/shared/ipc.ts` 约束载荷形状与通道名
+- **Security**：`contextBridge.exposeInMainWorld` 仅暴露白名单 API，不暴露原始 `ipcRenderer`
 
-## 6.4 Git Graph 渲染：SVG 方案
+## 6.4 远程文件列表与传输队列（规划）
 
-```typescript
-// src/renderer/views/GraphView.tsx
-// 1. 主进程 git log --all 收集 DAG 数据，分配 lane
-// 2. 渲染进程使用 SVG <circle>、<path> 绘制节点和连线
-// 3. 列表区域使用 React 列表渲染 commit 信息
-```
-
-**实现方案：**
-
-1. **数据层**（`git-handlers.ts:parseGraph`）：遍历 commit DAG，拓扑排序，为每个分支分配 lane（列），计算连线关系
-2. **渲染层**（`GraphView.tsx`）：SVG 元素绘制节点（圆点）和连线（path），React 列表渲染 commit 信息行
-3. **性能**：全量加载后一次性渲染，适用于中等规模仓库（~千级 commit）
+- **列表层**：分页或惰性加载目录，避免一次拉取超大目录树阻塞 UI
+- **传输层**：队列、并发上限、覆盖策略、断点续传（协议能力允许时）
+- **反馈层**：Toast + 可展开的详细错误（含底层错误码翻译）
 
 ## 6.5 架构决策：为什么不使用 MVC
 
-项目没有使用传统的 MVC 架构，而是选择了更适合 Electron 的架构模式：
+项目采用适合 Electron 的分层，而非经典 MVC：
 
 | 层级 | 技术 | 角色 |
 |------|------|------|
-| **数据获取层** | Main Process + system git CLI | 只负责数据获取和系统交互 |
-| **业务逻辑层** | Zustand Store (renderer) | 单一 Store 承载所有业务逻辑和状态 |
-| **UI 层** | React Views (renderer) | 纯展示和用户交互 |
+| **数据与系统层** | Main Process + 子进程 / 原生模块 | 连接、鉴权、IO、与 OS 交互 |
+| **业务与状态层** | Zustand Store（renderer） | 会话状态、队列、与 UI 编排 |
+| **UI 层** | React 视图与组件 | 展示与交互 |
 
-这种架构的优点是：
-- 清晰的三进程分离（安全边界明确）
-- 状态管理集中（易于调试和追踪）
-- UI 组件轻量（通过 Store Action 操作数据）
+优点：三进程边界清晰、状态集中、视图保持轻薄。
 
 ## 6.6 持久化策略
 
 配置文件位置：
-- **开发环境**：Electron `userData` 目录
-- **Linux**：`~/.config/opengit/`
-- **macOS**：`~/Library/Application Support/opengit/`
-- **Windows**：`%APPDATA%/opengit/`
+
+- **Linux**：`~/.config/openremote/`
+- **macOS**：`~/Library/Application Support/openremote/`
+- **Windows**：`%APPDATA%/openremote/`
 
 ```
 userData/
-├── config.json          # 窗口状态、当前视图、主题设置
-├── projects.json        # 最近打开的项目列表 (计划)
+├── config.json          # 窗口状态、主题、语言等
 └── config.json.bak      # 配置文件损坏时自动备份
 ```
 
 ## 6.7 主题系统
 
-当前使用 CSS 变量驱动的单主题方案：
-
-```css
-/* src/renderer/assets/index.css — Tokyo Night 深色主题 */
-:root {
-  --color-bg-primary: #1a1b26;
-  --color-bg-secondary: #16161e;
-  --color-bg-tertiary: #292e42;
-  --color-border: #3b4261;
-  --color-accent: #7aa2f7;
-  /* ... 更多变量 */
-}
-```
-
-计划支持多主题：通过加载 themes/ 目录下的 JSON 配置文件，动态设置 CSS 变量。
+当前使用 CSS 变量驱动的主题方案；可通过 `themes/` 目录下 JSON 扩展预设主题，运行时写入 CSS 变量。
