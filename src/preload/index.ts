@@ -20,6 +20,13 @@ const api = {
   minimize: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MINIMIZE),
   maximize: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_MAXIMIZE),
   close: () => ipcRenderer.send(IPC_CHANNELS.WINDOW_CLOSE),
+  isMaximized: (): Promise<boolean> => ipcRenderer.invoke(IPC_CHANNELS.WINDOW_IS_MAXIMIZED),
+  onMaximizedChange: (cb: (maximized: boolean) => void) => {
+    const fn = (_: Electron.IpcRendererEvent, maximized: boolean) => cb(maximized)
+    ipcRenderer.on(IPC_CHANNELS.WINDOW_MAXIMIZED_CHANGE, fn)
+    return () => { ipcRenderer.removeListener(IPC_CHANNELS.WINDOW_MAXIMIZED_CHANGE, fn) }
+  },
+  platform: process.platform,
 
   openDirectory: () => ipcRenderer.invoke(IPC_CHANNELS.DIALOG_OPEN_DIRECTORY),
   openFile: () => ipcRenderer.invoke(IPC_CHANNELS.DIALOG_OPEN_FILE),

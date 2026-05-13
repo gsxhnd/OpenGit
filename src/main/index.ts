@@ -1,7 +1,7 @@
 /**
  * Electron main — window lifecycle, IPC (settings, PTY, SSH/SFTP, dialogs).
  */
-import { app, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, Menu } from 'electron'
 import { join } from 'path'
 import { updateElectronApp } from 'update-electron-app'
 import { registerSettingsHandlers, loadSettings, saveSettings } from './settings'
@@ -11,8 +11,86 @@ import { IPC_CHANNELS } from '../shared/ipc'
 
 let mainWindow: BrowserWindow | null = null
 
+function buildAppMenu() {
+  const isMac = process.platform === 'darwin'
+
+  const template: Electron.MenuItemConstructorOptions[] = [
+    // macOS app menu
+    ...(isMac
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: 'about' as const },
+              { type: 'separator' as const },
+              { role: 'services' as const },
+              { type: 'separator' as const },
+              { role: 'hide' as const },
+              { role: 'hideOthers' as const },
+              { role: 'unhide' as const },
+              { type: 'separator' as const },
+              { role: 'quit' as const },
+            ],
+          },
+        ]
+      : []),
+    {
+      label: 'File',
+      submenu: [isMac ? { role: 'close' as const } : { role: 'quit' as const }],
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' as const },
+        { role: 'redo' as const },
+        { type: 'separator' as const },
+        { role: 'cut' as const },
+        { role: 'copy' as const },
+        { role: 'paste' as const },
+        ...(isMac
+          ? [
+              { role: 'pasteAndMatchStyle' as const },
+              { role: 'delete' as const },
+              { role: 'selectAll' as const },
+            ]
+          : [{ role: 'delete' as const }, { type: 'separator' as const }, { role: 'selectAll' as const }]),
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' as const },
+        { role: 'forceReload' as const },
+        { role: 'toggleDevTools' as const },
+        { type: 'separator' as const },
+        { role: 'resetZoom' as const },
+        { role: 'zoomIn' as const },
+        { role: 'zoomOut' as const },
+        { type: 'separator' as const },
+        { role: 'togglefullscreen' as const },
+      ],
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' as const },
+        { role: 'zoom' as const },
+        ...(isMac
+          ? [{ type: 'separator' as const }, { role: 'front' as const }]
+          : [{ role: 'close' as const }]),
+      ],
+    },
+  ]
+
+  return Menu.buildFromTemplate(template)
+}
+
 function createWindow() {
   const settings = loadSettings()
+  const isMac = process.platform === 'darwin'
+
+  // Set application menu (macOS: shown in menu bar; Windows/Linux: hidden but accessible via Alt)
+  Menu.setApplicationMenu(buildAppMenu())
 
   mainWindow = new BrowserWindow({
     width: settings.window.width,
@@ -21,9 +99,10 @@ function createWindow() {
     y: settings.window.y,
     minWidth: 800,
     minHeight: 500,
-    titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 12, y: 12 },
-    frame: process.platform === 'darwin',
+    // macOS: hiddenInset keeps native traffic lights; Windows/Linux: hidden = fully frameless
+    titleBarStyle: isMac ? 'hiddenInset' : 'hidden',
+    trafficLightPosition: isMac ? { x: 12, y: 13 } : undefined,
+    frame: true,
     show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -51,6 +130,14 @@ function createWindow() {
     }
   })
 
+  mainWindow.on('maximize', () => {
+    mainWindow?.webContents.send(IPC_CHANNELS.WINDOW_MAXIMIZED_CHANGE, true)
+  })
+
+  mainWindow.on('unmaximize', () => {
+    mainWindow?.webContents.send(IPC_CHANNELS.WINDOW_MAXIMIZED_CHANGE, false)
+  })
+
   ipcMain.on(IPC_CHANNELS.WINDOW_MINIMIZE, () => mainWindow?.minimize())
   ipcMain.on(IPC_CHANNELS.WINDOW_MAXIMIZE, () => {
     if (mainWindow?.isMaximized()) {
@@ -60,6 +147,7 @@ function createWindow() {
     }
   })
   ipcMain.on(IPC_CHANNELS.WINDOW_CLOSE, () => mainWindow?.close())
+  ipcMain.handle(IPC_CHANNELS.WINDOW_IS_MAXIMIZED, () => mainWindow?.isMaximized() ?? false)
 
   ipcMain.handle(IPC_CHANNELS.DIALOG_OPEN_DIRECTORY, async () => {
     const result = await dialog.showOpenDialog(mainWindow!, {
