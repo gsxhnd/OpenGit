@@ -6,7 +6,7 @@ export function TitleBar() {
 
   const title = activeSession
     ? `${activeSession.username}@${activeSession.host}`
-    : 'OpenRemote'
+    : 'Puck'
 
   return (
     <header className="drag-region flex h-10 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-title-bar)] pl-20 pr-3">

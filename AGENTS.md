@@ -2,7 +2,7 @@
 
 ## Project
 
-**OpenRemote** — Electron + React cross-platform desktop app. Product focus: **SSH & SFTP** remote access; **Docker** and **Kubernetes** are planned with **milestone priority before WebDAV**; **WebDAV** and **S3-compatible** storage follow. The codebase centers on the **app shell** (window, settings, themes, i18n) while remote protocol features are added over time. Three-process architecture: main, preload, renderer.
+**Puck** — Electron + React cross-platform desktop app. Product focus: **SSH & SFTP** remote access; **Docker** and **Kubernetes** are planned with **milestone priority before WebDAV**; **WebDAV** and **S3-compatible** storage follow. The codebase centers on the **app shell** (window, settings, themes, i18n) while remote protocol features are added over time. Three-process architecture: main, preload, renderer.
 
 ## Architecture
 

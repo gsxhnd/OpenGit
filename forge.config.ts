@@ -10,12 +10,12 @@ const iconPath = join(__dirname, "assets", "icon");
 
 const config: ForgeConfig = {
   packagerConfig: {
-    name: "OpenRemote",
-    executableName: "openremote",
-    appBundleId: "xyz.gsxhnd.openremote",
+    name: "Puck",
+    executableName: "puck",
+    appBundleId: "xyz.gsxhnd.puck",
     asar: true,
     icon: iconPath,
-    appCopyright: `Copyright © ${new Date().getFullYear()} OpenRemote contributors`,
+    appCopyright: `Copyright © ${new Date().getFullYear()} Puck contributors`,
     appCategoryType: "public.app-category.developer-tools",
     extendInfo: {
       NSMicrophoneUsageDescription: "",
@@ -40,8 +40,8 @@ const config: ForgeConfig = {
             path: join(
               __dirname,
               "out",
-              "OpenRemote-darwin-arm64",
-              "OpenRemote.app",
+              "Puck-darwin-arm64",
+              "Puck.app",
             ),
           },
           { x: 448, y: 344, type: "link", path: "/Applications" },
@@ -51,10 +51,10 @@ const config: ForgeConfig = {
     ),
     new MakerSquirrel(
       {
-        name: "OpenRemote",
+        name: "Puck",
         setupIcon: `${iconPath}.ico`,
         iconUrl:
-          "https://raw.githubusercontent.com/gsxhnd/OpenRemote/main/assets/icon.ico",
+          "https://raw.githubusercontent.com/gsxhnd/Puck/main/assets/icon.ico",
         loadingGif: undefined,
         noMsi: false,
       },
@@ -62,8 +62,8 @@ const config: ForgeConfig = {
     ),
     new MakerDeb({
       options: {
-        maintainer: "OpenRemote",
-        homepage: "https://github.com/gsxhnd/OpenRemote",
+        maintainer: "Puck",
+        homepage: "https://github.com/gsxhnd/Puck",
         icon: `${iconPath}.png`,
         section: "utils",
         priority: "optional",
@@ -74,7 +74,7 @@ const config: ForgeConfig = {
     }),
     new MakerRpm({
       options: {
-        homepage: "https://github.com/gsxhnd/OpenRemote",
+        homepage: "https://github.com/gsxhnd/Puck",
         icon: `${iconPath}.png`,
         categories: ["Development", "Network"],
         description:
@@ -89,7 +89,7 @@ const config: ForgeConfig = {
       config: {
         repository: {
           owner: "gsxhnd",
-          name: "OpenRemote",
+          name: "Puck",
         },
         prerelease: false,
         draft: true,

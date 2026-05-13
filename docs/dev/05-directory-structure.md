@@ -1,7 +1,7 @@
 # 5. 目录结构
 
 ```
-OpenRemote/
+Puck/
 ├── package.json                  # NPM 包定义，scripts，依赖
 ├── package-lock.json
 ├── tsconfig.json                 # 基础 TS 配置

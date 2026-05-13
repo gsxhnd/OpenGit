@@ -2,7 +2,7 @@
 
 ## 6.1 远程能力与安全执行
 
-OpenRemote 中涉及 **SSH / SFTP / 本地 CLI（如 Docker、kubectl）** 的能力，在主进程侧通过 **子进程或经审计的原生模块** 调用实现；**禁止**将未校验的用户输入拼进 shell 字符串执行。
+Puck 中涉及 **SSH / SFTP / 本地 CLI（如 Docker、kubectl）** 的能力，在主进程侧通过 **子进程或经审计的原生模块** 调用实现；**禁止**将未校验的用户输入拼进 shell 字符串执行。
 
 **原则：**
 
@@ -67,9 +67,9 @@ Renderer (React)          Preload                 Main (Node.js)
 
 配置文件位置：
 
-- **Linux**：`~/.config/openremote/`
-- **macOS**：`~/Library/Application Support/openremote/`
-- **Windows**：`%APPDATA%/openremote/`
+- **Linux**：`~/.config/puck/`
+- **macOS**：`~/Library/Application Support/puck/`
+- **Windows**：`%APPDATA%/puck/`
 
 ```
 userData/

@@ -1,6 +1,6 @@
 # 4. 系统架构
 
-> **OpenRemote** 采用 Electron 三进程模型。主进程承载**窗口、设置持久化、以及未来的远程协议适配**（SSH/SFTP、Docker/Kubernetes、WebDAV、S3 等）；渲染进程专注 React UI 与 Zustand 状态；预加载脚本提供类型安全的 `window.api` 桥接。
+> **Puck** 采用 Electron 三进程模型。主进程承载**窗口、设置持久化、以及未来的远程协议适配**（SSH/SFTP、Docker/Kubernetes、WebDAV、S3 等）；渲染进程专注 React UI 与 Zustand 状态；预加载脚本提供类型安全的 `window.api` 桥接。
 
 ## 4.1 Electron 三进程架构
 

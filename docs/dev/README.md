@@ -1,4 +1,4 @@
-# OpenRemote 开发指南
+# Puck 开发指南
 
 > 基于 Electron + React + TypeScript 的跨平台客户端：**SSH 与 SFTP** 为核心方向；**Docker 与 Kubernetes** 按路线图优先于 **WebDAV** 落地，其后为 **WebDAV** 与 **兼容 S3 的云存储**。
 

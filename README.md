@@ -1,8 +1,8 @@
-# OpenRemote
+# Puck
 
 **Multi-platform SSH & SFTP client.** **Docker** and **Kubernetes** workflows are planned with **milestone priority before WebDAV**; WebDAV and S3-compatible cloud storage follow on the roadmap.
 
-OpenRemote is built with Electron, React, and TypeScript. The app shell (window, settings, themes, i18n, welcome flow) is in place; **SSH, SFTP, and subsequent protocol work** land per the roadmap in `docs/dev/09-roadmap.md`.
+Puck is built with Electron, React, and TypeScript. The app shell (window, settings, themes, i18n, welcome flow) is in place; **SSH, SFTP, and subsequent protocol work** land per the roadmap in `docs/dev/09-roadmap.md`.
 
 ## Tech Stack
 

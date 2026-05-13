@@ -1,12 +1,12 @@
 {
-  "name": "openremote",
+  "name": "puck",
   "version": "1.0.0",
-  "description": "OpenRemote — multi-platform SSH & SFTP client (Electron + React). Docker & Kubernetes before WebDAV; WebDAV and S3-compatible storage planned.",
-  "author": "OpenRemote contributors",
+  "description": "Puck — multi-platform SSH & SFTP client (Electron + React). Docker & Kubernetes before WebDAV; WebDAV and S3-compatible storage planned.",
+  "author": "Puck contributors",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/gsxhnd/OpenRemote"
+    "url": "https://github.com/gsxhnd/Puck"
   },
   "main": "./dist/main/index.js",
   "scripts": {

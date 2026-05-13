@@ -2,7 +2,7 @@
 
 ## 1.1 定位
 
-**OpenRemote** 是一个使用 Electron、React 和 TypeScript 构建的**跨平台客户端**。
+**Puck** 是一个使用 Electron、React 和 TypeScript 构建的**跨平台客户端**。
 
 - **核心方向**：多平台 **SSH** 与 **SFTP** 远程访问（终端、会话、远程文件管理）；终端 UI 规划采用 **xterm.js**，远程文本编辑规划采用 **Monaco Editor**（见 `docs/dev/02-tech-stack.md` §2.3）。
 - **后续规划（路线顺序）**：在 WebDAV 之前优先推进 **Docker** 与 **Kubernetes（kubectl 生态）**；其后为 **WebDAV**，以及 **兼容 S3 API** 的云存储（如 MinIO、R2 等），与远程工作流统一在同一应用中完成。

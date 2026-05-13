@@ -62,7 +62,7 @@ export function loadSettings(): AppSettings {
   return { ...DEFAULT_SETTINGS }
 }
 
-/** Merge legacy OpenGit keys into OpenRemote shape */
+/** Merge legacy OpenGit keys into Puck shape */
 function migrateSettings(s: AppSettings): AppSettings {
   const any = s as unknown as Record<string, unknown>
   if (!Array.isArray(s.hosts) && Array.isArray(any.recentRepos)) {

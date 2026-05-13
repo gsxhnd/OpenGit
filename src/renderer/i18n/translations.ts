@@ -3,7 +3,7 @@ export const en = {
   'nav.localShell': 'Local shell',
   'nav.settings': 'Settings',
 
-  'welcome.title': 'OpenRemote',
+  'welcome.title': 'Puck',
   'welcome.subtitle': 'SSH, SFTP, and remote editing',
   'welcome.localTerminal': 'Local terminal',
   'welcome.refreshHosts': 'Refresh hosts',
@@ -114,7 +114,7 @@ export const zh = {
   'nav.localShell': '本地终端',
   'nav.settings': '设置',
 
-  'welcome.title': 'OpenRemote',
+  'welcome.title': 'Puck',
   'welcome.subtitle': 'SSH、SFTP 与远程编辑',
   'welcome.localTerminal': '本地终端',
   'welcome.refreshHosts': '刷新主机列表',
