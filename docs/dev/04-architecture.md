@@ -70,7 +70,12 @@ interface AppStore {
   // 当前视图、设置、Toast 等
   settings: AppSettings | null
   toasts: Toast[]
-  // 未来：sessions、transferQueue、activeHostId …
+  // SSH 会话 Tab 管理
+  sessions: Session[]          // 所有已建立的 SSH 会话
+  activeSessionId: string | null  // 当前激活的 Tab
+  // Session 内子视图状态
+  // activeSubView: 'terminal' | 'sftp' | 'monitor'（每个 session 独立）
+  // transferQueue: TransferTask[]  // SFTP 传输队列
 }
 ```
 

@@ -2,9 +2,10 @@
 
 ## 1.1 定位
 
-**Puck** 是一个使用 Electron、React 和 TypeScript 构建的**跨平台客户端**。
+**Puck** 是一个使用 Electron、React 和 TypeScript 构建的**跨平台远程管理客户端**。
 
-- **核心方向**：多平台 **SSH** 与 **SFTP** 远程访问（终端、会话、远程文件管理）；终端 UI 规划采用 **xterm.js**，远程文本编辑规划采用 **Monaco Editor**（见 `docs/dev/02-tech-stack.md` §2.3）。
+- **核心方向**：多平台 **SSH** 远程访问与 **SFTP** 文件管理。每个 SSH 连接成功后创建独立 Tab 页，Tab 内含三个子视图：**终端**（xterm.js）、**SFTP 双栏对比**（本地 ↔ 远程）、**资源监控**（CPU/内存/磁盘）。远程文本编辑规划采用 **Monaco Editor**（见 `docs/dev/02-tech-stack.md` §2.3）。
+- **产品约束**：**不提供本地终端**，所有终端与文件操作均面向远程服务器；本地文件系统仅在 SFTP 双栏视图中作为传输源/目标使用。
 - **后续规划（路线顺序）**：在 WebDAV 之前优先推进 **Docker** 与 **Kubernetes（kubectl 生态）**；其后为 **WebDAV**，以及 **兼容 S3 API** 的云存储（如 MinIO、R2 等），与远程工作流统一在同一应用中完成。
 - **当前实现**：以**应用壳与通用体验**（窗口、设置、主题、国际化、欢迎页等）为主；远程协议能力按 [09-roadmap.md](09-roadmap.md) 中 **Phase 2** 起逐步交付。
 
