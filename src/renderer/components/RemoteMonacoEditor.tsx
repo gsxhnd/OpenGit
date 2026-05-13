@@ -87,7 +87,17 @@ export function RemoteMonacoEditor({
       scrollBeyondLastLine: false,
     })
     editorRef.current = ed
+
+    // Cmd+S / Ctrl+S keyboard shortcut
+    const disposer = ed.addAction({
+      id: 'save-remote',
+      label: 'Save to remote',
+      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+      run: () => { void handleSave() },
+    })
+
     return () => {
+      disposer.dispose()
       ed.dispose()
       model.dispose()
       editorRef.current = null

@@ -9,7 +9,7 @@ import { IPC_CHANNELS } from '../shared/ipc'
 import type { SftpListEntry, SshConnectPayload, SshConnectResult } from '../shared/types'
 import { findKnownHost, addKnownHost } from './settings'
 
-const MAX_REMOTE_TEXT_BYTES = 4 * 1024 * 1024
+const MAX_REMOTE_TEXT_BYTES = 50 * 1024 * 1024
 
 type Conn = {
   client: Client
