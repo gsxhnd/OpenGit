@@ -24,7 +24,7 @@ function getThemesDir(): string {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   window: { width: 1200, height: 760 },
-  theme: 'Tokyo Night',
+  theme: 'Standard Dark',
   language: 'en',
   hosts: [],
   terminal: {

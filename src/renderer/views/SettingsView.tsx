@@ -7,6 +7,7 @@ import { Input } from '../components/ui/input'
 import { useState, useEffect } from 'react'
 import type { HostProfile } from '@shared/types'
 import type { Language } from '../i18n/translations'
+import { THEME_NAMES } from '../hooks/useTheme'
 import styles from './SettingsView.module.scss'
 
 export function SettingsView() {
@@ -14,7 +15,7 @@ export function SettingsView() {
   const navigate = useNavigate()
   const { settings, loadSettings, updateSettings, addToast, setLanguage, language } = useAppStore()
 
-  const [theme, setTheme] = useState(settings?.theme || 'Tokyo Night')
+  const [theme, setTheme] = useState(settings?.theme || 'Standard Dark')
   const [selectedLang, setSelectedLang] = useState<Language>(language)
 
   const [termFontSize, setTermFontSize] = useState(settings?.terminal.fontSize ?? 14)
@@ -146,11 +147,9 @@ export function SettingsView() {
             <div>
               <label className={styles.fieldLabel}>{t('settings.theme')}</label>
               <select value={theme} onChange={(e) => handleThemeChange(e.target.value)} className={styles.select}>
-                <option>Tokyo Night</option>
-                <option>Dracula</option>
-                <option>Nord</option>
-                <option>Solarized Dark</option>
-                <option>Solarized Light</option>
+                {THEME_NAMES.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
               </select>
             </div>
             <div>
