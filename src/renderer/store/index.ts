@@ -78,6 +78,13 @@ interface AppState {
   toasts: Toast[];
 
   // ========================================================================
+  // Workbench UI (Inspector)
+  // ========================================================================
+
+  /** Right-hand Inspector panel (properties / tasks) — Phase 0 placeholder */
+  inspectorOpen: boolean;
+
+  // ========================================================================
   // 配置操作 | Configuration actions
   // ========================================================================
 
@@ -161,6 +168,9 @@ interface AppState {
    * Remove specified toast notification
    */
   removeToast: (id: string) => void;
+
+  setInspectorOpen: (open: boolean) => void;
+  toggleInspector: () => void;
 }
 
 // ============================================================================
@@ -192,6 +202,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   sessions: [],
   activeSessionId: null,
   toasts: [],
+  inspectorOpen: false,
 
   // ========================================================================
   // 配置操作实现 | Configuration actions implementation
@@ -340,4 +351,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       toasts: state.toasts.filter((t) => t.id !== id),
     }));
   },
+
+  setInspectorOpen: (open) => set({ inspectorOpen: open }),
+
+  toggleInspector: () => set((state) => ({ inspectorOpen: !state.inspectorOpen })),
 }));

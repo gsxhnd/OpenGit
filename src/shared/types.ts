@@ -61,6 +61,25 @@ export interface Toast {
 /** App navigation views */
 export type ViewType = 'dashboard' | 'connections' | 'local-terminal' | 'session' | 'files' | 'settings'
 
+/**
+ * Workbench session tab metadata (see docs/dev/05-information-architecture.md, session model).
+ * Renderer builds tabs via `buildWorkbenchSessionTabs` (local + `RemoteSessionMeta` rows).
+ */
+export type WorkbenchSessionConnectionType = 'ssh' | 'local-terminal' | 'sftp'
+
+export interface WorkbenchSessionTabModel {
+  /** Stable row key (equals `connectionId` for SSH; fixed id for local tab). */
+  id: string
+  connectionId: string
+  connectionType: WorkbenchSessionConnectionType
+  title: string
+  status: 'connecting' | 'connected' | 'reconnecting' | 'failed' | 'disconnected'
+  /** Hash route for NavLink / navigate when the tab is selected */
+  routePath: string
+  /** Local shell tab is not closed from the strip */
+  closable: boolean
+}
+
 /** Active remote session (after connect) */
 export interface RemoteSessionMeta {
   connectionId: string

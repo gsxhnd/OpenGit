@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router'
+import { useAppStore } from '../store'
 
 export interface KeyboardShortcut {
   key: string
@@ -34,24 +35,34 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
 
 export function useAppKeyboardShortcuts() {
   const navigate = useNavigate()
+  const toggleInspector = useAppStore((s) => s.toggleInspector)
 
-  const shortcuts: KeyboardShortcut[] = [
-    {
-      key: '1',
-      ctrl: true,
-      action: () => navigate('/'),
-    },
-    {
-      key: '2',
-      ctrl: true,
-      action: () => navigate('/local-terminal'),
-    },
-    {
-      key: '3',
-      ctrl: true,
-      action: () => navigate('/settings'),
-    },
-  ]
+  const shortcuts: KeyboardShortcut[] = useMemo(
+    () => [
+      {
+        key: '1',
+        ctrl: true,
+        action: () => navigate('/'),
+      },
+      {
+        key: '2',
+        ctrl: true,
+        action: () => navigate('/local-terminal'),
+      },
+      {
+        key: '3',
+        ctrl: true,
+        action: () => navigate('/settings'),
+      },
+      {
+        key: 'i',
+        ctrl: true,
+        alt: true,
+        action: () => toggleInspector(),
+      },
+    ],
+    [navigate, toggleInspector],
+  )
 
   useKeyboardShortcuts(shortcuts)
 }

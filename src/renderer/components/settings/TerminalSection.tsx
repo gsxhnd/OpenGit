@@ -2,6 +2,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import styles from '../../views/SettingsView.module.scss'
 
+/** xterm 终端偏好设置；非 Windows 平台由父组件传入 `showWindowsShell={false}` 隐藏 Shell 下拉框。 */
 interface TerminalSectionProps {
   labels: {
     title: string
@@ -28,7 +29,7 @@ interface TerminalSectionProps {
   onSave: () => void
 }
 
-export function TerminalSection({ labels, fontSize, scrollback, fontFamily, cursorStyle, windowsShell, onFontSizeChange, onScrollbackChange, onFontFamilyChange, onCursorStyleChange, onWindowsShellChange, onSave }: TerminalSectionProps) {
+export function TerminalSection({ showWindowsShell, labels, fontSize, scrollback, fontFamily, cursorStyle, windowsShell, onFontSizeChange, onScrollbackChange, onFontFamilyChange, onCursorStyleChange, onWindowsShellChange, onSave }: TerminalSectionProps) {
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>{labels.title}</h2>
@@ -53,14 +54,16 @@ export function TerminalSection({ labels, fontSize, scrollback, fontFamily, curs
             <option value="bar">{labels.cursorBar}</option>
           </select>
         </div>
-        <div>
-          <label className={styles.fieldLabel} htmlFor="term-shell">{labels.windowsShell}</label>
-          <select id="term-shell" value={windowsShell} onChange={(event) => onWindowsShellChange(event.target.value as 'powershell' | 'cmd' | 'wsl')} className={styles.select}>
-            <option value="powershell">PowerShell</option>
-            <option value="cmd">cmd</option>
-            <option value="wsl">WSL</option>
-          </select>
-        </div>
+        {showWindowsShell ? (
+          <div>
+            <label className={styles.fieldLabel} htmlFor="term-shell">{labels.windowsShell}</label>
+            <select id="term-shell" value={windowsShell} onChange={(event) => onWindowsShellChange(event.target.value as 'powershell' | 'cmd' | 'wsl')} className={styles.select}>
+              <option value="powershell">PowerShell</option>
+              <option value="cmd">cmd</option>
+              <option value="wsl">WSL</option>
+            </select>
+          </div>
+        ) : null}
         <Button type="button" variant="secondary" onClick={onSave}>{labels.save}</Button>
       </div>
     </section>

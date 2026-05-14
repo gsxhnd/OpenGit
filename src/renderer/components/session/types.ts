@@ -10,8 +10,12 @@ export interface TransferItem {
   error?: string
 }
 
+/** Remote SSH session shell lifecycle (Phase 1 — reconnect after stream closes). */
+export type SessionShellPhase = 'starting' | 'connected' | 'exited'
+
 export interface SessionUIState {
-  shellReady: boolean
+  /** PTY over SSH: `starting` until `sshShellStart` resolves; `exited` after shell stream closes (SFTP may still work). */
+  shellPhase: SessionShellPhase
   cwd: string
   entries: SftpListEntry[]
   loadingDir: boolean

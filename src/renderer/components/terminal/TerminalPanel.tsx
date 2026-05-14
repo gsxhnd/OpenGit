@@ -1,3 +1,7 @@
+/**
+ * Phase 1 — 统一 **本地 / SSH** 终端 chrome：徽章、标题、连接状态、元信息行。
+ * 实际 PTY/SSH 字节流由子组件 `XtermPane` 根据 `mode` 分流到 preload API。
+ */
 import type { TerminalSettings, RemoteSessionMeta } from '@shared/types'
 import { XtermPane, type XtermMode } from './XtermPane'
 import styles from './TerminalPanel.module.scss'

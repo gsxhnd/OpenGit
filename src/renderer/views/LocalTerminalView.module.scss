@@ -5,6 +5,22 @@
   min-height: 0;
 }
 
+.exitedBar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in oklab, var(--color-muted) 40%, transparent);
+}
+
+.exitedHint {
+  font-size: 0.8rem;
+  color: var(--color-muted-foreground);
+}
+
 .term {
   flex: 1;
   min-height: 0;

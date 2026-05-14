@@ -1,9 +1,14 @@
+/**
+ * SSH 会话工作区：左侧 SFTP、右侧远程 Shell（xterm）与可选 Monaco 编辑器。
+ * Phase 1：Shell 与 SSH 连接解耦 — 流关闭后 SFTP/编辑器仍可用，用户可「重新连接 Shell」。
+ */
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store'
 import { TerminalPanel } from '../components/terminal/TerminalPanel'
 import { RemoteMonacoEditor } from '../components/RemoteMonacoEditor'
+import { Button } from '../components/ui/button'
 import type { SftpListEntry } from '@shared/types'
 import { joinRemote } from '../lib/sftp/path'
 import { formatSize } from '../lib/sftp/format'
@@ -39,7 +44,7 @@ export function SessionView() {
   function getState(): SessionUIState {
     let s = stateMapRef.current.get(cid)
     if (!s) {
-      s = { shellReady: false, cwd: '/', entries: [], loadingDir: false, editor: null, transfers: [] }
+      s = { shellPhase: 'starting', cwd: '/', entries: [], loadingDir: false, editor: null, transfers: [] }
       stateMapRef.current.set(cid, s)
     }
     return s
@@ -68,7 +73,34 @@ export function SessionView() {
     }
   }, [cid, addToast, t])
 
-  // Launch shell on mount
+  /**
+   * 打开或恢复 SSH shell 流。首次进入会话失败时退回首页；用户主动「重连」失败时留在本页。
+   * @param softFail - true：仅提示并进入 `exited`；false：与历史行为一致，失败则 `navigate('/')`
+   */
+  const startRemoteShell = useCallback(
+    async (softFail: boolean, cancelledRef?: { current: boolean }) => {
+      if (!cid) return
+      const s = getState()
+      s.shellPhase = 'starting'
+      rerender()
+      try {
+        await window.api.sshShellStart(cid)
+        if (cancelledRef?.current) return
+        s.shellPhase = 'connected'
+        rerender()
+      } catch (e: unknown) {
+        if (cancelledRef?.current) return
+        addToast(e instanceof Error ? e.message : t('session.shellFailed'), 'error')
+        s.shellPhase = 'exited'
+        rerender()
+        if (!softFail) {
+          navigate('/')
+        }
+      }
+    },
+    [cid, addToast, t, navigate],
+  )
+
   useEffect(() => {
     if (!cid || !meta) {
       addToast(t('session.invalidSession'), 'error')
@@ -78,23 +110,17 @@ export function SessionView() {
     if (activeSessionId !== cid) {
       setActiveSessionId(cid)
     }
-    const s = getState()
-    let cancelled = false
-    ;(async () => {
-      try {
-        await window.api.sshShellStart(cid)
-        if (!cancelled) {
-          s.shellReady = true
-          rerender()
-        }
-      } catch (e: unknown) {
-        addToast(e instanceof Error ? e.message : t('session.shellFailed'), 'error')
-        if (!cancelled) navigate('/')
-      }
-    })()
+  }, [cid, meta, activeSessionId, addToast, navigate, setActiveSessionId, t])
+
+  // Only (re)open the shell stream when the route session id changes — not when `activeSessionId` syncs.
+  useEffect(() => {
+    if (!cid || !meta) return
+    const cancelledRef = { current: false }
+    void startRemoteShell(false, cancelledRef)
     return () => {
-      cancelled = true
+      cancelledRef.current = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: avoid duplicate sshShellStart when store updates activeSessionId
   }, [cid])
 
   useEffect(() => {
@@ -397,7 +423,18 @@ export function SessionView() {
 
         <div className={styles.mainCol}>
           <div className={styles.termArea}>
-            {st.shellReady ? (
+            {st.shellPhase === 'starting' ? (
+              <div className={styles.muted}>{t('session.startingShell')}</div>
+            ) : null}
+            {st.shellPhase === 'exited' ? (
+              <div className={styles.shellExited}>
+                <p className={styles.shellExitedText}>{t('session.shellExitedHint')}</p>
+                <Button type="button" variant="secondary" onClick={() => void startRemoteShell(true)}>
+                  {t('session.reconnectShell')}
+                </Button>
+              </div>
+            ) : null}
+            {st.shellPhase === 'connected' ? (
               <TerminalPanel
                 mode={{ kind: 'ssh', connectionId: cid }}
                 title={meta.hostLabel || `${meta.username}@${meta.host}`}
@@ -405,11 +442,14 @@ export function SessionView() {
                 status="connected"
                 settings={term}
                 session={meta}
-                onExit={() => addToast(t('session.shellClosed'), 'info')}
+                onExit={() => {
+                  const s = getState()
+                  s.shellPhase = 'exited'
+                  rerender()
+                  addToast(t('session.shellClosed'), 'info')
+                }}
               />
-            ) : (
-              <div className={styles.muted}>{t('session.startingShell')}</div>
-            )}
+            ) : null}
           </div>
           {st.editor && ed && (
             <div className={styles.editorArea}>

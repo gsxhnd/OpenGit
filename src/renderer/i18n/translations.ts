@@ -27,6 +27,11 @@ export const en = {
   'workbench.status.sessions': 'Sessions: {{count}}',
   'workbench.status.active': 'Active',
   'workbench.status.noActive': 'No active session',
+  'workbench.inspectorTitle': 'Inspector',
+  'workbench.inspectorToggle': 'Inspector',
+  'workbench.inspectorClose': 'Close inspector',
+  'workbench.inspectorPlaceholder':
+    'Secondary sidebar for connection details, transfer progress, and diagnostics. Content will appear here as features land.',
 
   'welcome.title': 'Puck',
   'welcome.subtitle': 'SSH, SFTP, and remote editing',
@@ -49,11 +54,16 @@ export const en = {
   'welcome.newHostKey': 'New host key saved · {{fingerprint}}',
 
   'localTerminal.title': 'Local shell',
+  'localTerminal.exitedHint': 'The local shell process ended.',
+  'localTerminal.restart': 'New shell',
 
   'session.disconnect': 'Disconnect',
   'session.newSession': 'New session',
   'session.startingShell': 'Starting shell…',
   'session.shellClosed': 'Shell closed',
+  'session.shellExitedHint': 'The remote shell session ended. SFTP and the editor still work. Start a new shell when you are ready.',
+  'session.reconnectShell': 'Reconnect shell',
+
   'session.sftpListFailed': 'SFTP list failed',
   'session.invalidSession': 'Invalid or expired session',
   'session.shellFailed': 'Shell failed',
@@ -125,14 +135,17 @@ export const en = {
   'settings.labelHostUsernameRequired': 'Label, host, and username required',
   'settings.shortcuts': 'Shortcuts',
   'settings.commandPalette': 'Command palette',
+  'settings.shortcutToggleInspector': 'Toggle Inspector panel',
   'settings.remove': 'Remove',
 
   'commands.goToHome': 'Go to home',
   'commands.openLocalTerminal': 'Open local terminal',
   'commands.openSettings': 'Open settings',
   'commands.clearSession': 'Clear remote session state',
+  'commands.toggleInspector': 'Toggle Inspector',
   'commands.navigation': 'Navigation',
   'commands.session': 'Session',
+  'commands.workbench': 'Workbench',
   'commands.searchPlaceholder': 'Type a command…',
 
   'ui.back': '← Back',
@@ -181,6 +194,11 @@ export const zh = {
   'workbench.status.sessions': '会话数: {{count}}',
   'workbench.status.active': '当前',
   'workbench.status.noActive': '无活跃会话',
+  'workbench.inspectorTitle': '检查器',
+  'workbench.inspectorToggle': '检查器',
+  'workbench.inspectorClose': '关闭检查器',
+  'workbench.inspectorPlaceholder':
+    '右侧边栏，用于连接详情、传输进度与诊断信息。相关功能接入后将在此展示内容。',
 
   'welcome.title': 'Puck',
   'welcome.subtitle': 'SSH、SFTP 与远程编辑',
@@ -203,11 +221,16 @@ export const zh = {
   'welcome.newHostKey': '新主机密钥已保存 · {{fingerprint}}',
 
   'localTerminal.title': '本地终端',
+  'localTerminal.exitedHint': '本地 Shell 进程已结束。',
+  'localTerminal.restart': '新建 Shell',
 
   'session.disconnect': '断开连接',
   'session.newSession': '新建会话',
   'session.startingShell': '正在启动终端…',
   'session.shellClosed': '终端已关闭',
+  'session.shellExitedHint': '远程 Shell 已结束。SFTP 与编辑器仍可使用，需要时可重新打开 Shell。',
+  'session.reconnectShell': '重新连接 Shell',
+
   'session.sftpListFailed': 'SFTP 文件列表获取失败',
   'session.invalidSession': '会话无效或已过期',
   'session.shellFailed': '终端启动失败',
@@ -279,14 +302,17 @@ export const zh = {
   'settings.labelHostUsernameRequired': '标签、主机和用户名为必填项',
   'settings.shortcuts': '快捷键',
   'settings.commandPalette': '命令面板',
+  'settings.shortcutToggleInspector': '切换检查器侧栏',
   'settings.remove': '移除',
 
   'commands.goToHome': '前往首页',
   'commands.openLocalTerminal': '打开本地终端',
   'commands.openSettings': '打开设置',
   'commands.clearSession': '清除远程会话状态',
+  'commands.toggleInspector': '切换检查器',
   'commands.navigation': '导航',
   'commands.session': '会话',
+  'commands.workbench': '工作台',
   'commands.searchPlaceholder': '输入命令…',
 
   'ui.back': '← 返回',

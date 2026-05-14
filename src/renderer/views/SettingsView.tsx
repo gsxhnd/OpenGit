@@ -182,6 +182,7 @@ export function SettingsView() {
         />
 
         <TerminalSection
+          showWindowsShell={window.api.platform === 'win32'}
           labels={{
             title: t('settings.terminal'),
             fontSize: t('settings.terminalFontSize'),
@@ -259,6 +260,10 @@ export function SettingsView() {
             <div className={styles.shortcutItem}>
               <span>{t('settings.title')}</span>
               <kbd className={styles.kbd}>⌘,</kbd>
+            </div>
+            <div className={styles.shortcutItem}>
+              <span>{t('settings.shortcutToggleInspector')}</span>
+              <kbd className={styles.kbd}>{window.api.platform === 'darwin' ? '⌘⌥I' : 'Ctrl+Alt+I'}</kbd>
             </div>
             <div className={styles.shortcutItem}>
               <span>{t('nav.home')}</span>

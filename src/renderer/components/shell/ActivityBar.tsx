@@ -1,3 +1,7 @@
+/**
+ * Phase 0 — **Activity Bar**：一级功能域（Dashboard / Connections / Sessions / Files / Settings）。
+ * 与 `PrimarySidebar` 联动：`/sessions` 与 `/session/:id` 均视为会话域高亮。
+ */
 import { NavLink, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Folder, LayoutDashboard, MonitorPlay, Plug, Settings } from 'lucide-react'

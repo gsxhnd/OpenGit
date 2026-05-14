@@ -25,7 +25,7 @@ export function CommandPalette() {
   const [search, setSearch] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const navigate = useNavigate()
-  const { removeSession, sessions } = useAppStore()
+  const { removeSession, sessions, toggleInspector } = useAppStore()
 
   const commands: Command[] = useMemo(
     () => [
@@ -69,8 +69,18 @@ export function CommandPalette() {
           setIsOpen(false)
         },
       },
+      {
+        id: 'toggle-inspector',
+        label: t('commands.toggleInspector'),
+        category: t('commands.workbench'),
+        action: () => {
+          toggleInspector()
+          setIsOpen(false)
+        },
+        shortcut: '⌃⌥I',
+      },
     ],
-    [navigate, removeSession, sessions, t],
+    [navigate, removeSession, sessions, t, toggleInspector],
   )
 
   const filtered = useMemo(() => {

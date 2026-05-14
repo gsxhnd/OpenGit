@@ -1,5 +1,7 @@
 /**
- * App root layout — title bar, side nav, routes, toasts, command palette.
+ * App root — Phase 0 **workbench skeleton**:
+ * Title bar → (Activity Bar | Primary Sidebar | Main: SessionTabs + routes + optional Inspector) → Status bar,
+ * plus toasts and command palette. Phase 1 terminal UX is implemented inside routed views (`LocalTerminalView`, `SessionView`).
  */
 import { useEffect } from 'react'
 import { Routes, Route, useLocation, Navigate } from 'react-router'
@@ -12,6 +14,7 @@ import { ActivityBar } from './components/shell/ActivityBar'
 import { PrimarySidebar } from './components/shell/PrimarySidebar'
 import { SessionTabs } from './components/shell/SessionTabs'
 import { PanelContainer } from './components/shell/PanelContainer'
+import { InspectorPanel } from './components/shell/InspectorPanel'
 import { StatusBar } from './components/shell/StatusBar'
 import { ToastContainer } from './components/shell/ToastContainer'
 import { CommandPalette } from './components/shell/CommandPalette'
@@ -19,7 +22,7 @@ import { appRoutes, pathToView } from './routes'
 import styles from './App.module.scss'
 
 function AppContent() {
-  const { loadSettings, language } = useAppStore()
+  const { loadSettings, language, inspectorOpen, setInspectorOpen } = useAppStore()
   const location = useLocation()
   const { i18n } = useTranslation()
   const showSessionTabs = location.pathname !== '/'
@@ -57,15 +60,20 @@ function AppContent() {
         <ActivityBar />
         <PrimarySidebar />
         <main className={styles.mainContent}>
-          {showSessionTabs ? <SessionTabs /> : null}
-          <PanelContainer>
-            <Routes>
-              {appRoutes.map((route) => (
-                <Route key={route.path} path={route.path} element={route.element} />
-              ))}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </PanelContainer>
+          <div className={styles.workbenchSplit}>
+            <div className={styles.workbenchMain}>
+              {showSessionTabs ? <SessionTabs /> : null}
+              <PanelContainer>
+                <Routes>
+                  {appRoutes.map((route) => (
+                    <Route key={route.path} path={route.path} element={route.element} />
+                  ))}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </PanelContainer>
+            </div>
+            {inspectorOpen ? <InspectorPanel onClose={() => setInspectorOpen(false)} /> : null}
+          </div>
         </main>
       </div>
       <StatusBar />

@@ -1,16 +1,25 @@
+/**
+ * Phase 0 — **Session Tabs**：数据由 `buildWorkbenchSessionTabs` 生成（本地 + SSH），
+ * 与 `@shared/types` 的 `WorkbenchSessionTabModel` 对齐，便于后续加入仅 SFTP 等 Tab 类型。
+ */
+import { useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { useAppStore } from '../../store'
+import { buildWorkbenchSessionTabs, isWorkbenchTabActive } from '../../lib/workbenchSessionTabs'
 import styles from './SessionTabs.module.scss'
 
 export function SessionTabs() {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
-  const { sessions, removeSession, activeSessionId } = useAppStore()
+  const { sessions, removeSession } = useAppStore()
 
-  const isLocalActive = location.pathname.startsWith('/local-terminal')
+  const tabs = useMemo(
+    () => buildWorkbenchSessionTabs(sessions, t('nav.localShell')),
+    [sessions, t],
+  )
 
   const closeRemoteSession = async (connectionId: string) => {
     await window.api.sshDisconnect(connectionId)
@@ -22,24 +31,26 @@ export function SessionTabs() {
 
   return (
     <div className={styles.tabs} aria-label={t('workbench.sessionTabs')}>
-      <button type="button" className={isLocalActive ? styles.tabActive : styles.tab} onClick={() => navigate('/local-terminal')}>
-        {t('nav.localShell')}
-      </button>
-      {sessions.map((session) => {
-        const active = activeSessionId === session.connectionId || location.pathname === `/session/${session.connectionId}`
+      {tabs.map((tab) => {
+        const active = isWorkbenchTabActive(tab, location.pathname)
         return (
-          <div key={session.connectionId} className={active ? styles.tabActive : styles.tab}>
-            <button type="button" className={styles.tabTrigger} onClick={() => navigate(`/session/${session.connectionId}`)}>
-              {session.hostLabel}
+          <div key={tab.id} className={active ? styles.tabActive : styles.tab}>
+            <button type="button" className={styles.tabTrigger} onClick={() => navigate(tab.routePath)}>
+              <span className={styles.tabTitle}>{tab.title}</span>
+              {tab.status !== 'connected' ? (
+                <span className={styles.tabStatus} data-state={tab.status} aria-hidden />
+              ) : null}
             </button>
-            <button
-              type="button"
-              className={styles.closeBtn}
-              onClick={() => void closeRemoteSession(session.connectionId)}
-              aria-label={t('ui.close')}
-            >
-              <X size={12} />
-            </button>
+            {tab.closable ? (
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={() => void closeRemoteSession(tab.connectionId)}
+                aria-label={t('ui.close')}
+              >
+                <X size={12} />
+              </button>
+            ) : null}
           </div>
         )
       })}

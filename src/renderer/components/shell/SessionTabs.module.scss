@@ -38,6 +38,47 @@
   color: inherit;
   padding: 0;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.tabTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabStatus {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: var(--color-muted-foreground);
+  opacity: 0.5;
+}
+
+.tabStatus[data-state='connecting'],
+.tabStatus[data-state='reconnecting'] {
+  background: var(--color-primary);
+  opacity: 1;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.tabStatus[data-state='failed'],
+.tabStatus[data-state='disconnected'] {
+  background: var(--color-destructive);
+  opacity: 0.85;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .closeBtn {

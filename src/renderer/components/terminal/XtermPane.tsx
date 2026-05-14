@@ -1,3 +1,10 @@
+/**
+ * Phase 1 — xterm.js 封装：
+ * - **Local**：`ptyLocalCreate` + `onPtyLocalData`（主进程 node-pty）
+ * - **SSH**：仅订阅 `onSshData`；Shell 流由 `SessionView` 在挂载时 `sshShellStart` 打开
+ *
+ * 字体 / 滚动 / 光标来自设置；Windows 本地 Shell 类型由 `windowsShell` 传入并在主进程解析为可执行文件。
+ */
 import { useEffect, useRef } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'

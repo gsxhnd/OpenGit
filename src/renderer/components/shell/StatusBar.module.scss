@@ -9,3 +9,28 @@
   padding: 0 0.75rem;
   font-size: 0.75rem;
 }
+
+.spacer {
+  flex: 1;
+  min-width: 0.5rem;
+}
+
+.inspectorBtn {
+  flex-shrink: 0;
+  gap: 0.35rem;
+  height: 22px;
+  padding: 0 0.4rem;
+  font-size: 0.7rem;
+}
+
+.inspectorIcon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.inspectorLabel {
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
