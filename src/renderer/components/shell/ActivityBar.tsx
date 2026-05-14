@@ -1,14 +1,15 @@
-/**
- * Phase 0 — **Activity Bar**：一级功能域（Dashboard / Connections / Sessions / Files / Settings）。
- * 与 `PrimarySidebar` 联动：`/sessions` 与 `/session/:id` 均视为会话域高亮。
- * 显示会话计数徽章与快捷键提示。
- */
 import { NavLink, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Folder, LayoutDashboard, MonitorPlay, Plug, Settings } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Folder, LayoutDashboard, MonitorPlay, Plug, Settings } from 'lucide-react'
 import { useAppStore } from '../../store'
-import { ShellTooltip } from './ShellTooltip'
-import styles from './ActivityBar.module.scss'
+import { cn } from '../../lib/utils'
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from '../ui/sidebar'
+import { Button } from '../ui/button'
 
 const items = [
   { to: '/', icon: LayoutDashboard, labelKey: 'workbench.dashboard', end: true, shortcut: 'Ctrl+Shift+D' },
@@ -16,41 +17,62 @@ const items = [
   { to: '/sessions', icon: MonitorPlay, labelKey: 'workbench.sessions', shortcut: 'Ctrl+Shift+S' },
   { to: '/files', icon: Folder, labelKey: 'workbench.files', shortcut: 'Ctrl+Shift+F' },
   { to: '/settings', icon: Settings, labelKey: 'nav.settings', shortcut: '⌘,' },
-]
+] as const
 
 export function ActivityBar() {
   const { t } = useTranslation()
   const location = useLocation()
   const { sessions } = useAppStore()
+  const { state, toggleSidebar } = useSidebar()
+  const collapsed = state === 'collapsed'
 
   return (
-    <aside className={styles.activityBar} aria-label="Activity Bar">
-      {items.map((item) => {
-        const Icon = item.icon
-        const label = t(item.labelKey)
-        const tooltip = item.shortcut ? `${label} (${item.shortcut})` : label
-        const isSessions = item.to === '/sessions'
-        const badgeCount = isSessions ? sessions.length : 0
+    <nav
+      aria-label="Activity Bar"
+      className="group flex shrink-0 flex-col border-r border-border bg-sidebar transition-[width] duration-200 ease-linear"
+      style={{ width: collapsed ? 'var(--sidebar-width-icon)' : 'var(--sidebar-width)' }}
+      data-state={state}
+      data-collapsible={collapsed ? 'icon' : ''}
+    >
+      <SidebarMenu className={cn('flex-1 gap-1 py-2', collapsed ? 'items-center' : 'px-2')}>
+        {items.map((item) => {
+          const Icon = item.icon
+          const label = t(item.labelKey)
+          const tooltip = collapsed ? (item.shortcut ? `${label} (${item.shortcut})` : label) : undefined
+          const isSessions = item.to === '/sessions'
+          const isActive = location.pathname === item.to
+            || (isSessions && location.pathname.startsWith('/session/'))
+          const badgeCount = isSessions ? sessions.length : 0
 
-        return (
-          <ShellTooltip key={item.to} content={tooltip} side="right" delay={350}>
-            <NavLink
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => {
-                const active = isActive || (item.to === '/sessions' && location.pathname.startsWith('/session/'))
-                return active ? styles.itemActive : styles.item
-              }}
-              aria-label={tooltip}
-            >
-              <Icon size={18} />
-              {badgeCount > 0 ? (
-                <span className={styles.badge}>{badgeCount > 9 ? '9+' : badgeCount}</span>
+          return (
+            <SidebarMenuItem key={item.to} className={collapsed ? 'relative flex justify-center' : undefined}>
+              <SidebarMenuButton
+                render={<NavLink to={item.to} end={item.end} viewTransition />}
+                isActive={isActive}
+                tooltip={tooltip}
+              >
+                <Icon />
+                {!collapsed && <span>{label}</span>}
+              </SidebarMenuButton>
+              {badgeCount > 0 && collapsed ? (
+                <span className="pointer-events-none absolute -top-0.5 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground tabular-nums leading-none select-none">
+                  {badgeCount > 9 ? '9+' : badgeCount}
+                </span>
               ) : null}
-            </NavLink>
-          </ShellTooltip>
-        )
-      })}
-    </aside>
+            </SidebarMenuItem>
+          )
+        })}
+      </SidebarMenu>
+      <div className="flex shrink-0 justify-end p-2">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={toggleSidebar}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        </Button>
+      </div>
+    </nav>
   )
 }

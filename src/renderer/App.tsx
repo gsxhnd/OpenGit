@@ -11,6 +11,7 @@ import { useAppKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useTheme } from './hooks/useTheme'
 import { TitleBar } from './components/shell/TitleBar'
 import { ActivityBar } from './components/shell/ActivityBar'
+import { SidebarProvider } from './components/ui/sidebar'
 import { PrimarySidebar } from './components/shell/PrimarySidebar'
 import { SessionTabs } from './components/shell/SessionTabs'
 import { PanelContainer } from './components/shell/PanelContainer'
@@ -57,7 +58,9 @@ function AppContent() {
     <div className={styles.appContainer}>
       <TitleBar onOpenCommandPalette={() => toggleCommandPalette()} />
       <div className={styles.bodyRow}>
-        <ActivityBar />
+        <SidebarProvider defaultOpen={false} style={{ display: 'contents' }}>
+          <ActivityBar />
+        </SidebarProvider>
         <PrimarySidebar />
         <main className={styles.mainContent}>
           <div className={styles.workbenchSplit}>
