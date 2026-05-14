@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { PanelRight } from 'lucide-react'
 import { useAppStore } from '../../store'
 import { Button } from '../ui/button'
+import { ShellTooltip } from './ShellTooltip'
 import styles from './StatusBar.module.scss'
 
 export function StatusBar() {
@@ -19,18 +20,20 @@ export function StatusBar() {
       <span>{t('workbench.status.sessions', { count: sessions.length })}</span>
       <span>{active ? `${t('workbench.status.active')}: ${active.hostLabel}` : t('workbench.status.noActive')}</span>
       <span className={styles.spacer} aria-hidden />
-      <Button
-        type="button"
-        variant={inspectorOpen ? 'secondary' : 'ghost'}
-        size="xs"
-        className={styles.inspectorBtn}
-        onClick={() => toggleInspector()}
-        aria-pressed={inspectorOpen}
-        title={t('workbench.inspectorToggle')}
-      >
-        <PanelRight size={14} className={styles.inspectorIcon} />
-        <span className={styles.inspectorLabel}>{t('workbench.inspectorToggle')}</span>
-      </Button>
+      <ShellTooltip content={t('workbench.inspectorToggleHint')} side="top" delay={400}>
+        <Button
+          type="button"
+          variant={inspectorOpen ? 'secondary' : 'ghost'}
+          size="xs"
+          className={styles.inspectorBtn}
+          onClick={() => toggleInspector()}
+          aria-pressed={inspectorOpen}
+          aria-label={t('workbench.inspectorToggle')}
+        >
+          <PanelRight size={14} className={styles.inspectorIcon} />
+          <span className={styles.inspectorLabel}>{t('workbench.inspectorToggle')}</span>
+        </Button>
+      </ShellTooltip>
     </footer>
   )
 }

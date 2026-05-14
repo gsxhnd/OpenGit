@@ -5,6 +5,7 @@
 import { NavLink, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Folder, LayoutDashboard, MonitorPlay, Plug, Settings } from 'lucide-react'
+import { ShellTooltip } from './ShellTooltip'
 import styles from './ActivityBar.module.scss'
 
 const items = [
@@ -23,19 +24,21 @@ export function ActivityBar() {
     <aside className={styles.activityBar} aria-label="Activity Bar">
       {items.map((item) => {
         const Icon = item.icon
+        const label = t(item.labelKey)
         return (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            className={({ isActive }) => {
-              const active = isActive || (item.to === '/sessions' && location.pathname.startsWith('/session/'))
-              return active ? styles.itemActive : styles.item
-            }}
-            title={t(item.labelKey)}
-          >
-            <Icon size={18} />
-          </NavLink>
+          <ShellTooltip key={item.to} content={label} side="right" delay={350}>
+            <NavLink
+              to={item.to}
+              end={item.end}
+              className={({ isActive }) => {
+                const active = isActive || (item.to === '/sessions' && location.pathname.startsWith('/session/'))
+                return active ? styles.itemActive : styles.item
+              }}
+              aria-label={label}
+            >
+              <Icon size={18} />
+            </NavLink>
+          </ShellTooltip>
         )
       })}
     </aside>

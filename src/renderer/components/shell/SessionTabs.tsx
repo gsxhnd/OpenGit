@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
 import { useAppStore } from '../../store'
 import { buildWorkbenchSessionTabs, isWorkbenchTabActive } from '../../lib/workbenchSessionTabs'
+import { ShellTooltip } from './ShellTooltip'
 import styles from './SessionTabs.module.scss'
 
 export function SessionTabs() {
@@ -35,21 +36,25 @@ export function SessionTabs() {
         const active = isWorkbenchTabActive(tab, location.pathname)
         return (
           <div key={tab.id} className={active ? styles.tabActive : styles.tab}>
-            <button type="button" className={styles.tabTrigger} onClick={() => navigate(tab.routePath)}>
-              <span className={styles.tabTitle}>{tab.title}</span>
-              {tab.status !== 'connected' ? (
-                <span className={styles.tabStatus} data-state={tab.status} aria-hidden />
-              ) : null}
-            </button>
-            {tab.closable ? (
-              <button
-                type="button"
-                className={styles.closeBtn}
-                onClick={() => void closeRemoteSession(tab.connectionId)}
-                aria-label={t('ui.close')}
-              >
-                <X size={12} />
+            <ShellTooltip content={tab.title} side="bottom" delay={350}>
+              <button type="button" className={styles.tabTrigger} onClick={() => navigate(tab.routePath)}>
+                <span className={styles.tabTitle}>{tab.title}</span>
+                {tab.status !== 'connected' ? (
+                  <span className={styles.tabStatus} data-state={tab.status} aria-hidden />
+                ) : null}
               </button>
+            </ShellTooltip>
+            {tab.closable ? (
+              <ShellTooltip content={t('workbench.closeSessionTab')} side="bottom" delay={350}>
+                <button
+                  type="button"
+                  className={styles.closeBtn}
+                  onClick={() => void closeRemoteSession(tab.connectionId)}
+                  aria-label={t('workbench.closeSessionTab')}
+                >
+                  <X size={12} />
+                </button>
+              </ShellTooltip>
             ) : null}
           </div>
         )

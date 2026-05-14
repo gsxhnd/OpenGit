@@ -1,13 +1,15 @@
-import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { HashRouter } from 'react-router'
 import './monaco-setup'
 import App from './App'
 import './i18n'
 import './index.css'
+import { TooltipProvider } from './components/ui/tooltip'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <HashRouter>
-    <App />
-  </HashRouter>,
+  <TooltipProvider delay={350} closeDelay={80}>
+    <HashRouter>
+      <App />
+    </HashRouter>
+  </TooltipProvider>,
 )

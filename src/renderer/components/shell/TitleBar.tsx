@@ -9,7 +9,9 @@
  */
 import { useEffect, useState, useCallback } from 'react'
 import { Minus, Square, X, Maximize2, Menu } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
+import { ShellTooltip } from './ShellTooltip'
 
 const platform = (window.api as { platform?: string }).platform ?? 'linux'
 const isMac = platform === 'darwin'
@@ -37,36 +39,47 @@ function MacTitleBar({ title }: { title: string }) {
 // Windows / Linux window control buttons
 // ---------------------------------------------------------------------------
 function WinControlButtons({ isMaximized }: { isMaximized: boolean }) {
+  const { t } = useTranslation()
   const handleMinimize = () => window.api.minimize()
   const handleMaximize = () => window.api.maximize()
   const handleClose = () => window.api.close()
 
   return (
     <div className="no-drag flex h-full shrink-0 items-stretch">
-      <button
-        onClick={handleMinimize}
-        className="flex h-full w-[46px] items-center justify-center text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
-        title="Minimize"
-        aria-label="Minimize window"
+      <ShellTooltip content={t('titleBar.minimize')} side="bottom" delay={400}>
+        <button
+          type="button"
+          onClick={handleMinimize}
+          className="flex h-full w-[46px] items-center justify-center text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+          aria-label={t('titleBar.minimize')}
+        >
+          <Minus size={14} strokeWidth={1.5} />
+        </button>
+      </ShellTooltip>
+      <ShellTooltip
+        content={isMaximized ? t('titleBar.restore') : t('titleBar.maximize')}
+        side="bottom"
+        delay={400}
       >
-        <Minus size={14} strokeWidth={1.5} />
-      </button>
-      <button
-        onClick={handleMaximize}
-        className="flex h-full w-[46px] items-center justify-center text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
-        title={isMaximized ? 'Restore' : 'Maximize'}
-        aria-label={isMaximized ? 'Restore window' : 'Maximize window'}
-      >
-        {isMaximized ? <Square size={12} strokeWidth={1.5} /> : <Maximize2 size={12} strokeWidth={1.5} />}
-      </button>
-      <button
-        onClick={handleClose}
-        className="flex h-full w-[46px] items-center justify-center text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-destructive)] hover:text-[var(--color-destructive-foreground)]"
-        title="Close"
-        aria-label="Close window"
-      >
-        <X size={14} strokeWidth={1.5} />
-      </button>
+        <button
+          type="button"
+          onClick={handleMaximize}
+          className="flex h-full w-[46px] items-center justify-center text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+          aria-label={isMaximized ? t('titleBar.restore') : t('titleBar.maximize')}
+        >
+          {isMaximized ? <Square size={12} strokeWidth={1.5} /> : <Maximize2 size={12} strokeWidth={1.5} />}
+        </button>
+      </ShellTooltip>
+      <ShellTooltip content={t('titleBar.close')} side="bottom" delay={400}>
+        <button
+          type="button"
+          onClick={handleClose}
+          className="flex h-full w-[46px] items-center justify-center text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-destructive)] hover:text-[var(--color-destructive-foreground)]"
+          aria-label={t('titleBar.close')}
+        >
+          <X size={14} strokeWidth={1.5} />
+        </button>
+      </ShellTooltip>
     </div>
   )
 }
@@ -75,22 +88,25 @@ function WinControlButtons({ isMaximized }: { isMaximized: boolean }) {
 // Windows / Linux title bar
 // ---------------------------------------------------------------------------
 function WinTitleBar({ title, isMaximized }: { title: string; isMaximized: boolean }) {
+  const { t } = useTranslation()
   return (
     <header className="drag-region flex h-[32px] shrink-0 items-stretch border-b border-[var(--color-border)] bg-[var(--color-title-bar)]">
       {/* Left: app menu button */}
       <div className="no-drag flex shrink-0 items-center pl-2 pr-1">
-        <button
-          className="flex h-6 w-6 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
-          title="Menu"
-          aria-label="Application menu"
-          onClick={() => {
-            // On Windows/Linux the native menu is accessible via Alt key;
-            // this button is a visual affordance — clicking it focuses the window
-            // so the user can press Alt to open the menu.
-          }}
-        >
-          <Menu size={14} strokeWidth={1.5} />
-        </button>
+        <ShellTooltip content={t('titleBar.menuHint')} side="bottom" delay={500}>
+          <button
+            type="button"
+            className="flex h-6 w-6 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+            aria-label={t('titleBar.menu')}
+            onClick={() => {
+              // On Windows/Linux the native menu is accessible via Alt key;
+              // this button is a visual affordance — clicking it focuses the window
+              // so the user can press Alt to open the menu.
+            }}
+          >
+            <Menu size={14} strokeWidth={1.5} />
+          </button>
+        </ShellTooltip>
       </div>
 
       {/* Center: title */}

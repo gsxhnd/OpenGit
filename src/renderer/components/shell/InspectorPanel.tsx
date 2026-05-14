@@ -5,6 +5,7 @@
 import { useTranslation } from 'react-i18next'
 import { PanelRightClose } from 'lucide-react'
 import { Button } from '../ui/button'
+import { ShellTooltip } from './ShellTooltip'
 import styles from './InspectorPanel.module.scss'
 
 interface InspectorPanelProps {
@@ -18,16 +19,18 @@ export function InspectorPanel({ onClose }: InspectorPanelProps) {
     <aside className={styles.inspector} aria-label={t('workbench.inspectorTitle')}>
       <header className={styles.header}>
         <span className={styles.title}>{t('workbench.inspectorTitle')}</span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-xs"
-          className={styles.closeBtn}
-          onClick={onClose}
-          aria-label={t('workbench.inspectorClose')}
-        >
-          <PanelRightClose size={16} />
-        </Button>
+        <ShellTooltip content={t('workbench.inspectorClose')} side="bottom" delay={300}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-xs"
+            className={styles.closeBtn}
+            onClick={onClose}
+            aria-label={t('workbench.inspectorClose')}
+          >
+            <PanelRightClose size={16} />
+          </Button>
+        </ShellTooltip>
       </header>
       <div className={styles.body}>
         <p className={styles.placeholder}>{t('workbench.inspectorPlaceholder')}</p>

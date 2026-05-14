@@ -3,6 +3,13 @@ export const en = {
   'nav.localShell': 'Local shell',
   'nav.settings': 'Settings',
 
+  'titleBar.minimize': 'Minimize window',
+  'titleBar.maximize': 'Maximize window',
+  'titleBar.restore': 'Restore window',
+  'titleBar.close': 'Close window',
+  'titleBar.menu': 'Application menu',
+  'titleBar.menuHint': 'System menu: press Alt to open the native menu',
+
   'workbench.dashboard': 'Dashboard',
   'workbench.connections': 'Connections',
   'workbench.connectionsHint': 'Manage saved hosts and start remote sessions.',
@@ -29,7 +36,9 @@ export const en = {
   'workbench.status.noActive': 'No active session',
   'workbench.inspectorTitle': 'Inspector',
   'workbench.inspectorToggle': 'Inspector',
+  'workbench.inspectorToggleHint': 'Toggle the right Inspector panel (properties & tasks)',
   'workbench.inspectorClose': 'Close inspector',
+  'workbench.closeSessionTab': 'Disconnect SSH and close this tab',
   'workbench.inspectorPlaceholder':
     'Secondary sidebar for connection details, transfer progress, and diagnostics. Content will appear here as features land.',
 
@@ -170,6 +179,13 @@ export const zh = {
   'nav.localShell': '本地终端',
   'nav.settings': '设置',
 
+  'titleBar.minimize': '最小化窗口',
+  'titleBar.maximize': '最大化窗口',
+  'titleBar.restore': '还原窗口',
+  'titleBar.close': '关闭窗口',
+  'titleBar.menu': '应用菜单',
+  'titleBar.menuHint': '系统菜单：按 Alt 键打开原生菜单',
+
   'workbench.dashboard': '仪表盘',
   'workbench.connections': '连接',
   'workbench.connectionsHint': '管理已保存主机并发起远程会话。',
@@ -196,7 +212,9 @@ export const zh = {
   'workbench.status.noActive': '无活跃会话',
   'workbench.inspectorTitle': '检查器',
   'workbench.inspectorToggle': '检查器',
+  'workbench.inspectorToggleHint': '切换右侧检查器面板（属性与任务）',
   'workbench.inspectorClose': '关闭检查器',
+  'workbench.closeSessionTab': '断开 SSH 并关闭此标签',
   'workbench.inspectorPlaceholder':
     '右侧边栏，用于连接详情、传输进度与诊断信息。相关功能接入后将在此展示内容。',
 

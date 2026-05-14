@@ -72,6 +72,7 @@ export function CommandPalette() {
       {
         id: 'toggle-inspector',
         label: t('commands.toggleInspector'),
+        description: t('workbench.inspectorToggleHint'),
         category: t('commands.workbench'),
         action: () => {
           toggleInspector()
