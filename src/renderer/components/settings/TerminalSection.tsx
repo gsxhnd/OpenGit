@@ -4,6 +4,7 @@ import styles from '../../views/SettingsView.module.scss'
 
 /** xterm 终端偏好设置；非 Windows 平台由父组件传入 `showWindowsShell={false}` 隐藏 Shell 下拉框。 */
 interface TerminalSectionProps {
+  showWindowsShell: boolean
   labels: {
     title: string
     fontSize: string

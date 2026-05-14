@@ -19,10 +19,12 @@ export interface XtermPaneProps {
   scrollback: number
   cursorStyle?: 'block' | 'underline' | 'bar'
   windowsShell?: 'powershell' | 'cmd' | 'wsl'
+  /** Theme color overrides for xterm.js */
+  theme?: { background?: string; foreground?: string; cursor?: string; selectionBackground?: string }
   onExit?: () => void
 }
 
-export function XtermPane({ mode, fontSize, fontFamily, scrollback, cursorStyle = 'block', windowsShell, onExit }: XtermPaneProps) {
+export function XtermPane({ mode, fontSize, fontFamily, scrollback, cursorStyle = 'block', windowsShell, theme, onExit }: XtermPaneProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef<string | null>(null)
 
@@ -36,6 +38,7 @@ export function XtermPane({ mode, fontSize, fontFamily, scrollback, cursorStyle 
       scrollback,
       cursorBlink: true,
       cursorStyle,
+      theme: theme ?? {},
     })
     const fit = new FitAddon()
     term.loadAddon(fit)

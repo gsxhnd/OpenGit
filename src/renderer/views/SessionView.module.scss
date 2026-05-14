@@ -244,38 +244,6 @@
   box-sizing: border-box;
 }
 
-/* Context menu */
-.contextMenu {
-  position: fixed;
-  z-index: 100;
-  min-width: 160px;
-  background: var(--color-background);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  padding: 0.3rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.contextMenuItem {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.6rem;
-  border: none;
-  background: transparent;
-  color: var(--color-foreground);
-  font-size: 0.8rem;
-  cursor: pointer;
-  border-radius: 4px;
-  text-align: left;
-}
-
-.contextMenuItem:hover {
-  background: var(--color-muted);
-}
-
 /* Modal / Dialog */
 .modalOverlay {
   position: fixed;

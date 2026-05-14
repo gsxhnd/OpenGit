@@ -14,10 +14,9 @@ import { joinRemote } from '../lib/sftp/path'
 import { formatSize } from '../lib/sftp/format'
 import { SessionHeader } from '../components/session/SessionHeader'
 import { SftpPane } from '../components/session/SftpPane'
-import { SessionContextMenu } from '../components/session/SessionContextMenu'
 import { NewFolderDialog } from '../components/session/NewFolderDialog'
 import { PropertiesDialog } from '../components/session/PropertiesDialog'
-import type { ContextMenuState, PropertiesModalState, SessionUIState } from '../components/session/types'
+import type { PropertiesModalState, SessionUIState } from '../components/session/types'
 import styles from './SessionView.module.scss'
 
 let transferIdCounter = 0
@@ -31,6 +30,7 @@ export function SessionView() {
     activeSessionId,
     removeSession,
     setActiveSessionId,
+    updateSessionStatus,
     settings,
     addToast,
   } = useAppStore()
@@ -52,7 +52,6 @@ export function SessionView() {
 
   const [, rerender] = useReducer((n: number) => n + 1, 0)
 
-  const [ctxMenu, setCtxMenu] = useState<ContextMenuState>({ visible: false, x: 0, y: 0, entry: null })
   const [propsModal, setPropsModal] = useState<PropertiesModalState>({ entry: null, detail: null })
   const [newFolderPrompt, setNewFolderPrompt] = useState(false)
   const [newFolderValue, setNewFolderValue] = useState('')
@@ -73,32 +72,31 @@ export function SessionView() {
     }
   }, [cid, addToast, t])
 
-  /**
-   * 打开或恢复 SSH shell 流。首次进入会话失败时退回首页；用户主动「重连」失败时留在本页。
-   * @param softFail - true：仅提示并进入 `exited`；false：与历史行为一致，失败则 `navigate('/')`
-   */
   const startRemoteShell = useCallback(
     async (softFail: boolean, cancelledRef?: { current: boolean }) => {
       if (!cid) return
       const s = getState()
       s.shellPhase = 'starting'
+      updateSessionStatus(cid, 'connecting')
       rerender()
       try {
         await window.api.sshShellStart(cid)
         if (cancelledRef?.current) return
         s.shellPhase = 'connected'
+        updateSessionStatus(cid, 'connected')
         rerender()
       } catch (e: unknown) {
         if (cancelledRef?.current) return
         addToast(e instanceof Error ? e.message : t('session.shellFailed'), 'error')
         s.shellPhase = 'exited'
+        updateSessionStatus(cid, 'failed')
         rerender()
         if (!softFail) {
           navigate('/')
         }
       }
     },
-    [cid, addToast, t, navigate],
+    [cid, addToast, t, navigate, updateSessionStatus],
   )
 
   useEffect(() => {
@@ -112,7 +110,6 @@ export function SessionView() {
     }
   }, [cid, meta, activeSessionId, addToast, navigate, setActiveSessionId, t])
 
-  // Only (re)open the shell stream when the route session id changes — not when `activeSessionId` syncs.
   useEffect(() => {
     if (!cid || !meta) return
     const cancelledRef = { current: false }
@@ -120,7 +117,7 @@ export function SessionView() {
     return () => {
       cancelledRef.current = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: avoid duplicate sshShellStart when store updates activeSessionId
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cid])
 
   useEffect(() => {
@@ -137,7 +134,6 @@ export function SessionView() {
     }
   }, [cid])
 
-  // Transfer progress listener
   useEffect(() => {
     return window.api.onSftpTransferProgress((payload) => {
       const s = stateMapRef.current.get(payload.connectionId)
@@ -164,7 +160,6 @@ export function SessionView() {
       if (payload.done && payload.error) {
         addToast(payload.error, 'error')
       }
-      // Clean done transfers after 5s
       if (payload.done) {
         const tId = s.transfers.find((t) => t.path === payload.remotePath && t.done)?.id
         if (tId) {
@@ -183,6 +178,7 @@ export function SessionView() {
 
   const disconnect = async () => {
     await window.api.sshDisconnect(cid)
+    updateSessionStatus(cid, 'disconnected')
     removeSession(cid)
     stateMapRef.current.delete(cid)
     if (sessions.length <= 1) {
@@ -192,14 +188,13 @@ export function SessionView() {
 
   const openFile = async (remotePath: string) => {
     try {
-      // Check file size first
       let stat: SftpListEntry | null = null
       try {
         stat = await window.api.sftpStat(cid, remotePath)
       } catch {
         // proceed anyway
       }
-      const WARN_SIZE = 1024 * 1024 // 1MB
+      const WARN_SIZE = 1024 * 1024
       if (stat && stat.size > WARN_SIZE) {
         const ok = window.confirm(
           `File is ${formatSize(stat.size)}. Open in editor? Large files may be slow.`,
@@ -223,33 +218,7 @@ export function SessionView() {
     rerender()
   }
 
-  // Context menu
-  const closeContextMenu = () => {
-    setCtxMenu({ visible: false, x: 0, y: 0, entry: null })
-  }
-
-  const handleEntryContextMenu = (e: React.MouseEvent, entry: SftpListEntry) => {
-    e.preventDefault()
-    setCtxMenu({
-      visible: true,
-      x: e.clientX,
-      y: e.clientY,
-      entry,
-    })
-  }
-
-  const handleListContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault()
-    setCtxMenu({
-      visible: true,
-      x: e.clientX,
-      y: e.clientY,
-      entry: null,
-    })
-  }
-
   const handleNewFolder = () => {
-    closeContextMenu()
     setNewFolderValue('')
     setNewFolderPrompt(true)
   }
@@ -269,10 +238,7 @@ export function SessionView() {
     }
   }
 
-  const handleRename = () => {
-    const entry = ctxMenu.entry
-    if (!entry) return
-    closeContextMenu()
+  const handleRename = (entry: SftpListEntry) => {
     const s = getState()
     const oldPath = joinRemote(s.cwd, entry.name)
     const newName = window.prompt(t('session.enterNewName', { name: entry.name }), entry.name)
@@ -289,10 +255,7 @@ export function SessionView() {
     })()
   }
 
-  const handleDelete = () => {
-    const entry = ctxMenu.entry
-    if (!entry) return
-    closeContextMenu()
+  const handleDelete = (entry: SftpListEntry) => {
     const confirmed = window.confirm(t('session.confirmDelete', { name: entry.name }))
     if (!confirmed) return
     const s = getState()
@@ -312,10 +275,7 @@ export function SessionView() {
     })()
   }
 
-  const handleProperties = async () => {
-    const entry = ctxMenu.entry
-    if (!entry) return
-    closeContextMenu()
+  const handleProperties = async (entry: SftpListEntry) => {
     const s = getState()
     const path = joinRemote(s.cwd, entry.name)
     try {
@@ -326,7 +286,6 @@ export function SessionView() {
     }
   }
 
-  // Upload / Download
   const handleUpload = async () => {
     const local = await window.api.openFile()
     if (!local) return
@@ -363,14 +322,6 @@ export function SessionView() {
     }
   }
 
-  // Close menus on click outside
-  useEffect(() => {
-    if (!ctxMenu.visible) return
-    const handler = () => closeContextMenu()
-    window.addEventListener('click', handler)
-    return () => window.removeEventListener('click', handler)
-  }, [ctxMenu.visible])
-
   if (!meta) {
     return null
   }
@@ -393,29 +344,20 @@ export function SessionView() {
           cwd={st.cwd}
           entries={st.entries}
           transfers={activeTransfers}
-          labels={{ parent: t('session.parent'), newFolder: t('session.newFolder'), upload: t('session.upload') }}
-          onNavigate={navigateTo}
-          onOpenFile={(path) => { void openFile(path) }}
-          onEntryContextMenu={handleEntryContextMenu}
-          onListContextMenu={handleListContextMenu}
-          onNewFolder={handleNewFolder}
-          onUpload={() => { void handleUpload() }}
-        />
-
-        <SessionContextMenu
-          state={ctxMenu}
           labels={{
+            parent: t('session.parent'),
             newFolder: t('session.newFolder'),
+            upload: t('session.upload'),
             download: t('session.downloaded'),
             rename: t('session.rename'),
             delete: t('session.delete'),
             properties: t('session.properties'),
           }}
+          onNavigate={navigateTo}
+          onOpenFile={(path) => { void openFile(path) }}
           onNewFolder={handleNewFolder}
-          onDownload={(entry) => {
-            closeContextMenu()
-            void handleDownload(entry)
-          }}
+          onUpload={() => { void handleUpload() }}
+          onDownload={(entry) => { void handleDownload(entry) }}
           onRename={handleRename}
           onDelete={handleDelete}
           onProperties={handleProperties}
@@ -445,6 +387,7 @@ export function SessionView() {
                 onExit={() => {
                   const s = getState()
                   s.shellPhase = 'exited'
+                  updateSessionStatus(cid, 'disconnected')
                   rerender()
                   addToast(t('session.shellClosed'), 'info')
                 }}

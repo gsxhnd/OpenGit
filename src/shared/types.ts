@@ -3,124 +3,153 @@
  */
 
 export interface WindowConfig {
-  width: number
-  height: number
-  x?: number
-  y?: number
+  width: number;
+  height: number;
+  x?: number;
+  y?: number;
 }
 
 /** Saved SSH host bookmark */
 export interface HostProfile {
-  id: string
-  label: string
-  host: string
-  port: number
-  username: string
+  id: string;
+  label: string;
+  host: string;
+  port: number;
+  username: string;
   /** If set, host key must match (from ssh:connect result) */
-  trustedFingerprint?: string
-  authType: 'password' | 'privateKey'
+  trustedFingerprint?: string;
+  authType: "password" | "privateKey";
   /** Stored only if user chooses to save password (local config) */
-  password?: string
-  privateKeyPath?: string
-  passphrase?: string
+  password?: string;
+  privateKeyPath?: string;
+  passphrase?: string;
 }
 
 export interface TerminalSettings {
-  fontSize: number
-  scrollback: number
-  fontFamily: string
-  cursorStyle: 'block' | 'underline' | 'bar'
-  windowsShell: 'powershell' | 'cmd' | 'wsl'
+  fontSize: number;
+  scrollback: number;
+  fontFamily: string;
+  cursorStyle: "block" | "underline" | "bar";
+  windowsShell: "powershell" | "cmd" | "wsl";
 }
 
 export interface EditorSettings {
-  fontSize: number
-  tabSize: number
-  wordWrap: 'on' | 'off'
-  minimap: boolean
+  fontSize: number;
+  tabSize: number;
+  wordWrap: "on" | "off";
+  minimap: boolean;
 }
 
 export interface AppSettings {
-  window: WindowConfig
-  theme: string
-  language: string
-  hosts: HostProfile[]
-  terminal: TerminalSettings
-  editor: EditorSettings
+  window: WindowConfig;
+  theme: string;
+  language: string;
+  hosts: HostProfile[];
+  terminal: TerminalSettings;
+  editor: EditorSettings;
 }
 
-export type ToastKind = 'success' | 'error' | 'info'
+export type ToastKind = "success" | "error" | "info";
 
 export interface Toast {
-  id: string
-  message: string
-  kind: ToastKind
-  createdAt: number
+  id: string;
+  message: string;
+  kind: ToastKind;
+  createdAt: number;
 }
 
 /** App navigation views */
-export type ViewType = 'dashboard' | 'connections' | 'local-terminal' | 'session' | 'files' | 'settings'
+export type ViewType =
+  | "dashboard"
+  | "connections"
+  | "local-terminal"
+  | "session"
+  | "files"
+  | "settings";
 
 /**
  * Workbench session tab metadata (see docs/dev/05-information-architecture.md, session model).
  * Renderer builds tabs via `buildWorkbenchSessionTabs` (local + `RemoteSessionMeta` rows).
  */
-export type WorkbenchSessionConnectionType = 'ssh' | 'local-terminal' | 'sftp'
+export type WorkbenchSessionConnectionType = "ssh" | "local-terminal" | "sftp";
 
 export interface WorkbenchSessionTabModel {
   /** Stable row key (equals `connectionId` for SSH; fixed id for local tab). */
-  id: string
-  connectionId: string
-  connectionType: WorkbenchSessionConnectionType
-  title: string
-  status: 'connecting' | 'connected' | 'reconnecting' | 'failed' | 'disconnected'
+  id: string;
+  connectionId: string;
+  connectionType: WorkbenchSessionConnectionType;
+  title: string;
+  status:
+    | "connecting"
+    | "connected"
+    | "reconnecting"
+    | "failed"
+    | "disconnected";
   /** Hash route for NavLink / navigate when the tab is selected */
-  routePath: string
+  routePath: string;
   /** Local shell tab is not closed from the strip */
-  closable: boolean
+  closable: boolean;
 }
+
+export type SessionStatus =
+  | 'connecting'
+  | 'connected'
+  | 'reconnecting'
+  | 'failed'
+  | 'disconnected'
 
 /** Active remote session (after connect) */
 export interface RemoteSessionMeta {
-  connectionId: string
-  hostLabel: string
-  username: string
-  host: string
-  port: number
+  connectionId: string;
+  hostLabel: string;
+  username: string;
+  host: string;
+  port: number;
   /** Server host key fingerprint from last connect */
-  fingerprint?: string
+  fingerprint?: string;
+  /** Session lifecycle status (defaults to 'connecting' when added to store) */
+  status?: SessionStatus;
 }
 
 export interface SftpListEntry {
-  name: string
-  longname: string
-  isDirectory: boolean
-  size: number
-  mtimeMs: number | null
+  name: string;
+  longname: string;
+  isDirectory: boolean;
+  size: number;
+  mtimeMs: number | null;
+}
+
+/** Local file system entry */
+export interface LocalFileEntry {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  size: number;
+  mtimeMs: number;
 }
 
 /** Known host entry (fingerprint store) */
 export interface KnownHostEntry {
-  host: string
-  port: number
-  fingerprint: string
-  addedAt: number
+  host: string;
+  port: number;
+  fingerprint: string;
+  addedAt: number;
 }
 
 /** One-time connect payload (password may be omitted if saved on host) */
 export interface SshConnectPayload {
-  host: string
-  port: number
-  username: string
-  password?: string
-  privateKeyPath?: string
-  passphrase?: string
-  expectedFingerprint?: string
+  host: string;
+  port: number;
+  username: string;
+  password?: string;
+  privateKeyPath?: string;
+  passphrase?: string;
+  expectedFingerprint?: string;
 }
 
 export interface SshConnectResult {
-  connectionId: string
-  fingerprint: string
+  connectionId: string;
+  fingerprint: string;
   /** true when this is the first connection to this host (fingerprint newly saved) */
-  isNewHost: boolean
+  isNewHost: boolean;
 }

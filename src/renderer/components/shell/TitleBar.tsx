@@ -2,13 +2,14 @@
  * TitleBar — platform-aware title bar.
  *
  * macOS:  hiddenInset mode — native traffic lights on the left, drag region,
- *         title centered. No custom window buttons needed.
+ *         title centered. Command palette search icon on the right.
  *
  * Windows / Linux:  fully frameless — custom minimize / maximize / close
  *         buttons on the right, app menu button on the left.
+ *         Command palette search entry integrated.
  */
 import { useEffect, useState, useCallback } from 'react'
-import { Minus, Square, X, Maximize2, Menu } from 'lucide-react'
+import { Minus, Square, X, Maximize2, Menu, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
 import { ShellTooltip } from './ShellTooltip'
@@ -16,21 +17,40 @@ import { ShellTooltip } from './ShellTooltip'
 const platform = (window.api as { platform?: string }).platform ?? 'linux'
 const isMac = platform === 'darwin'
 
+interface TitleBarProps {
+  /** Callback to open the command palette */
+  onOpenCommandPalette?: () => void
+}
+
 // ---------------------------------------------------------------------------
 // macOS title bar
 // ---------------------------------------------------------------------------
-function MacTitleBar({ title }: { title: string }) {
+function MacTitleBar({ title, onOpenCommandPalette }: { title: string; onOpenCommandPalette?: () => void }) {
+  const { t } = useTranslation()
   return (
     <header
       className="drag-region flex h-[38px] shrink-0 items-center border-b border-[var(--color-border)] bg-[var(--color-title-bar)]"
       style={{ paddingLeft: 76 }}
     >
-      {/* Center title */}
       <div className="pointer-events-none flex flex-1 items-center justify-center gap-2 overflow-hidden px-2">
         <span className="truncate text-[13px] font-medium text-[var(--color-foreground)] opacity-80">
           {title}
         </span>
       </div>
+      {onOpenCommandPalette ? (
+        <div className="no-drag flex shrink-0 items-center pr-2">
+          <ShellTooltip content={t('workbench.status.commandPalette')} side="bottom" delay={400}>
+            <button
+              type="button"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+              onClick={onOpenCommandPalette}
+              aria-label={t('workbench.status.commandPalette')}
+            >
+              <Search size={15} strokeWidth={1.5} />
+            </button>
+          </ShellTooltip>
+        </div>
+      ) : null}
     </header>
   )
 }
@@ -87,11 +107,10 @@ function WinControlButtons({ isMaximized }: { isMaximized: boolean }) {
 // ---------------------------------------------------------------------------
 // Windows / Linux title bar
 // ---------------------------------------------------------------------------
-function WinTitleBar({ title, isMaximized }: { title: string; isMaximized: boolean }) {
+function WinTitleBar({ title, isMaximized, onOpenCommandPalette }: { title: string; isMaximized: boolean; onOpenCommandPalette?: () => void }) {
   const { t } = useTranslation()
   return (
     <header className="drag-region flex h-[32px] shrink-0 items-stretch border-b border-[var(--color-border)] bg-[var(--color-title-bar)]">
-      {/* Left: app menu button */}
       <div className="no-drag flex shrink-0 items-center pl-2 pr-1">
         <ShellTooltip content={t('titleBar.menuHint')} side="bottom" delay={500}>
           <button
@@ -99,9 +118,9 @@ function WinTitleBar({ title, isMaximized }: { title: string; isMaximized: boole
             className="flex h-6 w-6 items-center justify-center rounded text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
             aria-label={t('titleBar.menu')}
             onClick={() => {
-              // On Windows/Linux the native menu is accessible via Alt key;
-              // this button is a visual affordance — clicking it focuses the window
-              // so the user can press Alt to open the menu.
+              if (window.api.platform) {
+                window.focus()
+              }
             }}
           >
             <Menu size={14} strokeWidth={1.5} />
@@ -109,14 +128,27 @@ function WinTitleBar({ title, isMaximized }: { title: string; isMaximized: boole
         </ShellTooltip>
       </div>
 
-      {/* Center: title */}
       <div className="pointer-events-none flex flex-1 items-center overflow-hidden px-2">
         <span className="truncate text-[12px] font-medium text-[var(--color-foreground)] opacity-70">
           {title}
         </span>
       </div>
 
-      {/* Right: window controls */}
+      {onOpenCommandPalette ? (
+        <div className="no-drag flex shrink-0 items-center pr-1">
+          <ShellTooltip content={t('workbench.status.commandPalette')} side="bottom" delay={400}>
+            <button
+              type="button"
+              className="flex h-6 w-6 items-center justify-center rounded-md text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]"
+              onClick={onOpenCommandPalette}
+              aria-label={t('workbench.status.commandPalette')}
+            >
+              <Search size={13} strokeWidth={1.5} />
+            </button>
+          </ShellTooltip>
+        </div>
+      ) : null}
+
       <WinControlButtons isMaximized={isMaximized} />
     </header>
   )
@@ -125,7 +157,7 @@ function WinTitleBar({ title, isMaximized }: { title: string; isMaximized: boole
 // ---------------------------------------------------------------------------
 // Root export
 // ---------------------------------------------------------------------------
-export function TitleBar() {
+export function TitleBar({ onOpenCommandPalette }: TitleBarProps = {}) {
   const { sessions, activeSessionId } = useAppStore()
   const activeSession = sessions.find((s) => s.connectionId === activeSessionId)
 
@@ -150,8 +182,8 @@ export function TitleBar() {
   }, [refreshMaximized])
 
   if (isMac) {
-    return <MacTitleBar title={title} />
+    return <MacTitleBar title={title} onOpenCommandPalette={onOpenCommandPalette} />
   }
 
-  return <WinTitleBar title={title} isMaximized={isMaximized} />
+  return <WinTitleBar title={title} isMaximized={isMaximized} onOpenCommandPalette={onOpenCommandPalette} />
 }

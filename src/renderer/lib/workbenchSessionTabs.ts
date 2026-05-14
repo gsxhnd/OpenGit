@@ -26,7 +26,7 @@ export function buildWorkbenchSessionTabs(
     connectionId: s.connectionId,
     connectionType: 'ssh',
     title: s.hostLabel,
-    status: 'connected',
+    status: s.status || 'connected',
     routePath: `/session/${s.connectionId}`,
     closable: true,
   }))

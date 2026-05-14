@@ -23,13 +23,6 @@ export interface SessionUIState {
   transfers: TransferItem[]
 }
 
-export interface ContextMenuState {
-  visible: boolean
-  x: number
-  y: number
-  entry: SftpListEntry | null
-}
-
 export interface PropertiesModalState {
   entry: SftpListEntry | null
   detail: SftpListEntry | null

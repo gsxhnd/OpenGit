@@ -1,5 +1,6 @@
 /**
  * Command palette — Cmd/Ctrl+Shift+P
+ * Open state driven by Zustand store so TitleBar and shortcuts can toggle it.
  */
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router'
@@ -21,11 +22,10 @@ export interface Command {
 
 export function CommandPalette() {
   const { t } = useTranslation()
-  const [isOpen, setIsOpen] = useState(false)
+  const { commandPaletteOpen, setCommandPaletteOpen, toggleCommandPalette, removeSession, sessions, toggleInspector } = useAppStore()
   const [search, setSearch] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
   const navigate = useNavigate()
-  const { removeSession, sessions, toggleInspector } = useAppStore()
 
   const commands: Command[] = useMemo(
     () => [
@@ -35,7 +35,7 @@ export function CommandPalette() {
         category: t('commands.navigation'),
         action: () => {
           navigate('/')
-          setIsOpen(false)
+          setCommandPaletteOpen(false)
         },
       },
       {
@@ -44,7 +44,16 @@ export function CommandPalette() {
         category: t('commands.navigation'),
         action: () => {
           navigate('/local-terminal')
-          setIsOpen(false)
+          setCommandPaletteOpen(false)
+        },
+      },
+      {
+        id: 'connections',
+        label: t('commands.goToConnections'),
+        category: t('commands.navigation'),
+        action: () => {
+          navigate('/connections')
+          setCommandPaletteOpen(false)
         },
       },
       {
@@ -53,9 +62,27 @@ export function CommandPalette() {
         category: t('commands.navigation'),
         action: () => {
           navigate('/settings')
-          setIsOpen(false)
+          setCommandPaletteOpen(false)
         },
         shortcut: '\u2318,',
+      },
+      {
+        id: 'files',
+        label: t('commands.openFiles'),
+        category: t('commands.navigation'),
+        action: () => {
+          navigate('/files')
+          setCommandPaletteOpen(false)
+        },
+      },
+      {
+        id: 'toggle-sidebar',
+        label: t('commands.toggleSidebar'),
+        category: t('commands.workbench'),
+        action: () => {
+          setCommandPaletteOpen(false)
+        },
+        shortcut: 'Ctrl+B',
       },
       {
         id: 'clear-sessions',
@@ -66,7 +93,7 @@ export function CommandPalette() {
             void window.api.sshDisconnect(s.connectionId)
             removeSession(s.connectionId)
           }
-          setIsOpen(false)
+          setCommandPaletteOpen(false)
         },
       },
       {
@@ -76,12 +103,12 @@ export function CommandPalette() {
         category: t('commands.workbench'),
         action: () => {
           toggleInspector()
-          setIsOpen(false)
+          setCommandPaletteOpen(false)
         },
-        shortcut: '⌃⌥I',
+        shortcut: 'Ctrl+I',
       },
     ],
-    [navigate, removeSession, sessions, t, toggleInspector],
+    [navigate, removeSession, sessions, t, toggleInspector, setCommandPaletteOpen],
   )
 
   const filtered = useMemo(() => {
@@ -97,14 +124,14 @@ export function CommandPalette() {
 
   useEffect(() => {
     setSelectedIndex(0)
-  }, [search, isOpen])
+  }, [search, commandPaletteOpen])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey
       if (mod && e.shiftKey && e.key.toLowerCase() === 'p') {
         e.preventDefault()
-        setIsOpen((o) => !o)
+        toggleCommandPalette()
         return
       }
       if (mod && e.key === ',') {
@@ -114,13 +141,13 @@ export function CommandPalette() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [navigate])
+  }, [navigate, toggleCommandPalette])
 
   useEffect(() => {
-    if (!isOpen) return
+    if (!commandPaletteOpen) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsOpen(false)
+        setCommandPaletteOpen(false)
         return
       }
       if (e.key === 'ArrowDown') {
@@ -138,17 +165,17 @@ export function CommandPalette() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [isOpen, filtered, selectedIndex])
+  }, [commandPaletteOpen, filtered, selectedIndex, setCommandPaletteOpen])
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {commandPaletteOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className={styles.overlay}
-          onClick={() => setIsOpen(false)}
+          onClick={() => setCommandPaletteOpen(false)}
         >
           <motion.div
             initial={{ scale: 0.96, opacity: 0 }}
@@ -168,24 +195,33 @@ export function CommandPalette() {
                   className="min-w-0 flex-1 border-0 bg-transparent shadow-none outline-none focus-visible:ring-0"
                 />
               </div>
-              <ul className={styles.commandList}>
-                {filtered.map((cmd, i) => (
-                  <li key={cmd.id}>
-                    <button
-                      type="button"
-                      className={`${styles.commandItem} ${i === selectedIndex ? styles.itemSelected : ''}`}
-                      onClick={() => cmd.action()}
-                      onMouseEnter={() => setSelectedIndex(i)}
-                    >
-                      <span className={styles.commandLabel}>{cmd.label}</span>
-                      <span className={styles.commandMeta}>
-                        <span className={styles.commandCategory}>{cmd.category}</span>
-                        {cmd.shortcut && <span className={styles.commandShortcut}>{cmd.shortcut}</span>}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              {filtered.length === 0 ? (
+                <div className={styles.emptyState}>{t('ui.noResults')}</div>
+              ) : (
+                <ul className={styles.commandList}>
+                  {filtered.map((cmd, i) => (
+                    <li key={cmd.id}>
+                      <button
+                        type="button"
+                        className={`${styles.commandItem} ${i === selectedIndex ? styles.itemSelected : ''}`}
+                        onClick={() => cmd.action()}
+                        onMouseEnter={() => setSelectedIndex(i)}
+                      >
+                        <span className={styles.commandLabel}>{cmd.label}</span>
+                        <span className={styles.commandMeta}>
+                          <span className={styles.commandCategory}>{cmd.category}</span>
+                          {cmd.shortcut && <span className={styles.commandShortcut}>{cmd.shortcut}</span>}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <footer className={styles.footer}>
+                <span>↑↓ {t('commands.navigation')}</span>
+                <span>↵ {t('env.select')}</span>
+                <span>Esc {t('ui.close')}</span>
+              </footer>
             </div>
           </motion.div>
         </motion.div>

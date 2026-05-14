@@ -94,6 +94,11 @@
   width: 100%;
   cursor: pointer;
   background: transparent;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 }
 
 .link:hover,
@@ -106,12 +111,64 @@
   border-color: color-mix(in oklab, var(--color-primary) 28%, var(--color-border));
   background: color-mix(in oklab, var(--color-primary) 14%, transparent);
   color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font: inherit;
+  font-size: 0.84rem;
+  line-height: 1.2;
+  min-height: 32px;
+  padding: 0.4rem 0.55rem;
+  text-align: left;
 }
 
 .link svg,
 .linkActive svg,
 .action svg {
   flex-shrink: 0;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  margin-left: auto;
+  background: var(--color-muted-foreground);
+  opacity: 0.5;
+
+  &[data-status='connected'] {
+    background: #22c55e;
+    opacity: 1;
+  }
+
+  &[data-status='connecting'],
+  &[data-status='reconnecting'] {
+    background: var(--color-primary);
+    opacity: 1;
+    animation: pulse 1s ease-in-out infinite;
+  }
+
+  &[data-status='failed'] {
+    background: var(--color-destructive);
+    opacity: 0.85;
+  }
+
+  &[data-status='disconnected'] {
+    background: var(--color-muted-foreground);
+    opacity: 0.4;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .truncate {

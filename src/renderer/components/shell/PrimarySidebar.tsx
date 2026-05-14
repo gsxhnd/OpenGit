@@ -2,6 +2,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Folder, LayoutDashboard, MonitorPlay, Plug, Search, Server, Settings, TerminalSquare } from 'lucide-react'
 import { useAppStore } from '../../store'
+import { useSshConnect } from '../../hooks/useSshConnect'
 import styles from './PrimarySidebar.module.scss'
 
 function getSection(pathname: string) {
@@ -17,6 +18,7 @@ export function PrimarySidebar() {
   const navigate = useNavigate()
   const location = useLocation()
   const { sessions, settings } = useAppStore()
+  const { connectSaved, connecting } = useSshConnect()
   const section = getSection(location.pathname)
   const hosts = settings?.hosts ?? []
 
@@ -86,10 +88,16 @@ export function PrimarySidebar() {
           <div className={styles.empty}>{t('workbench.noSavedConnections')}</div>
         ) : (
           hosts.map((host) => (
-            <NavLink key={host.id} to="/connections" className={({ isActive }) => linkClass(isActive)}>
+            <button
+              key={host.id}
+              type="button"
+              className={styles.action}
+              disabled={connecting}
+              onClick={() => { void connectSaved(host) }}
+            >
               <Server size={14} />
               <span className={styles.truncate}>{host.label}</span>
-            </NavLink>
+            </button>
           ))
         )}
       </div>
@@ -102,18 +110,20 @@ export function PrimarySidebar() {
       <NavLink to="/local-terminal" className={({ isActive }) => linkClass(isActive)}>
         <TerminalSquare size={14} />
         {t('nav.localShell')}
+        <span className={styles.statusDot} data-status="connected" title="connected" />
       </NavLink>
       {sessions.length === 0 ? (
         <div className={styles.empty}>{t('workbench.noActiveSessions')}</div>
       ) : (
         sessions.map((session) => (
           <NavLink
-            key={session.connectionId}
+            key={`session-${session.connectionId}`}
             to={`/session/${session.connectionId}`}
             className={({ isActive }) => linkClass(isActive)}
           >
             <Server size={14} />
             <span className={styles.truncate}>{session.hostLabel}</span>
+            <span className={styles.statusDot} data-status={session.status} title={session.status} />
           </NavLink>
         ))
       )}
@@ -128,7 +138,7 @@ export function PrimarySidebar() {
       ) : (
         sessions.map((session) => (
           <NavLink
-            key={session.connectionId}
+            key={`files-${session.connectionId}`}
             to={`/session/${session.connectionId}`}
             className={({ isActive }) => linkClass(isActive)}
           >
@@ -143,17 +153,17 @@ export function PrimarySidebar() {
   const renderSettings = () => (
     <div className={styles.group}>
       <div className={styles.groupTitle}>{t('settings.title')}</div>
-      <button type="button" className={styles.linkActive}>
+      <NavLink to="/settings" end className={({ isActive }) => linkClass(isActive)}>
         <Settings size={14} />
-        {t('settings.appearance')}
-      </button>
+        {t('workbench.settingsAppearance')}
+      </NavLink>
       <button type="button" className={styles.action}>
         <TerminalSquare size={14} />
-        {t('settings.terminal')}
+        {t('workbench.settingsTerminal')}
       </button>
       <button type="button" className={styles.action}>
         <Plug size={14} />
-        {t('settings.remoteHosts')}
+        {t('workbench.settingsRemoteHosts')}
       </button>
     </div>
   )

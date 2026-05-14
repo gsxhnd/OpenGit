@@ -17,6 +17,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  position: relative;
   color: var(--color-muted-foreground);
   text-decoration: none;
   transition: background 0.15s ease;
@@ -30,4 +31,21 @@
 .itemActive {
   background: color-mix(in oklab, var(--color-primary) 28%, transparent);
   color: var(--color-foreground);
+}
+
+.badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 14px;
+  text-align: center;
+  padding: 0 3px;
+  border: 1.5px solid var(--color-sidebar);
 }

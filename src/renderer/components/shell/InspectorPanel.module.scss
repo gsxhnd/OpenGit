@@ -23,7 +23,7 @@
 }
 
 .title {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--color-muted-foreground);
   text-transform: uppercase;
@@ -32,6 +32,39 @@
 
 .closeBtn {
   color: var(--color-muted-foreground);
+}
+
+.tabBar {
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-title-bar);
+}
+
+.tab,
+.tabActive {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.72rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.tab:hover {
+  color: var(--color-foreground);
+}
+
+.tabActive {
+  color: var(--color-foreground);
+  border-bottom-color: var(--color-primary);
+  background: var(--color-background);
 }
 
 .body {
@@ -43,7 +76,46 @@
 
 .placeholder {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   line-height: 1.5;
   color: var(--color-muted-foreground);
+}
+
+.propertiesList {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.propertyRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  dt {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-muted-foreground);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.8rem;
+    word-break: break-all;
+  }
+}
+
+.mono {
+  font-family: var(--font-mono, 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace);
+  font-size: 0.72rem !important;
+}
+
+.statusConnected {
+  color: #22c55e;
+}
+
+.statusOther {
+  color: var(--color-destructive);
 }

@@ -10,6 +10,11 @@
   overflow: auto;
 }
 
+/* ContextMenuTrigger wrapper — transparent in layout so .tab flex children work */
+.tabs > [data-slot='context-menu'] > [data-slot='context-menu-trigger'] {
+  display: contents;
+}
+
 .tab,
 .tabActive {
   display: inline-flex;

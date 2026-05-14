@@ -11,6 +11,7 @@ import { ptyApi } from "./pty";
 import { sshApi } from "./ssh";
 import { knownHostsApi } from "./known-hosts";
 import { sftpApi } from "./sftp";
+import { localFilesApi } from "./local-files";
 
 /**
  * 合并所有API模块为统一的api对象
@@ -75,6 +76,14 @@ export const api = {
   sftpDownloadToLocal: sftpApi.downloadToLocal,
   sftpExists: sftpApi.exists,
   onSftpTransferProgress: sftpApi.onTransferProgress,
+
+  // 本地文件操作 | Local File Operations
+  localReaddir: localFilesApi.readdir,
+  localStat: localFilesApi.stat,
+  localMkdir: localFilesApi.mkdir,
+  localRmdir: localFilesApi.rmdir,
+  localUnlink: localFilesApi.unlink,
+  localRename: localFilesApi.rename,
 };
 
 /**
@@ -90,4 +99,5 @@ export {
   sshApi,
   knownHostsApi,
   sftpApi,
+  localFilesApi,
 };

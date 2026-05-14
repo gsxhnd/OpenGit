@@ -84,6 +84,9 @@ interface AppState {
   /** Right-hand Inspector panel (properties / tasks) — Phase 0 placeholder */
   inspectorOpen: boolean;
 
+  /** Command palette open state */
+  commandPaletteOpen: boolean;
+
   // ========================================================================
   // 配置操作 | Configuration actions
   // ========================================================================
@@ -150,6 +153,12 @@ interface AppState {
    */
   setActiveSessionId: (connectionId: string | null) => void;
 
+  /**
+   * 更新远程会话的状态（生命周期）
+   * Update remote session lifecycle status
+   */
+  updateSessionStatus: (connectionId: string, status: import('@shared/types').SessionStatus) => void;
+
   // ========================================================================
   // Toast通知操作 | Toast notification actions
   // ========================================================================
@@ -171,6 +180,9 @@ interface AppState {
 
   setInspectorOpen: (open: boolean) => void;
   toggleInspector: () => void;
+
+  toggleCommandPalette: () => void;
+  setCommandPaletteOpen: (open: boolean) => void;
 }
 
 // ============================================================================
@@ -203,6 +215,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   activeSessionId: null,
   toasts: [],
   inspectorOpen: false,
+  commandPaletteOpen: false,
 
   // ========================================================================
   // 配置操作实现 | Configuration actions implementation
@@ -278,11 +291,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       const existing = state.sessions.find(
         (s) => s.connectionId === meta.connectionId,
       );
-      // 如果会话已存在，只激活它 | If session exists, just activate it
-      if (existing) return { activeSessionId: meta.connectionId };
-      // 否则添加新会话 | Otherwise add new session
+      if (existing) {
+        return {
+          activeSessionId: meta.connectionId,
+          sessions: state.sessions.map((s) =>
+            s.connectionId === meta.connectionId ? { ...s, ...meta } : s,
+          ),
+        }
+      }
       return {
-        sessions: [...state.sessions, meta],
+        sessions: [...state.sessions, { ...meta, status: meta.status || 'connecting' }],
         activeSessionId: meta.connectionId,
       };
     });
@@ -315,6 +333,13 @@ export const useAppStore = create<AppState>((set, get) => ({
    * Set active session
    */
   setActiveSessionId: (connectionId) => set({ activeSessionId: connectionId }),
+
+  updateSessionStatus: (connectionId, status) =>
+    set((state) => ({
+      sessions: state.sessions.map((s) =>
+        s.connectionId === connectionId ? { ...s, status } : s,
+      ),
+    })),
 
   // ========================================================================
   // Toast操作实现 | Toast actions implementation
@@ -355,4 +380,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   setInspectorOpen: (open) => set({ inspectorOpen: open }),
 
   toggleInspector: () => set((state) => ({ inspectorOpen: !state.inspectorOpen })),
+
+  toggleCommandPalette: () => set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
+
+  setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
 }));

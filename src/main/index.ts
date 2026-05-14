@@ -7,6 +7,7 @@ import { join } from "path";
 import { updateElectronApp } from "update-electron-app";
 import { registerSettingsHandlers } from "./handlers/settings-handler";
 import { registerSshSftpHandlers } from "./handlers/ssh-sftp-handler";
+import { registerLocalFilesHandlers } from "./handlers/local-files-handler";
 import { loadSettings, saveSettings } from "./config-manager";
 import { registerPtyHandlers } from "./pty-handlers";
 import { IPC_CHANNELS } from "../shared/ipc";
@@ -229,6 +230,7 @@ app.whenReady().then(() => {
   registerSettingsHandlers();
   registerPtyHandlers();
   registerSshSftpHandlers();
+  registerLocalFilesHandlers();
   createWindow();
 
   app.on("activate", () => {

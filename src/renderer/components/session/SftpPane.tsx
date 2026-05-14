@@ -16,13 +16,19 @@ interface SftpPaneProps {
     parent: string
     newFolder: string
     upload: string
+    download: string
+    rename: string
+    delete: string
+    properties: string
   }
   onNavigate: (path: string) => void
   onOpenFile: (path: string) => void
-  onEntryContextMenu: (event: React.MouseEvent, entry: SftpListEntry) => void
-  onListContextMenu: (event: React.MouseEvent) => void
   onNewFolder: () => void
   onUpload: () => void
+  onDownload: (entry: SftpListEntry) => void
+  onRename: (entry: SftpListEntry) => void
+  onDelete: (entry: SftpListEntry) => void
+  onProperties: (entry: SftpListEntry) => void
 }
 
 export function SftpPane({
@@ -33,10 +39,12 @@ export function SftpPane({
   labels,
   onNavigate,
   onOpenFile,
-  onEntryContextMenu,
-  onListContextMenu,
   onNewFolder,
   onUpload,
+  onDownload,
+  onRename,
+  onDelete,
+  onProperties,
 }: SftpPaneProps) {
   const parts = cwd.split('/').filter(Boolean)
 
@@ -75,10 +83,20 @@ export function SftpPane({
         connectionId={connectionId}
         cwd={cwd}
         entries={entries}
+        labels={{
+          newFolder: labels.newFolder,
+          download: labels.download,
+          rename: labels.rename,
+          delete: labels.delete,
+          properties: labels.properties,
+        }}
         onNavigate={onNavigate}
         onOpenFile={onOpenFile}
-        onContextMenu={onEntryContextMenu}
-        onListContextMenu={onListContextMenu}
+        onNewFolder={onNewFolder}
+        onDownload={onDownload}
+        onRename={onRename}
+        onDelete={onDelete}
+        onProperties={onProperties}
       />
     </aside>
   )

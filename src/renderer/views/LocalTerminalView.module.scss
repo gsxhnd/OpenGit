@@ -13,12 +13,36 @@
   gap: 0.75rem;
   padding: 0.4rem 0.75rem;
   border-bottom: 1px solid var(--color-border);
-  background: color-mix(in oklab, var(--color-muted) 40%, transparent);
+  background: color-mix(in oklab, var(--color-destructive) 10%, transparent);
+}
+
+.exitedMessage {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
 }
 
 .exitedHint {
   font-size: 0.8rem;
   color: var(--color-muted-foreground);
+}
+
+.exitedError {
+  font-size: 0.75rem;
+  color: var(--color-destructive);
+  font-family: var(--font-mono);
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .term {

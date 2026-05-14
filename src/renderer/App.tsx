@@ -22,7 +22,7 @@ import { appRoutes, pathToView } from './routes'
 import styles from './App.module.scss'
 
 function AppContent() {
-  const { loadSettings, language, inspectorOpen, setInspectorOpen } = useAppStore()
+  const { loadSettings, language, inspectorOpen, setInspectorOpen, toggleCommandPalette } = useAppStore()
   const location = useLocation()
   const { i18n } = useTranslation()
   const showSessionTabs = location.pathname !== '/'
@@ -55,7 +55,7 @@ function AppContent() {
 
   return (
     <div className={styles.appContainer}>
-      <TitleBar />
+      <TitleBar onOpenCommandPalette={() => toggleCommandPalette()} />
       <div className={styles.bodyRow}>
         <ActivityBar />
         <PrimarySidebar />
