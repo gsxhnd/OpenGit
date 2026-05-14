@@ -10,10 +10,12 @@ export interface XtermPaneProps {
   fontSize: number
   fontFamily: string
   scrollback: number
+  cursorStyle?: 'block' | 'underline' | 'bar'
+  windowsShell?: 'powershell' | 'cmd' | 'wsl'
   onExit?: () => void
 }
 
-export function XtermPane({ mode, fontSize, fontFamily, scrollback, onExit }: XtermPaneProps) {
+export function XtermPane({ mode, fontSize, fontFamily, scrollback, cursorStyle = 'block', windowsShell, onExit }: XtermPaneProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const sessionIdRef = useRef<string | null>(null)
 
@@ -26,6 +28,7 @@ export function XtermPane({ mode, fontSize, fontFamily, scrollback, onExit }: Xt
       fontFamily,
       scrollback,
       cursorBlink: true,
+      cursorStyle,
     })
     const fit = new FitAddon()
     term.loadAddon(fit)
@@ -62,6 +65,7 @@ export function XtermPane({ mode, fontSize, fontFamily, scrollback, onExit }: Xt
         const { sessionId } = await window.api.ptyLocalCreate({
           cols: term.cols,
           rows: term.rows,
+          shell: windowsShell,
         })
         sessionIdRef.current = sessionId
         unsubs.push(
@@ -101,7 +105,7 @@ export function XtermPane({ mode, fontSize, fontFamily, scrollback, onExit }: Xt
       term.dispose()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mode switches remount terminal
-  }, [mode.kind, mode.kind === 'ssh' ? mode.connectionId : 'local', fontSize, fontFamily, scrollback])
+  }, [mode.kind, mode.kind === 'ssh' ? mode.connectionId : 'local', fontSize, fontFamily, scrollback, cursorStyle, windowsShell])
 
-  return <div ref={wrapRef} className="h-full min-h-[120px] w-full overflow-hidden rounded-md bg-[#1a1b26] p-1" />
+  return <div ref={wrapRef} className="h-full min-h-[120px] w-full overflow-hidden rounded-md bg-background p-1" />
 }

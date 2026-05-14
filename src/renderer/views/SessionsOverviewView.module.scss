@@ -1,0 +1,76 @@
+.container {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 1rem;
+  overflow: auto;
+  padding: 1rem;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.title {
+  color: var(--color-foreground);
+  font-size: 1.25rem;
+  font-weight: 650;
+}
+
+.subtitle {
+  margin-top: 0.25rem;
+  color: var(--color-muted-foreground);
+  font-size: 0.85rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+
+.card {
+  display: flex;
+  min-height: 120px;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-card);
+  padding: 0.9rem;
+}
+
+.cardTitle {
+  color: var(--color-foreground);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.cardMeta {
+  margin-top: 0.25rem;
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.status {
+  width: fit-content;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--color-success) 12%, transparent);
+  color: var(--color-success);
+  padding: 0.15rem 0.45rem;
+  font-size: 0.7rem;
+  margin-bottom: 0.35rem;
+}
+
+.empty {
+  border: 1px dashed var(--color-border);
+  border-radius: 10px;
+  color: var(--color-muted-foreground);
+  padding: 1rem;
+}

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { SftpListEntry } from '@shared/types'
 import { ChevronRight, Folder, File, Loader } from 'lucide-react'
+import { joinRemote } from '../../lib/sftp/path'
+import { formatSize } from '../../lib/sftp/format'
 import styles from './SftpTreeView.module.scss'
 
 interface TreeNode {
@@ -11,18 +13,6 @@ interface TreeNode {
   children: TreeNode[] | null
   loading: boolean
   expanded: boolean
-}
-
-function joinRemote(parent: string, name: string): string {
-  if (parent === '/') return `/${name}`
-  return `${parent.replace(/\/$/, '')}/${name}`
-}
-
-function formatSize(bytes: number): string {
-  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)}G`
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)}M`
-  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)}K`
-  return `${bytes}B`
 }
 
 function entryToNode(entry: SftpListEntry, parentPath: string): TreeNode {
@@ -71,8 +61,8 @@ export function SftpTreeView({
     if (loadedChildren.has(dirPath) || loadingPaths.has(dirPath)) return
     setLoadingPaths((prev) => new Set(prev).add(dirPath))
     try {
-      const list = await window.api.sftpReaddir(connectionId, dirPath)
-      const nodes = list.map((e) => entryToNode(e, dirPath))
+      const list = await window.api.sftpReaddir(connectionId, dirPath) as SftpListEntry[]
+      const nodes = list.map((entry) => entryToNode(entry, dirPath))
       setLoadedChildren((prev) => {
         const next = new Map(prev)
         next.set(dirPath, nodes)
@@ -141,6 +131,7 @@ export function SftpTreeView({
               longname: '',
               isDirectory: node.isDirectory,
               size: node.size,
+              mtimeMs: null,
             }
             onContextMenu(e, fakeEntry)
           }}

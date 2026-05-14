@@ -7,10 +7,14 @@ import { useTranslation } from 'react-i18next'
 import { useAppStore } from './store'
 import { useAppKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useTheme } from './hooks/useTheme'
-import { TitleBar } from './components/TitleBar'
-import { AppNav } from './components/AppNav'
-import { ToastContainer } from './components/ToastContainer'
-import { CommandPalette } from './components/CommandPalette'
+import { TitleBar } from './components/shell/TitleBar'
+import { ActivityBar } from './components/shell/ActivityBar'
+import { PrimarySidebar } from './components/shell/PrimarySidebar'
+import { SessionTabs } from './components/shell/SessionTabs'
+import { PanelContainer } from './components/shell/PanelContainer'
+import { StatusBar } from './components/shell/StatusBar'
+import { ToastContainer } from './components/shell/ToastContainer'
+import { CommandPalette } from './components/shell/CommandPalette'
 import { appRoutes, pathToView } from './routes'
 import styles from './App.module.scss'
 
@@ -18,6 +22,7 @@ function AppContent() {
   const { loadSettings, language } = useAppStore()
   const location = useLocation()
   const { i18n } = useTranslation()
+  const showSessionTabs = location.pathname !== '/'
 
   useAppKeyboardShortcuts()
   useTheme()
@@ -49,16 +54,21 @@ function AppContent() {
     <div className={styles.appContainer}>
       <TitleBar />
       <div className={styles.bodyRow}>
-        <AppNav />
+        <ActivityBar />
+        <PrimarySidebar />
         <main className={styles.mainContent}>
-          <Routes>
-            {appRoutes.map((route) => (
-              <Route key={route.path} path={route.path} element={route.element} />
-            ))}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          {showSessionTabs ? <SessionTabs /> : null}
+          <PanelContainer>
+            <Routes>
+              {appRoutes.map((route) => (
+                <Route key={route.path} path={route.path} element={route.element} />
+              ))}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </PanelContainer>
         </main>
       </div>
+      <StatusBar />
       <ToastContainer />
       <CommandPalette />
     </div>

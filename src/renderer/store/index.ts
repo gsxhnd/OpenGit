@@ -186,7 +186,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   // 初始状态 | Initial state
   // ========================================================================
   settings: null,
-  currentView: "welcome",
+  currentView: "dashboard",
   previousView: null,
   language: "en",
   sessions: [],

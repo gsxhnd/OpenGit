@@ -1,0 +1,76 @@
+.terminalPanel {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-card);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 34px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.35rem 0.55rem;
+  background: var(--color-title-bar);
+}
+
+.titleGroup,
+.metaGroup {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.title {
+  overflow: hidden;
+  color: var(--color-foreground);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge,
+.status {
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  padding: 0.08rem 0.45rem;
+  font-size: 0.68rem;
+  color: var(--color-muted-foreground);
+}
+
+.status[data-state='connected'] {
+  border-color: color-mix(in oklab, var(--color-success) 35%, var(--color-border));
+  color: var(--color-success);
+}
+
+.status[data-state='connecting'] {
+  border-color: color-mix(in oklab, var(--color-warning) 35%, var(--color-border));
+  color: var(--color-warning);
+}
+
+.status[data-state='disconnected'] {
+  border-color: color-mix(in oklab, var(--color-muted-foreground) 35%, var(--color-border));
+}
+
+.meta {
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.body {
+  min-height: 0;
+  flex: 1;
+  padding: 0.4rem;
+}

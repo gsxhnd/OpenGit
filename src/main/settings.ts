@@ -31,6 +31,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
     fontSize: 14,
     scrollback: 5000,
     fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+    cursorStyle: 'block',
+    windowsShell: 'powershell',
   },
   editor: {
     fontSize: 14,
@@ -69,6 +71,7 @@ function migrateSettings(s: AppSettings): AppSettings {
     s.hosts = []
   }
   if (!s.terminal) s.terminal = { ...DEFAULT_SETTINGS.terminal }
+  else s.terminal = { ...DEFAULT_SETTINGS.terminal, ...s.terminal }
   if (!s.editor) s.editor = { ...DEFAULT_SETTINGS.editor }
   return s
 }

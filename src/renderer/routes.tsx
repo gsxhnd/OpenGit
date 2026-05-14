@@ -1,19 +1,27 @@
 import type { ViewType } from '@shared/types'
-import { WelcomeView } from './views/WelcomeView'
+import { DashboardView } from './views/DashboardView'
+import { ConnectionsView } from './views/ConnectionsView'
 import { LocalTerminalView } from './views/LocalTerminalView'
 import { SessionView } from './views/SessionView'
+import { SessionsOverviewView } from './views/SessionsOverviewView'
+import { FilesView } from './views/FilesView'
 import { SettingsView } from './views/SettingsView'
 
 const VIEW_TO_PATH: Record<ViewType, string> = {
-  welcome: '/',
+  dashboard: '/',
+  connections: '/connections',
   'local-terminal': '/local-terminal',
-  session: '/session',
+  session: '/sessions',
+  files: '/files',
   settings: '/settings',
 }
 
 const PATH_TO_VIEW: Record<string, ViewType> = {
-  '/': 'welcome',
+  '/': 'dashboard',
+  '/connections': 'connections',
   '/local-terminal': 'local-terminal',
+  '/sessions': 'session',
+  '/files': 'files',
   '/session': 'session',
   '/settings': 'settings',
 }
@@ -24,12 +32,15 @@ export function viewToPath(view: ViewType): string {
 
 export function pathToView(pathname: string): ViewType {
   if (pathname.startsWith('/session')) return 'session'
-  return PATH_TO_VIEW[pathname] || 'welcome'
+  return PATH_TO_VIEW[pathname] || 'dashboard'
 }
 
 export const appRoutes = [
-  { path: '/', element: <WelcomeView /> },
+  { path: '/', element: <DashboardView /> },
+  { path: '/connections', element: <ConnectionsView /> },
   { path: '/local-terminal', element: <LocalTerminalView /> },
+  { path: '/sessions', element: <SessionsOverviewView /> },
   { path: '/session/:connectionId', element: <SessionView /> },
+  { path: '/files', element: <FilesView /> },
   { path: '/settings', element: <SettingsView /> },
 ]

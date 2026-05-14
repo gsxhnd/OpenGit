@@ -5,87 +5,13 @@
   min-height: 0;
 }
 
-/* Session tabs */
-.tabs {
-  display: flex;
-  align-items: center;
-  background: var(--color-title-bar);
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
-  height: 32px;
-}
-
-.tabList {
-  display: flex;
-  flex: 1;
-  overflow-x: auto;
-  min-width: 0;
-}
-
-.tab {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.75rem;
-  border: none;
-  border-right: 1px solid var(--color-border);
-  background: transparent;
-  color: var(--color-muted-foreground);
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.tab:hover {
-  background: var(--color-muted);
-  color: var(--color-foreground);
-}
-
-.tabActive {
-  background: var(--color-background);
-  color: var(--color-foreground);
-  border-bottom: 2px solid var(--color-primary);
-}
-
-.tabLabel {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tabClose {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  opacity: 0.6;
-}
-
-.tabClose:hover {
-  opacity: 1;
-  background: var(--color-destructive);
-  color: white;
-}
-
-.newTabBtn {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.4rem 0.75rem;
+  min-height: 38px;
+  padding: 0.35rem 0.75rem;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
   background: var(--color-title-bar);
@@ -107,9 +33,10 @@
   font-weight: 700;
   letter-spacing: 0.05em;
   padding: 0.15rem 0.35rem;
-  border-radius: 4px;
-  background: color-mix(in oklab, var(--color-primary) 35%, transparent);
-  color: var(--color-foreground);
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--color-primary) 32%, var(--color-border));
+  background: color-mix(in oklab, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
 }
 
 .sessionTitle {
@@ -157,6 +84,7 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  min-height: 38px;
   padding: 0.35rem 0.5rem;
   border-bottom: 1px solid var(--color-border);
 }
@@ -444,7 +372,7 @@
 .termArea {
   flex: 1;
   min-height: 180px;
-  padding: 0.35rem;
+  padding: 0.5rem;
   display: flex;
   flex-direction: column;
 }

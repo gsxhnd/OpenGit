@@ -13,13 +13,13 @@ export const ptyApi = {
   /**
    * 创建新的本地PTY会话
    * 返回 { sessionId }
-   * 参数: 可选配置 { cwd?, cols?, rows? }
+   * 参数: 可选配置 { cwd?, cols?, rows?, shell? }
    *
    * Create new local PTY session
    * Returns { sessionId }
-   * Arguments: Optional config { cwd?, cols?, rows? }
+   * Arguments: Optional config { cwd?, cols?, rows?, shell? }
    */
-  create: (opts?: { cwd?: string; cols?: number; rows?: number }) =>
+  create: (opts?: { cwd?: string; cols?: number; rows?: number; shell?: "powershell" | "cmd" | "wsl" }) =>
     ipcRenderer.invoke(IPC_CHANNELS.PTY_LOCAL_CREATE, opts),
 
   /**

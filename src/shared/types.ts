@@ -29,6 +29,8 @@ export interface TerminalSettings {
   fontSize: number
   scrollback: number
   fontFamily: string
+  cursorStyle: 'block' | 'underline' | 'bar'
+  windowsShell: 'powershell' | 'cmd' | 'wsl'
 }
 
 export interface EditorSettings {
@@ -57,7 +59,7 @@ export interface Toast {
 }
 
 /** App navigation views */
-export type ViewType = 'welcome' | 'local-terminal' | 'session' | 'settings'
+export type ViewType = 'dashboard' | 'connections' | 'local-terminal' | 'session' | 'files' | 'settings'
 
 /** Active remote session (after connect) */
 export interface RemoteSessionMeta {

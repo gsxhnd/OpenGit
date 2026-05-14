@@ -1,0 +1,131 @@
+.sidebar {
+  width: 248px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-sidebar);
+  padding: 0;
+  overflow: auto;
+}
+
+.header {
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.8rem 0.85rem;
+  background: color-mix(in oklab, var(--color-title-bar) 72%, var(--color-sidebar));
+}
+
+.title {
+  color: var(--color-foreground);
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.subtitle {
+  margin-top: 0.25rem;
+  color: var(--color-muted-foreground);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 32px;
+  margin: 0.75rem 0.75rem 0;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-background);
+  color: var(--color-muted-foreground);
+  padding: 0 0.55rem;
+}
+
+.search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: 0.78rem;
+}
+
+.search input::placeholder {
+  color: var(--color-muted-foreground);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem;
+}
+
+.group + .group {
+  border-top: 1px solid var(--color-border);
+}
+
+.groupTitle {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted-foreground);
+  padding: 0 0.25rem 0.35rem;
+}
+
+.link,
+.linkActive,
+.action {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  font: inherit;
+  color: var(--color-muted-foreground);
+  font-size: 0.84rem;
+  line-height: 1.2;
+  min-height: 32px;
+  padding: 0.4rem 0.55rem;
+  text-align: left;
+}
+
+.action {
+  width: 100%;
+  cursor: pointer;
+  background: transparent;
+}
+
+.link:hover,
+.action:hover {
+  background: var(--color-muted);
+  color: var(--color-foreground);
+}
+
+.linkActive {
+  border-color: color-mix(in oklab, var(--color-primary) 28%, var(--color-border));
+  background: color-mix(in oklab, var(--color-primary) 14%, transparent);
+  color: var(--color-primary);
+}
+
+.link svg,
+.linkActive svg,
+.action svg {
+  flex-shrink: 0;
+}
+
+.truncate {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  color: var(--color-muted-foreground);
+  font-size: 0.78rem;
+  line-height: 1.4;
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  padding: 0.65rem;
+}

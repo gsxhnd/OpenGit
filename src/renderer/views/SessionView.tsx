@@ -2,75 +2,20 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store'
-import { Button } from '../components/ui/button'
-import { XtermPane } from '../components/XtermPane'
+import { TerminalPanel } from '../components/terminal/TerminalPanel'
 import { RemoteMonacoEditor } from '../components/RemoteMonacoEditor'
-import { SftpTreeView } from '../components/SftpTreeView'
 import type { SftpListEntry } from '@shared/types'
-import { ArrowUp, Upload, Download, Plus, X, FolderPlus, Trash2, Pencil, Info } from 'lucide-react'
+import { joinRemote } from '../lib/sftp/path'
+import { formatSize } from '../lib/sftp/format'
+import { SessionHeader } from '../components/session/SessionHeader'
+import { SftpPane } from '../components/session/SftpPane'
+import { SessionContextMenu } from '../components/session/SessionContextMenu'
+import { NewFolderDialog } from '../components/session/NewFolderDialog'
+import { PropertiesDialog } from '../components/session/PropertiesDialog'
+import type { ContextMenuState, PropertiesModalState, SessionUIState } from '../components/session/types'
 import styles from './SessionView.module.scss'
 
-function joinRemote(parent: string, name: string): string {
-  if (parent === '/') return `/${name}`
-  return `${parent.replace(/\/$/, '')}/${name}`
-}
-
-function parentPath(p: string): string {
-  if (p === '/' || p === '') return '/'
-  const trimmed = p.replace(/\/$/, '')
-  const i = trimmed.lastIndexOf('/')
-  if (i <= 0) return '/'
-  return trimmed.slice(0, i) || '/'
-}
-
-function formatSize(bytes: number): string {
-  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)}G`
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)}M`
-  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)}K`
-  return `${bytes}B`
-}
-
-function formatPerms(entry: SftpListEntry): string {
-  if (entry.longname) {
-    const match = entry.longname.match(/^([d\-][rwx\-]{9}|[d\-][rwx\-]{9}[+@])/)
-    if (match) return match[1]
-  }
-  return entry.isDirectory ? 'd---------' : '----------'
-}
-
-interface TransferItem {
-  id: number
-  kind: 'upload' | 'download'
-  path: string
-  bytes: number
-  total: number
-  done: boolean
-  error?: string
-}
-
 let transferIdCounter = 0
-
-/** Per-session UI state */
-interface SessionUIState {
-  shellReady: boolean
-  cwd: string
-  entries: SftpListEntry[]
-  loadingDir: boolean
-  editor: { path: string; text: string } | null
-  transfers: TransferItem[]
-}
-
-interface ContextMenuState {
-  visible: boolean
-  x: number
-  y: number
-  entry: SftpListEntry | null
-}
-
-interface PropertiesModal {
-  entry: SftpListEntry | null
-  detail: SftpListEntry | null
-}
 
 export function SessionView() {
   const { t } = useTranslation()
@@ -103,7 +48,7 @@ export function SessionView() {
   const [, rerender] = useReducer((n: number) => n + 1, 0)
 
   const [ctxMenu, setCtxMenu] = useState<ContextMenuState>({ visible: false, x: 0, y: 0, entry: null })
-  const [propsModal, setPropsModal] = useState<PropertiesModal>({ entry: null, detail: null })
+  const [propsModal, setPropsModal] = useState<PropertiesModalState>({ entry: null, detail: null })
   const [newFolderPrompt, setNewFolderPrompt] = useState(false)
   const [newFolderValue, setNewFolderValue] = useState('')
 
@@ -217,11 +162,6 @@ export function SessionView() {
     if (sessions.length <= 1) {
       navigate('/')
     }
-  }
-
-  const switchTo = (targetCid: string) => {
-    setActiveSessionId(targetCid)
-    navigate(`/session/${targetCid}`)
   }
 
   const openFile = async (remotePath: string) => {
@@ -414,178 +354,57 @@ export function SessionView() {
 
   return (
     <div className={styles.root}>
-      {/* Session tabs */}
-      <header className={styles.tabs}>
-        <div className={styles.tabList}>
-          {sessions.map((ses) => (
-            <button
-              key={ses.connectionId}
-              type="button"
-              className={`${styles.tab} ${ses.connectionId === cid ? styles.tabActive : ''}`}
-              onClick={() => switchTo(ses.connectionId)}
-            >
-              <span className={styles.tabLabel}>
-                {ses.hostLabel || `${ses.username}@${ses.host}`}
-              </span>
-              {ses.connectionId === cid && (
-                <span
-                  className={styles.tabClose}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    void disconnect()
-                  }}
-                >
-                  <X size={12} />
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          className={styles.newTabBtn}
-          onClick={() => navigate('/')}
-          title={t('session.newSession')}
-        >
-          <Plus size={14} />
-        </Button>
-      </header>
-
-      {/* Session body */}
-      <div className={styles.header}>
-        <div className={styles.headerMain}>
-          <span className={styles.badge}>SSH</span>
-          <span className={styles.sessionTitle}>
-            {meta.username}@{meta.host}:{meta.port}
-          </span>
-          {meta.fingerprint && (
-            <span className={styles.fingerprint}>{meta.fingerprint.slice(0, 16)}</span>
-          )}
-        </div>
-        <div className={styles.headerActions}>
-          <Button size="sm" variant="destructive" onClick={() => void disconnect()}>
-            {t('session.disconnect')}
-          </Button>
-        </div>
-      </div>
+      <SessionHeader
+        meta={meta}
+        fingerprint={meta.fingerprint}
+        disconnectLabel={t('session.disconnect')}
+        onDisconnect={() => void disconnect()}
+      />
 
       <div className={styles.body}>
-        <aside className={styles.sftp}>
-          <div className={styles.sftpToolbar}>
-            <Button size="sm" variant="ghost" title={t('session.parent')} onClick={() => navigateTo(parentPath(st.cwd))}>
-              <ArrowUp size={16} />
-            </Button>
-            <Button size="sm" variant="ghost" title={t('session.newFolder')} onClick={handleNewFolder}>
-              <FolderPlus size={14} />
-            </Button>
-            <Button size="sm" variant="secondary" onClick={() => void handleUpload()}>
-              <Upload size={14} className="mr-1" />
-              {t('session.upload')}
-            </Button>
-          </div>
-          <div className={styles.breadcrumb}>
-            {(() => {
-              const parts = st.cwd.split('/').filter(Boolean)
-              return (
-                <>
-                  <button type="button" className={styles.breadcrumbItem} onClick={() => navigateTo('/')}>
-                    /
-                  </button>
-                  {parts.map((part, i) => {
-                    const path = '/' + parts.slice(0, i + 1).join('/')
-                    return (
-                      <span key={path}>
-                        <span className={styles.breadcrumbSep}>/</span>
-                        <button type="button" className={styles.breadcrumbItem} onClick={() => navigateTo(path)}>
-                          {part}
-                        </button>
-                      </span>
-                    )
-                  })}
-                </>
-              )
-            })()}
-          </div>
+        <SftpPane
+          connectionId={cid}
+          cwd={st.cwd}
+          entries={st.entries}
+          transfers={activeTransfers}
+          labels={{ parent: t('session.parent'), newFolder: t('session.newFolder'), upload: t('session.upload') }}
+          onNavigate={navigateTo}
+          onOpenFile={(path) => { void openFile(path) }}
+          onEntryContextMenu={handleEntryContextMenu}
+          onListContextMenu={handleListContextMenu}
+          onNewFolder={handleNewFolder}
+          onUpload={() => { void handleUpload() }}
+        />
 
-          {/* Transfer queue */}
-          {activeTransfers.length > 0 && (
-            <div className={styles.transferQueue}>
-              {activeTransfers.map((tr) => (
-                <div key={tr.id} className={styles.transferBar}>
-                  <div className={styles.transferInfo}>
-                    <span className={styles.transferArrow}>{tr.kind === 'upload' ? '↑' : '↓'}</span>
-                    <span className={styles.transferName}>{tr.path.split('/').pop()}</span>
-                    <span className={styles.transferSize}>
-                      {formatSize(tr.bytes)}{tr.total > 0 && ` / ${formatSize(tr.total)}`}
-                    </span>
-                  </div>
-                  <div className={styles.transferProgress}>
-                    <div
-                      className={styles.transferFill}
-                      style={{ width: tr.total > 0 ? `${Math.round((tr.bytes / tr.total) * 100)}%` : '100%' }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <SftpTreeView
-            connectionId={cid}
-            cwd={st.cwd}
-            entries={st.entries}
-            onNavigate={(path) => navigateTo(path)}
-            onOpenFile={(path) => { void openFile(path) }}
-            onContextMenu={(e, entry) => handleEntryContextMenu(e, entry)}
-            onListContextMenu={handleListContextMenu}
-          />
-        </aside>
-
-        {/* Context menu */}
-        {ctxMenu.visible && (
-          <div className={styles.contextMenu} style={{ left: ctxMenu.x, top: ctxMenu.y }}>
-            <button type="button" className={styles.contextMenuItem} onClick={handleNewFolder}>
-              <FolderPlus size={14} />
-              <span>{t('session.newFolder')}</span>
-            </button>
-            {ctxMenu.entry && (
-              <>
-                {!ctxMenu.entry.isDirectory && (
-                  <button type="button" className={styles.contextMenuItem} onClick={() => {
-                    const e = ctxMenu.entry
-                    closeContextMenu()
-                    if (e) void handleDownload(e)
-                  }}>
-                    <Download size={14} />
-                    <span>{t('session.downloaded')}</span>
-                  </button>
-                )}
-                <button type="button" className={styles.contextMenuItem} onClick={handleRename}>
-                  <Pencil size={14} />
-                  <span>{t('session.rename')}</span>
-                </button>
-                <button type="button" className={styles.contextMenuItem} onClick={handleDelete}>
-                  <Trash2 size={14} />
-                  <span>{t('session.delete')}</span>
-                </button>
-                <button type="button" className={styles.contextMenuItem} onClick={handleProperties}>
-                  <Info size={14} />
-                  <span>{t('session.properties')}</span>
-                </button>
-              </>
-            )}
-          </div>
-        )}
+        <SessionContextMenu
+          state={ctxMenu}
+          labels={{
+            newFolder: t('session.newFolder'),
+            download: t('session.downloaded'),
+            rename: t('session.rename'),
+            delete: t('session.delete'),
+            properties: t('session.properties'),
+          }}
+          onNewFolder={handleNewFolder}
+          onDownload={(entry) => {
+            closeContextMenu()
+            void handleDownload(entry)
+          }}
+          onRename={handleRename}
+          onDelete={handleDelete}
+          onProperties={handleProperties}
+        />
 
         <div className={styles.mainCol}>
           <div className={styles.termArea}>
             {st.shellReady ? (
-              <XtermPane
+              <TerminalPanel
                 mode={{ kind: 'ssh', connectionId: cid }}
-                fontSize={term?.fontSize ?? 14}
-                fontFamily={term?.fontFamily ?? 'Menlo, Monaco, monospace'}
-                scrollback={term?.scrollback ?? 5000}
+                title={meta.hostLabel || `${meta.username}@${meta.host}`}
+                protocol="SSH"
+                status="connected"
+                settings={term}
+                session={meta}
                 onExit={() => addToast(t('session.shellClosed'), 'info')}
               />
             ) : (
@@ -615,73 +434,23 @@ export function SessionView() {
         </div>
       </div>
 
-      {/* New folder dialog */}
-      {newFolderPrompt && (
-        <div className={styles.modalOverlay} onClick={() => setNewFolderPrompt(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>{t('session.newFolder')}</h3>
-            <input
-              className={styles.modalInput}
-              value={newFolderValue}
-              onChange={(e) => setNewFolderValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void submitNewFolder()
-                if (e.key === 'Escape') setNewFolderPrompt(false)
-              }}
-              placeholder={t('session.enterFolderName')}
-              autoFocus
-            />
-            <div className={styles.modalActions}>
-              <Button size="sm" variant="ghost" onClick={() => setNewFolderPrompt(false)}>
-                {t('ui.cancel')}
-              </Button>
-              <Button size="sm" variant="secondary" onClick={() => void submitNewFolder()}>
-                {t('ui.add')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {newFolderPrompt ? (
+        <NewFolderDialog
+          value={newFolderValue}
+          labels={{ title: t('session.newFolder'), placeholder: t('session.enterFolderName'), cancel: t('ui.cancel'), add: t('ui.add') }}
+          onChange={setNewFolderValue}
+          onCancel={() => setNewFolderPrompt(false)}
+          onSubmit={() => { void submitNewFolder() }}
+        />
+      ) : null}
 
-      {/* Properties modal */}
-      {propsModal.detail && (
-        <div className={styles.modalOverlay} onClick={() => setPropsModal({ entry: null, detail: null })}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>{t('session.properties')}</h3>
-            <div className={styles.propsTable}>
-              <div className={styles.propsRow}>
-                <span className={styles.propsLabel}>Name</span>
-                <span className={styles.propsValue}>{propsModal.detail.name}</span>
-              </div>
-              <div className={styles.propsRow}>
-                <span className={styles.propsLabel}>Type</span>
-                <span className={styles.propsValue}>{propsModal.detail.isDirectory ? 'Directory' : 'File'}</span>
-              </div>
-              <div className={styles.propsRow}>
-                <span className={styles.propsLabel}>Size</span>
-                <span className={styles.propsValue}>{formatSize(propsModal.detail.size)}</span>
-              </div>
-              <div className={styles.propsRow}>
-                <span className={styles.propsLabel}>Permissions</span>
-                <span className={styles.propsValueMono}>{formatPerms(propsModal.detail)}</span>
-              </div>
-              {propsModal.detail.mtimeMs && (
-                <div className={styles.propsRow}>
-                  <span className={styles.propsLabel}>Modified</span>
-                  <span className={styles.propsValue}>
-                    {new Date(propsModal.detail.mtimeMs).toLocaleString()}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className={styles.modalActions}>
-              <Button size="sm" variant="secondary" onClick={() => setPropsModal({ entry: null, detail: null })}>
-                {t('ui.close')}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {propsModal.detail ? (
+        <PropertiesDialog
+          detail={propsModal.detail}
+          labels={{ title: t('session.properties'), close: t('ui.close') }}
+          onClose={() => setPropsModal({ entry: null, detail: null })}
+        />
+      ) : null}
     </div>
   )
 }

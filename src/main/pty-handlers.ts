@@ -23,6 +23,18 @@ type PtySession = {
   wcId: number;
 };
 
+type WindowsShell = "powershell" | "cmd" | "wsl";
+
+function resolveShell(shell?: WindowsShell): string {
+  if (process.platform !== "win32") {
+    return process.env.SHELL || "/bin/bash";
+  }
+
+  if (shell === "cmd") return "cmd.exe";
+  if (shell === "wsl") return "wsl.exe";
+  return "powershell.exe";
+}
+
 // ============================================================================
 // 私有存储 | Private storage
 // ============================================================================
@@ -113,7 +125,7 @@ export function registerPtyHandlers() {
    */
   ipcMain.handle(
     IPC_CHANNELS.PTY_LOCAL_CREATE,
-    (event, opts?: { cwd?: string; cols?: number; rows?: number }) => {
+    (event, opts?: { cwd?: string; cols?: number; rows?: number; shell?: WindowsShell }) => {
       const wc = event.sender;
       const sessionId = randomUUID();
 
@@ -123,10 +135,7 @@ export function registerPtyHandlers() {
         process.env.HOME ??
         process.env.USERPROFILE ??
         process.cwd();
-      const shell =
-        process.platform === "win32"
-          ? "powershell.exe"
-          : process.env.SHELL || "/bin/bash";
+      const shell = resolveShell(opts?.shell);
 
       // 生成PTY进程 | Spawn PTY process
       const proc = pty.spawn(shell, [], {

@@ -9,7 +9,7 @@
  */
 import { useEffect, useState, useCallback } from 'react'
 import { Minus, Square, X, Maximize2, Menu } from 'lucide-react'
-import { useAppStore } from '../store'
+import { useAppStore } from '../../store'
 
 const platform = (window.api as { platform?: string }).platform ?? 'linux'
 const isMac = platform === 'darwin'

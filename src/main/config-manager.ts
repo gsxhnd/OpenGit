@@ -84,6 +84,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
     fontSize: 14,
     scrollback: 5000,
     fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+    cursorStyle: "block",
+    windowsShell: "powershell",
   },
   editor: {
     fontSize: 14,
@@ -142,6 +144,8 @@ function migrateSettings(s: AppSettings): AppSettings {
   // 确保terminal配置存在 | Ensure terminal config exists
   if (!s.terminal) {
     s.terminal = { ...DEFAULT_SETTINGS.terminal };
+  } else {
+    s.terminal = { ...DEFAULT_SETTINGS.terminal, ...s.terminal };
   }
 
   // 确保editor配置存在 | Ensure editor config exists

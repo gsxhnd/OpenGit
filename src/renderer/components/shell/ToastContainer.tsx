@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react'
-import { useAppStore } from '../store'
+import { useAppStore } from '../../store'
 import styles from './ToastContainer.module.scss'
 
 export function ToastContainer() {

@@ -2,12 +2,13 @@ import { motion } from 'motion/react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
 import { useState, useEffect } from 'react'
 import type { HostProfile } from '@shared/types'
 import type { Language } from '../i18n/translations'
-import { THEME_NAMES } from '../hooks/useTheme'
+import { AppearanceSection } from '../components/settings/AppearanceSection'
+import { TerminalSection } from '../components/settings/TerminalSection'
+import { EditorSection } from '../components/settings/EditorSection'
+import { HostsSection } from '../components/settings/HostsSection'
 import styles from './SettingsView.module.scss'
 
 export function SettingsView() {
@@ -21,6 +22,8 @@ export function SettingsView() {
   const [termFontSize, setTermFontSize] = useState(settings?.terminal.fontSize ?? 14)
   const [termScrollback, setTermScrollback] = useState(settings?.terminal.scrollback ?? 5000)
   const [termFontFamily, setTermFontFamily] = useState(settings?.terminal.fontFamily ?? 'Menlo, Monaco, "Courier New", monospace')
+  const [termCursorStyle, setTermCursorStyle] = useState(settings?.terminal.cursorStyle ?? 'block')
+  const [termWindowsShell, setTermWindowsShell] = useState(settings?.terminal.windowsShell ?? 'powershell')
 
   const [edFontSize, setEdFontSize] = useState(settings?.editor.fontSize ?? 14)
   const [edTabSize, setEdTabSize] = useState(settings?.editor.tabSize ?? 2)
@@ -34,6 +37,15 @@ export function SettingsView() {
   const [newPassword, setNewPassword] = useState('')
   const [newKeyPath, setNewKeyPath] = useState('')
   const [authType, setAuthType] = useState<'password' | 'privateKey'>('password')
+  const hostForm = {
+    label: newLabel,
+    host: newHost,
+    port: newPort,
+    username: newUser,
+    password: newPassword,
+    keyPath: newKeyPath,
+    authType,
+  }
 
   useEffect(() => {
     void loadSettings()
@@ -45,6 +57,8 @@ export function SettingsView() {
       setTermFontSize(settings.terminal.fontSize)
       setTermScrollback(settings.terminal.scrollback)
       setTermFontFamily(settings.terminal.fontFamily)
+      setTermCursorStyle(settings.terminal.cursorStyle)
+      setTermWindowsShell(settings.terminal.windowsShell)
       setEdFontSize(settings.editor.fontSize)
       setEdTabSize(settings.editor.tabSize)
       setEdWordWrap(settings.editor.wordWrap === 'on')
@@ -69,7 +83,13 @@ export function SettingsView() {
     if (!settings) return
     void updateSettings({
       ...settings,
-      terminal: { fontSize: termFontSize, scrollback: termScrollback, fontFamily: termFontFamily },
+      terminal: {
+        fontSize: termFontSize,
+        scrollback: termScrollback,
+        fontFamily: termFontFamily,
+        cursorStyle: termCursorStyle,
+        windowsShell: termWindowsShell,
+      },
     })
     addToast(t('settings.terminalSaved'), 'success')
   }
@@ -122,6 +142,16 @@ export function SettingsView() {
     addToast(t('settings.hostRemoved'), 'info')
   }
 
+  const updateHostForm = (partial: Partial<typeof hostForm>) => {
+    if (partial.label !== undefined) setNewLabel(partial.label)
+    if (partial.host !== undefined) setNewHost(partial.host)
+    if (partial.port !== undefined) setNewPort(partial.port)
+    if (partial.username !== undefined) setNewUser(partial.username)
+    if (partial.password !== undefined) setNewPassword(partial.password)
+    if (partial.keyPath !== undefined) setNewKeyPath(partial.keyPath)
+    if (partial.authType !== undefined) setAuthType(partial.authType)
+  }
+
   if (!settings) {
     return <div className={styles.loading}>{t('ui.loading')}</div>
   }
@@ -141,117 +171,83 @@ export function SettingsView() {
       </div>
 
       <div className={styles.content}>
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t('settings.appearance')}</h2>
-          <div className={styles.fieldGroup}>
-            <div>
-              <label className={styles.fieldLabel}>{t('settings.theme')}</label>
-              <select value={theme} onChange={(e) => handleThemeChange(e.target.value)} className={styles.select}>
-                {THEME_NAMES.map((name) => (
-                  <option key={name} value={name}>{name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className={styles.fieldLabel}>{t('settings.language')}</label>
-              <select value={selectedLang} onChange={(e) => handleLanguageChange(e.target.value as Language)} className={styles.select}>
-                <option value="en">English</option>
-                <option value="zh">中文</option>
-              </select>
-            </div>
-          </div>
-        </section>
+        <AppearanceSection
+          title={t('settings.appearance')}
+          themeLabel={t('settings.theme')}
+          languageLabel={t('settings.language')}
+          theme={theme}
+          language={selectedLang}
+          onThemeChange={handleThemeChange}
+          onLanguageChange={handleLanguageChange}
+        />
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t('settings.terminal')}</h2>
-          <div className={styles.fieldGroup}>
-            <div>
-              <label className={styles.fieldLabel} htmlFor="term-font">
-                {t('settings.terminalFontSize')}
-              </label>
-              <Input id="term-font" type="number" min={10} max={32} value={termFontSize} onChange={(e) => setTermFontSize(Number(e.target.value) || 14)} />
-            </div>
-            <div>
-              <label className={styles.fieldLabel} htmlFor="term-scroll">
-                {t('settings.terminalScrollback')}
-              </label>
-              <Input id="term-scroll" type="number" min={1000} max={500000} step={1000} value={termScrollback} onChange={(e) => setTermScrollback(Number(e.target.value) || 5000)} />
-            </div>
-            <div className={styles.full}>
-              <label className={styles.fieldLabel} htmlFor="term-ff">
-                {t('settings.terminalFontFamily')}
-              </label>
-              <Input id="term-ff" value={termFontFamily} onChange={(e) => setTermFontFamily(e.target.value)} />
-            </div>
-            <Button type="button" variant="secondary" onClick={saveTerminal}>
-              {t('settings.saveTerminal')}
-            </Button>
-          </div>
-        </section>
+        <TerminalSection
+          labels={{
+            title: t('settings.terminal'),
+            fontSize: t('settings.terminalFontSize'),
+            scrollback: t('settings.terminalScrollback'),
+            fontFamily: t('settings.terminalFontFamily'),
+            cursorStyle: t('settings.terminalCursorStyle'),
+            cursorBlock: t('settings.cursorBlock'),
+            cursorUnderline: t('settings.cursorUnderline'),
+            cursorBar: t('settings.cursorBar'),
+            windowsShell: t('settings.windowsShell'),
+            save: t('settings.saveTerminal'),
+          }}
+          fontSize={termFontSize}
+          scrollback={termScrollback}
+          fontFamily={termFontFamily}
+          cursorStyle={termCursorStyle}
+          windowsShell={termWindowsShell}
+          onFontSizeChange={setTermFontSize}
+          onScrollbackChange={setTermScrollback}
+          onFontFamilyChange={setTermFontFamily}
+          onCursorStyleChange={setTermCursorStyle}
+          onWindowsShellChange={setTermWindowsShell}
+          onSave={saveTerminal}
+        />
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t('settings.editor')}</h2>
-          <div className={styles.fieldGroup}>
-            <div>
-              <label className={styles.fieldLabel} htmlFor="ed-font">
-                {t('settings.editorFontSize')}
-              </label>
-              <Input id="ed-font" type="number" min={10} max={32} value={edFontSize} onChange={(e) => setEdFontSize(Number(e.target.value) || 14)} />
-            </div>
-            <div>
-              <label className={styles.fieldLabel} htmlFor="ed-tab">
-                {t('settings.editorTabSize')}
-              </label>
-              <Input id="ed-tab" type="number" min={1} max={12} value={edTabSize} onChange={(e) => setEdTabSize(Number(e.target.value) || 2)} />
-            </div>
-            <label className={styles.checkboxLabel}>
-              <input id="ed-wrap" type="checkbox" checked={edWordWrap} onChange={(e) => setEdWordWrap(e.target.checked)} />
-              <span>{t('settings.editorWordWrap')}</span>
-            </label>
-            <label className={styles.checkboxLabel}>
-              <input id="ed-mm" type="checkbox" checked={edMinimap} onChange={(e) => setEdMinimap(e.target.checked)} />
-              <span>{t('settings.editorMinimap')}</span>
-            </label>
-            <Button type="button" variant="secondary" onClick={saveEditor}>
-              {t('settings.saveEditor')}
-            </Button>
-          </div>
-        </section>
+        <EditorSection
+          labels={{
+            title: t('settings.editor'),
+            fontSize: t('settings.editorFontSize'),
+            tabSize: t('settings.editorTabSize'),
+            wordWrap: t('settings.editorWordWrap'),
+            minimap: t('settings.editorMinimap'),
+            save: t('settings.saveEditor'),
+          }}
+          fontSize={edFontSize}
+          tabSize={edTabSize}
+          wordWrap={edWordWrap}
+          minimap={edMinimap}
+          onFontSizeChange={setEdFontSize}
+          onTabSizeChange={setEdTabSize}
+          onWordWrapChange={setEdWordWrap}
+          onMinimapChange={setEdMinimap}
+          onSave={saveEditor}
+        />
 
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t('settings.remoteHosts')}</h2>
-          <p className={styles.hint}>{t('settings.remoteHostsHint')}</p>
-          <div className={styles.fieldGroup}>
-            <Input placeholder={t('settings.label')} value={newLabel} onChange={(e) => setNewLabel(e.target.value)} />
-            <Input placeholder={t('settings.host')} value={newHost} onChange={(e) => setNewHost(e.target.value)} />
-            <Input placeholder={t('settings.port')} value={newPort} onChange={(e) => setNewPort(e.target.value)} />
-            <Input placeholder={t('settings.username')} value={newUser} onChange={(e) => setNewUser(e.target.value)} />
-            <select value={authType} onChange={(e) => setAuthType(e.target.value as 'password' | 'privateKey')} className={styles.select}>
-              <option value="password">{t('settings.authTypePassword')}</option>
-              <option value="privateKey">{t('settings.authTypePrivateKey')}</option>
-            </select>
-            {authType === 'password' ? (
-              <Input type="password" placeholder={t('settings.password')} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-            ) : (
-              <Input placeholder={t('settings.keyPath')} value={newKeyPath} onChange={(e) => setNewKeyPath(e.target.value)} />
-            )}
-            <Button type="button" onClick={() => void addHost()}>
-              {t('settings.addHost')}
-            </Button>
-          </div>
-          <ul className={styles.hostList}>
-            {settings.hosts.map((h) => (
-              <li key={h.id} className={styles.hostRow}>
-                <span>
-                  {h.label} — {h.username}@{h.host}:{h.port}
-                </span>
-                <Button type="button" size="sm" variant="ghost" onClick={() => void removeHost(h.id)}>
-                  {t('settings.remove')}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <HostsSection
+          labels={{
+            title: t('settings.remoteHosts'),
+            hint: t('settings.remoteHostsHint'),
+            label: t('settings.label'),
+            host: t('settings.host'),
+            port: t('settings.port'),
+            username: t('settings.username'),
+            password: t('settings.password'),
+            keyPath: t('settings.keyPath'),
+            authPassword: t('settings.authTypePassword'),
+            authPrivateKey: t('settings.authTypePrivateKey'),
+            addHost: t('settings.addHost'),
+            remove: t('settings.remove'),
+          }}
+          hosts={settings.hosts}
+          form={hostForm}
+          onFormChange={updateHostForm}
+          onAdd={() => { void addHost() }}
+          onRemove={(id) => { void removeHost(id) }}
+        />
 
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>{t('settings.shortcuts')}</h2>
