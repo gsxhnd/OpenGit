@@ -1,23 +1,23 @@
-import { defineConfig } from 'vite'
-import { resolve } from 'path'
-import { builtinModules } from 'module'
+import { defineConfig } from "vite";
+import { resolve } from "path";
+import { builtinModules } from "module";
 
 export default defineConfig({
   build: {
-    outDir: 'dist/main',
+    outDir: "dist/main",
     rollupOptions: {
       input: {
-        index: resolve(__dirname, 'src/main/index.ts'),
+        index: resolve(__dirname, "src/main/index.ts"),
       },
       output: {
-        format: 'cjs',
-        entryFileNames: '[name].js',
+        format: "cjs",
+        entryFileNames: "[name].js",
       },
       external: [
-        'electron',
-        'ssh2',
-        'node-pty',
-        'cpu-features',
+        "electron",
+        "ssh2",
+        "node-pty",
+        "cpu-features",
         ...builtinModules,
         ...builtinModules.map((m) => `node:${m}`),
       ],
@@ -28,7 +28,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@shared': resolve(__dirname, 'src/shared'),
+      "@shared": resolve(__dirname, "src/shared"),
     },
   },
-})
+});

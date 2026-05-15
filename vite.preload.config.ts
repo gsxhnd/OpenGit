@@ -1,20 +1,20 @@
-import { defineConfig } from 'vite'
-import { resolve } from 'path'
-import { builtinModules } from 'module'
+import { defineConfig } from "vite";
+import { resolve } from "path";
+import { builtinModules } from "module";
 
 export default defineConfig({
   build: {
-    outDir: 'dist/preload',
+    outDir: "dist/preload",
     rollupOptions: {
       input: {
-        index: resolve(__dirname, 'src/preload/index.ts'),
+        index: resolve(__dirname, "src/preload/index.ts"),
       },
       output: {
-        format: 'cjs',
-        entryFileNames: '[name].js',
+        format: "cjs",
+        entryFileNames: "[name].js",
       },
       external: [
-        'electron',
+        "electron",
         ...builtinModules,
         ...builtinModules.map((m) => `node:${m}`),
       ],
@@ -25,7 +25,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@shared': resolve(__dirname, 'src/shared'),
+      "@shared": resolve(__dirname, "src/shared"),
     },
   },
-})
+});
