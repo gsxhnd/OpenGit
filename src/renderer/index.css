@@ -37,6 +37,13 @@
   --color-sidebar-accent-foreground: var(--color-sidebar-accent-foreground);
   --color-sidebar-border: var(--color-sidebar-border);
   --color-sidebar-ring: var(--color-sidebar-ring);
+  --color-widget: var(--color-widget);
+  --color-widget-border: var(--color-widget-border);
+  --color-list-hover: var(--color-list-hover);
+  --color-list-active: var(--color-list-active);
+  --color-list-active-foreground: var(--color-list-active-foreground);
+  --color-keybinding-bg: var(--color-keybinding-bg);
+  --color-keybinding-border: var(--color-keybinding-border);
   --color-diff-added: var(--color-diff-added);
   --color-diff-deleted: var(--color-diff-deleted);
   --color-diff-added-bg: var(--color-diff-added-bg);
@@ -81,6 +88,13 @@
   --color-scrollbar: #171717;
   --color-scrollbar-thumb: #262626;
   --color-title-bar: #050505;
+  --color-widget: #252526;
+  --color-widget-border: #454545;
+  --color-list-hover: #2a2d2e;
+  --color-list-active: #04395e;
+  --color-list-active-foreground: #ffffff;
+  --color-keybinding-bg: rgb(128 128 128 / 0.17);
+  --color-keybinding-border: rgb(128 128 128 / 0.3);
   --color-status-bar: #050505;
   --color-sidebar: #171717;
   --color-sidebar-foreground: #fafafa;

@@ -18,7 +18,7 @@ import { PanelContainer } from "./components/shell/PanelContainer";
 import { InspectorPanel } from "./components/shell/InspectorPanel";
 import { StatusBar } from "./components/shell/StatusBar";
 import { ToastContainer } from "./components/shell/ToastContainer";
-import { CommandPalette } from "./components/shell/CommandPalette";
+import { CommandPalette } from "./components/shell/command-palette";
 import { appRoutes, pathToView } from "./routes";
 import styles from "./App.module.scss";
 

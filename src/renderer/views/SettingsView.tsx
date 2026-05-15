@@ -275,7 +275,7 @@ export function SettingsView() {
             </div>
             <div className={styles.shortcutItem}>
               <span>{t('nav.settings')}</span>
-              <kbd className={styles.kbd}>⌘3</kbd>
+              <kbd className={styles.kbd}>{window.api.platform === 'darwin' ? '⌘,' : 'Ctrl+,'}</kbd>
             </div>
           </div>
         </section>

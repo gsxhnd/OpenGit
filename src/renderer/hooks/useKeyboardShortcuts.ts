@@ -47,9 +47,17 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
 export function useAppKeyboardShortcuts() {
   const navigate = useNavigate()
   const toggleInspector = useAppStore((s) => s.toggleInspector)
+  const toggleCommandPalette = useAppStore((s) => s.toggleCommandPalette)
 
   const shortcuts: KeyboardShortcut[] = useMemo(
     () => [
+      {
+        key: 'p',
+        ctrl: true,
+        shift: true,
+        allowInTerminal: true,
+        action: () => toggleCommandPalette(),
+      },
       {
         key: '1',
         ctrl: true,
@@ -61,7 +69,7 @@ export function useAppKeyboardShortcuts() {
         action: () => navigate('/local-terminal'),
       },
       {
-        key: '3',
+        key: ',',
         ctrl: true,
         action: () => navigate('/settings'),
       },
@@ -72,7 +80,7 @@ export function useAppKeyboardShortcuts() {
         action: () => toggleInspector(),
       },
     ],
-    [navigate, toggleInspector],
+    [navigate, toggleCommandPalette, toggleInspector],
   )
 
   useKeyboardShortcuts(shortcuts)

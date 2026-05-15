@@ -1,0 +1,184 @@
+/**
+ * Command palette — VS Code quick input (command mode)
+ */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.panel {
+  position: fixed;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(600px, calc(100vw - 2rem));
+  z-index: 201;
+
+  background: var(--color-widget, var(--color-popover, #252526));
+  border: 1px solid var(--color-widget-border, var(--color-border));
+  border-radius: 6px;
+  box-shadow:
+    0 0 8px 2px rgb(0 0 0 / 0.36),
+    0 0 0 1px rgb(0 0 0 / 0.28);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.inputRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--color-widget-border, var(--color-border));
+  flex-shrink: 0;
+}
+
+.inputPrefix {
+  flex-shrink: 0;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
+  user-select: none;
+}
+
+.input {
+  flex: 1;
+  height: 34px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: var(--color-foreground);
+  caret-color: var(--color-foreground);
+
+  &::placeholder {
+    color: var(--color-muted-foreground);
+    opacity: 0.85;
+  }
+}
+
+.listWrap {
+  flex-shrink: 0;
+}
+
+.list {
+  max-height: min(440px, calc(100vh - 120px));
+  overflow-y: auto;
+  padding: 2px 0;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-scrollbar-thumb, var(--color-border)) transparent;
+
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb, var(--color-border));
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 5px;
+  }
+}
+
+.empty {
+  padding: 14px 12px;
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 22px;
+  padding: 3px 10px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--color-foreground);
+
+  &:hover {
+    background: var(--color-list-hover, var(--color-accent));
+  }
+}
+
+.itemActive {
+  background: var(--color-list-active, #04395e) !important;
+  color: var(--color-list-active-foreground, #ffffff);
+
+  .keybindingKey {
+    color: var(--color-list-active-foreground, #ffffff);
+    background: rgb(255 255 255 / 0.12);
+    border-color: rgb(255 255 255 / 0.2);
+  }
+
+  .keybindingSep {
+    color: var(--color-list-active-foreground, #ffffff);
+    opacity: 0.7;
+  }
+
+  .match {
+    color: var(--color-list-active-foreground, #ffffff);
+  }
+}
+
+.itemLabel {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 22px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.match {
+  color: var(--color-primary, #3794ff);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.keybinding {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.keybindingPart {
+  display: inline-flex;
+  align-items: center;
+}
+
+.keybindingSep {
+  margin: 0 2px;
+  font-size: 10px;
+  color: var(--color-muted-foreground);
+}
+
+.keybindingKey {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--color-muted-foreground);
+  background: var(--color-keybinding-bg, rgb(128 128 128 / 0.17));
+  border: 1px solid var(--color-keybinding-border, rgb(128 128 128 / 0.3));
+  border-radius: 3px;
+  border-bottom-width: 2px;
+}
