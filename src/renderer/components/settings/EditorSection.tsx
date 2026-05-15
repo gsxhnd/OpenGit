@@ -2,11 +2,10 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Checkbox } from "../ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { SettingsPanel, settingsPanelStyles as ps } from "./SettingsPanel";
 
 interface EditorSectionProps {
   labels: {
-    title: string;
     fontSize: string;
     tabSize: string;
     wordWrap: string;
@@ -37,77 +36,64 @@ export function EditorSection({
   onSave,
 }: EditorSectionProps) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{labels.title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="ed-font">{labels.fontSize}</Label>
-              <Input
-                id="ed-font"
-                type="number"
-                min={10}
-                max={32}
-                value={fontSize}
-                onChange={(event) =>
-                  onFontSizeChange(Number(event.target.value) || 14)
-                }
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="ed-tab">{labels.tabSize}</Label>
-              <Input
-                id="ed-tab"
-                type="number"
-                min={1}
-                max={12}
-                value={tabSize}
-                onChange={(event) =>
-                  onTabSizeChange(Number(event.target.value) || 2)
-                }
-              />
-            </div>
+    <SettingsPanel
+      footer={
+        <Button type="button" onClick={onSave}>
+          {labels.save}
+        </Button>
+      }
+    >
+      <div className={ps.formStack}>
+        <div className={ps.formGrid}>
+          <div className={ps.field}>
+            <Label htmlFor="ed-font">{labels.fontSize}</Label>
+            <Input
+              id="ed-font"
+              type="number"
+              min={10}
+              max={32}
+              value={fontSize}
+              onChange={(event) =>
+                onFontSizeChange(Number(event.target.value) || 14)
+              }
+            />
           </div>
-
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="ed-wrap"
-                checked={wordWrap}
-                onCheckedChange={(checked) =>
-                  onWordWrapChange(checked === true)
-                }
-              />
-              <label
-                htmlFor="ed-wrap"
-                className="text-sm font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-50 cursor-pointer"
-              >
-                {labels.wordWrap}
-              </label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="ed-mm"
-                checked={minimap}
-                onCheckedChange={(checked) => onMinimapChange(checked === true)}
-              />
-              <label
-                htmlFor="ed-mm"
-                className="text-sm font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-50 cursor-pointer"
-              >
-                {labels.minimap}
-              </label>
-            </div>
+          <div className={ps.field}>
+            <Label htmlFor="ed-tab">{labels.tabSize}</Label>
+            <Input
+              id="ed-tab"
+              type="number"
+              min={1}
+              max={12}
+              value={tabSize}
+              onChange={(event) =>
+                onTabSizeChange(Number(event.target.value) || 2)
+              }
+            />
           </div>
-
-          <Button type="button" onClick={onSave}>
-            {labels.save}
-          </Button>
         </div>
-      </CardContent>
-    </Card>
+
+        <div className={ps.checkboxGroup}>
+          <div className={ps.checkboxRow}>
+            <Checkbox
+              id="ed-wrap"
+              checked={wordWrap}
+              onCheckedChange={(checked) =>
+                onWordWrapChange(checked === true)
+              }
+            />
+            <label htmlFor="ed-wrap">{labels.wordWrap}</label>
+          </div>
+          <div className={ps.checkboxRow}>
+            <Checkbox
+              id="ed-mm"
+              checked={minimap}
+              onCheckedChange={(checked) => onMinimapChange(checked === true)}
+            />
+            <label htmlFor="ed-mm">{labels.minimap}</label>
+          </div>
+        </div>
+      </div>
+    </SettingsPanel>
   );
 }

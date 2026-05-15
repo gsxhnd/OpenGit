@@ -5,8 +5,6 @@ import { LocalTerminalView } from './views/LocalTerminalView'
 import { SessionView } from './views/SessionView'
 import { SessionsOverviewView } from './views/SessionsOverviewView'
 import { FilesView } from './views/FilesView'
-import { SettingsView } from './views/SettingsView'
-
 const VIEW_TO_PATH: Record<ViewType, string> = {
   dashboard: '/',
   connections: '/connections',
@@ -35,12 +33,13 @@ export function pathToView(pathname: string): ViewType {
   return PATH_TO_VIEW[pathname] || 'dashboard'
 }
 
-export const appRoutes = [
+export const SETTINGS_PATH = '/settings'
+
+export const workbenchRoutes = [
   { path: '/', element: <DashboardView /> },
   { path: '/connections', element: <ConnectionsView /> },
   { path: '/local-terminal', element: <LocalTerminalView /> },
   { path: '/sessions', element: <SessionsOverviewView /> },
   { path: '/session/:connectionId', element: <SessionView /> },
   { path: '/files', element: <FilesView /> },
-  { path: '/settings', element: <SettingsView /> },
-]
+] as const

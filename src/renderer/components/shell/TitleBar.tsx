@@ -12,6 +12,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { Minus, Square, X, Maximize2, Menu, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../../store'
+import { InspectorToggle } from './InspectorToggle'
 import { ShellTooltip } from './ShellTooltip'
 
 const platform = (window.api as { platform?: string }).platform ?? 'linux'
@@ -37,8 +38,9 @@ function MacTitleBar({ title, onOpenCommandPalette }: { title: string; onOpenCom
           {title}
         </span>
       </div>
-      {onOpenCommandPalette ? (
-        <div className="no-drag flex shrink-0 items-center pr-2">
+      <div className="no-drag flex shrink-0 items-center gap-0.5 pr-2">
+        <InspectorToggle className="h-7 w-7" />
+        {onOpenCommandPalette ? (
           <ShellTooltip content={t('workbench.status.commandPalette')} side="bottom" delay={400}>
             <button
               type="button"
@@ -49,8 +51,8 @@ function MacTitleBar({ title, onOpenCommandPalette }: { title: string; onOpenCom
               <Search size={15} strokeWidth={1.5} />
             </button>
           </ShellTooltip>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </header>
   )
 }
@@ -134,8 +136,9 @@ function WinTitleBar({ title, isMaximized, onOpenCommandPalette }: { title: stri
         </span>
       </div>
 
-      {onOpenCommandPalette ? (
-        <div className="no-drag flex shrink-0 items-center pr-1">
+      <div className="no-drag flex shrink-0 items-center gap-0.5 pr-1">
+        <InspectorToggle className="h-6 w-6" iconSize={13} />
+        {onOpenCommandPalette ? (
           <ShellTooltip content={t('workbench.status.commandPalette')} side="bottom" delay={400}>
             <button
               type="button"
@@ -146,8 +149,8 @@ function WinTitleBar({ title, isMaximized, onOpenCommandPalette }: { title: stri
               <Search size={13} strokeWidth={1.5} />
             </button>
           </ShellTooltip>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       <WinControlButtons isMaximized={isMaximized} />
     </header>

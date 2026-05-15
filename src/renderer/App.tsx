@@ -1,7 +1,6 @@
 /**
- * App root — Phase 0 **workbench skeleton**:
- * Title bar → (Activity Bar | Primary Sidebar | Main: SessionTabs + routes + optional Inspector) → Status bar,
- * plus toasts and command palette. Phase 1 terminal UX is implemented inside routed views (`LocalTerminalView`, `SessionView`).
+ * App root — shared providers, global shortcuts, and route-level layouts:
+ * `SettingsLayout` (standalone settings) vs `WorkbenchLayout` (main shell).
  */
 import { useEffect } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router";
@@ -9,30 +8,18 @@ import { useTranslation } from "react-i18next";
 import { useAppStore } from "./store";
 import { useAppKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useTheme } from "./hooks/useTheme";
-import { TitleBar } from "./components/shell/TitleBar";
-import { ActivityBar } from "./components/shell/ActivityBar";
-import { SidebarProvider } from "./components/ui/sidebar";
-import { PrimarySidebar } from "./components/shell/PrimarySidebar";
-import { SessionTabs } from "./components/shell/SessionTabs";
-import { PanelContainer } from "./components/shell/PanelContainer";
-import { InspectorPanel } from "./components/shell/InspectorPanel";
-import { StatusBar } from "./components/shell/StatusBar";
 import { ToastContainer } from "./components/shell/ToastContainer";
 import { CommandPalette } from "./components/shell/command-palette";
-import { appRoutes, pathToView } from "./routes";
+import { SidebarProvider } from "./components/ui/sidebar";
+import { SettingsLayout, WorkbenchLayout } from "./layout";
+import { SettingsView } from "./views/SettingsView";
+import { workbenchRoutes, pathToView, SETTINGS_PATH } from "./routes";
 import styles from "./App.module.scss";
 
 function AppContent() {
-  const {
-    loadSettings,
-    language,
-    inspectorOpen,
-    setInspectorOpen,
-    toggleCommandPalette,
-  } = useAppStore();
+  const { loadSettings, language } = useAppStore();
   const location = useLocation();
   const { i18n } = useTranslation();
-  const showSessionTabs = location.pathname !== "/";
 
   useAppKeyboardShortcuts();
   useTheme();
@@ -62,40 +49,23 @@ function AppContent() {
   }, [location.pathname]);
 
   return (
-    <div className={styles.appContainer}>
-      <TitleBar onOpenCommandPalette={() => toggleCommandPalette()} />
-      <SidebarProvider defaultOpen={false} style={{ display: "contents" }}>
-        <div className={styles.bodyRow}>
-          <ActivityBar />
-          <PrimarySidebar />
-          <main className={styles.mainContent}>
-            <div className={styles.workbenchSplit}>
-              <div className={styles.workbenchMain}>
-                {showSessionTabs ? <SessionTabs /> : null}
-                <PanelContainer>
-                  <Routes>
-                    {appRoutes.map((route) => (
-                      <Route
-                        key={route.path}
-                        path={route.path}
-                        element={route.element}
-                      />
-                    ))}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </PanelContainer>
-              </div>
-              {inspectorOpen ? (
-                <InspectorPanel onClose={() => setInspectorOpen(false)} />
-              ) : null}
-            </div>
-          </main>
-        </div>
-        <StatusBar />
+    <SidebarProvider defaultOpen={false} style={{ display: "contents" }}>
+      <div className={styles.appContainer}>
+        <Routes>
+          <Route element={<SettingsLayout />}>
+            <Route path={SETTINGS_PATH} element={<SettingsView />} />
+          </Route>
+          <Route element={<WorkbenchLayout />}>
+            {workbenchRoutes.map((route) => (
+              <Route key={route.path} path={route.path} element={route.element} />
+            ))}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
         <ToastContainer />
         <CommandPalette />
-      </SidebarProvider>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 }
 

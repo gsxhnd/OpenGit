@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { HostProfile } from "@shared/types";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -10,19 +11,13 @@ import {
   SelectValue,
   SelectGroup,
 } from "../ui/select";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "../ui/card";
 import { Badge } from "../ui/badge";
+import { useAppStore } from "../../store";
+import { useTranslation } from "react-i18next";
+import { SettingsPanel, settingsPanelStyles as ps } from "./SettingsPanel";
 
 interface HostsSectionProps {
   labels: {
-    title: string;
-    hint: string;
     label: string;
     host: string;
     port: string;
@@ -31,192 +26,205 @@ interface HostsSectionProps {
     keyPath: string;
     authPassword: string;
     authPrivateKey: string;
+    authType: string;
     addHost: string;
     remove: string;
+    addNewHost: string;
+    savedHosts: string;
+    authBadgePassword: string;
+    authBadgeKey: string;
   };
   hosts: HostProfile[];
-  form: {
-    label: string;
-    host: string;
-    port: string;
-    username: string;
-    password: string;
-    keyPath: string;
-    authType: "password" | "privateKey";
-  };
-  onFormChange: (partial: Partial<HostsSectionProps["form"]>) => void;
-  onAdd: () => void;
-  onRemove: (id: string) => void;
 }
 
-export function HostsSection({
-  labels,
-  hosts,
-  form,
-  onFormChange,
-  onAdd,
-  onRemove,
-}: HostsSectionProps) {
+export function HostsSection({ labels, hosts }: HostsSectionProps) {
+  const { t } = useTranslation();
+  const { loadSettings, addToast } = useAppStore();
+
+  const [newLabel, setNewLabel] = useState("");
+  const [newHost, setNewHost] = useState("");
+  const [newPort, setNewPort] = useState("22");
+  const [newUser, setNewUser] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newKeyPath, setNewKeyPath] = useState("");
+  const [authType, setAuthType] = useState<"password" | "privateKey">(
+    "password",
+  );
+
+  const resetForm = () => {
+    setNewLabel("");
+    setNewHost("");
+    setNewUser("");
+    setNewPassword("");
+    setNewKeyPath("");
+    setNewPort("22");
+    setAuthType("password");
+  };
+
+  const addHost = async () => {
+    if (!newLabel.trim() || !newHost.trim() || !newUser.trim()) {
+      addToast(t("settings.labelHostUsernameRequired"), "error");
+      return;
+    }
+    const host: Omit<HostProfile, "id"> = {
+      label: newLabel.trim(),
+      host: newHost.trim(),
+      port: Number(newPort) || 22,
+      username: newUser.trim(),
+      authType,
+      password: authType === "password" ? newPassword || undefined : undefined,
+      privateKeyPath:
+        authType === "privateKey" ? newKeyPath || undefined : undefined,
+    };
+    try {
+      await window.api.hostsAdd(host);
+      resetForm();
+      await loadSettings();
+      addToast(t("settings.hostSaved"), "success");
+    } catch (e: unknown) {
+      addToast(e instanceof Error ? e.message : t("err.saveFailed"), "error");
+    }
+  };
+
+  const removeHost = async (id: string) => {
+    await window.api.hostsRemove(id);
+    await loadSettings();
+    addToast(t("settings.hostRemoved"), "info");
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{labels.title}</CardTitle>
-        <CardDescription>{labels.hint}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-6">
-          {/* Form for adding new host */}
-          <div className="space-y-4 p-4 bg-muted/30 rounded-lg border border-border">
-            <h3 className="text-sm font-medium">Add New Host</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 flex flex-col gap-2">
-                <Label htmlFor="host-label">{labels.label}</Label>
-                <Input
-                  id="host-label"
-                  placeholder={labels.label}
-                  value={form.label}
-                  onChange={(event) =>
-                    onFormChange({ label: event.target.value })
-                  }
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="host-host">{labels.host}</Label>
-                <Input
-                  id="host-host"
-                  placeholder={labels.host}
-                  value={form.host}
-                  onChange={(event) =>
-                    onFormChange({ host: event.target.value })
-                  }
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="host-port">{labels.port}</Label>
-                <Input
-                  id="host-port"
-                  placeholder={labels.port}
-                  value={form.port}
-                  onChange={(event) =>
-                    onFormChange({ port: event.target.value })
-                  }
-                />
-              </div>
-
-              <div className="col-span-2 flex flex-col gap-2">
-                <Label htmlFor="host-username">{labels.username}</Label>
-                <Input
-                  id="host-username"
-                  placeholder={labels.username}
-                  value={form.username}
-                  onChange={(event) =>
-                    onFormChange({ username: event.target.value })
-                  }
-                />
-              </div>
-
-              <div className="col-span-2 flex flex-col gap-2">
-                <Label htmlFor="host-auth">{labels.authPassword}</Label>
-                <Select
-                  value={form.authType}
-                  onValueChange={(value) =>
-                    value &&
-                    onFormChange({
-                      authType: value as "password" | "privateKey",
-                    })
-                  }
-                >
-                  <SelectTrigger id="host-auth" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="password">
-                        {labels.authPassword}
-                      </SelectItem>
-                      <SelectItem value="privateKey">
-                        {labels.authPrivateKey}
-                      </SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {form.authType === "password" ? (
-                <div className="col-span-2 flex flex-col gap-2">
-                  <Label htmlFor="host-password">{labels.password}</Label>
-                  <Input
-                    id="host-password"
-                    type="password"
-                    placeholder={labels.password}
-                    value={form.password}
-                    onChange={(event) =>
-                      onFormChange({ password: event.target.value })
-                    }
-                  />
-                </div>
-              ) : (
-                <div className="col-span-2 flex flex-col gap-2">
-                  <Label htmlFor="host-keypath">{labels.keyPath}</Label>
-                  <Input
-                    id="host-keypath"
-                    placeholder={labels.keyPath}
-                    value={form.keyPath}
-                    onChange={(event) =>
-                      onFormChange({ keyPath: event.target.value })
-                    }
-                  />
-                </div>
-              )}
+    <SettingsPanel>
+      <div className={ps.formStack}>
+        <div className={ps.hostFormBlock}>
+          <h3 className={ps.subsectionTitle}>{labels.addNewHost}</h3>
+          <div className={ps.formGrid}>
+            <div className={ps.fieldFull}>
+              <Label htmlFor="host-label">{labels.label}</Label>
+              <Input
+                id="host-label"
+                placeholder={labels.label}
+                value={newLabel}
+                onChange={(event) => setNewLabel(event.target.value)}
+              />
             </div>
-
-            <Button type="button" className="w-full" onClick={onAdd}>
-              {labels.addHost}
-            </Button>
+            <div className={ps.field}>
+              <Label htmlFor="host-host">{labels.host}</Label>
+              <Input
+                id="host-host"
+                placeholder={labels.host}
+                value={newHost}
+                onChange={(event) => setNewHost(event.target.value)}
+              />
+            </div>
+            <div className={ps.field}>
+              <Label htmlFor="host-port">{labels.port}</Label>
+              <Input
+                id="host-port"
+                placeholder={labels.port}
+                value={newPort}
+                onChange={(event) => setNewPort(event.target.value)}
+              />
+            </div>
+            <div className={ps.fieldFull}>
+              <Label htmlFor="host-username">{labels.username}</Label>
+              <Input
+                id="host-username"
+                placeholder={labels.username}
+                value={newUser}
+                onChange={(event) => setNewUser(event.target.value)}
+              />
+            </div>
+            <div className={ps.fieldFull}>
+              <Label htmlFor="host-auth">{labels.authType}</Label>
+              <Select
+                value={authType}
+                onValueChange={(value) =>
+                  value && setAuthType(value as "password" | "privateKey")
+                }
+              >
+                <SelectTrigger id="host-auth" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value="password">
+                      {labels.authPassword}
+                    </SelectItem>
+                    <SelectItem value="privateKey">
+                      {labels.authPrivateKey}
+                    </SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            {authType === "password" ? (
+              <div className={ps.fieldFull}>
+                <Label htmlFor="host-password">{labels.password}</Label>
+                <Input
+                  id="host-password"
+                  type="password"
+                  placeholder={labels.password}
+                  value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                />
+              </div>
+            ) : (
+              <div className={ps.fieldFull}>
+                <Label htmlFor="host-keypath">{labels.keyPath}</Label>
+                <Input
+                  id="host-keypath"
+                  placeholder={labels.keyPath}
+                  value={newKeyPath}
+                  onChange={(event) => setNewKeyPath(event.target.value)}
+                />
+              </div>
+            )}
           </div>
-
-          {/* List of hosts */}
-          {hosts.length > 0 && (
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">
-                Saved Hosts ({hosts.length})
-              </h3>
-              <div className="space-y-2">
-                {hosts.map((host) => (
-                  <div
-                    key={host.id}
-                    className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="flex flex-col gap-1 flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm truncate">
-                          {host.label}
-                        </span>
-                        <Badge variant="outline" className="text-xs">
-                          {host.authType === "password" ? "Password" : "Key"}
-                        </Badge>
-                      </div>
-                      <span className="text-xs text-muted-foreground truncate">
-                        {host.username}@{host.host}:{host.port}
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => onRemove(host.id)}
-                    >
-                      {labels.remove}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <Button
+            type="button"
+            className="w-full mt-4"
+            onClick={() => void addHost()}
+          >
+            {labels.addHost}
+          </Button>
         </div>
-      </CardContent>
-    </Card>
+
+        {hosts.length > 0 ? (
+          <div>
+            <h3 className={ps.subsectionTitle}>
+              {labels.savedHosts.replace("{{count}}", String(hosts.length))}
+            </h3>
+            <div className={ps.hostList}>
+              {hosts.map((host) => (
+                <div key={host.id} className={ps.hostItem}>
+                  <div className={ps.hostMeta}>
+                    <div className={ps.hostLabel}>
+                      <span className="truncate">{host.label}</span>
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {host.authType === "password"
+                          ? labels.authBadgePassword
+                          : labels.authBadgeKey}
+                      </Badge>
+                    </div>
+                    <span className={ps.hostAddress}>
+                      {host.username}@{host.host}:{host.port}
+                    </span>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    className="shrink-0"
+                    onClick={() => void removeHost(host.id)}
+                  >
+                    {labels.remove}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </SettingsPanel>
   );
 }

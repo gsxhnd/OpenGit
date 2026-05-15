@@ -58,6 +58,11 @@ export interface Toast {
   createdAt: number;
 }
 
+/** Persistent notification shown in the status bar popover */
+export interface AppNotification extends Toast {
+  read: boolean;
+}
+
 /** App navigation views */
 export type ViewType =
   | "dashboard"
