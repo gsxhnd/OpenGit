@@ -1,0 +1,7 @@
+export { standardDark } from './standard-dark'
+export { standardLight } from './standard-light'
+export { nord } from './nord'
+export { catppuccinMocha } from './catppuccin-mocha'
+export { catppuccinLatte } from './catppuccin-latte'
+export { tokyoNight } from './tokyo-night'
+export { dracula } from './dracula'
