@@ -1,0 +1,50 @@
+.header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: stretch;
+  height: var(--shell-header-height);
+  min-height: var(--shell-header-height);
+  max-height: var(--shell-header-height);
+  border-bottom: 1px solid var(--color-border);
+  -webkit-app-region: drag;
+  box-sizing: border-box;
+  background: var(--color-title-bar);
+}
+
+[data-platform="darwin"] .header {
+  background: transparent;
+}
+
+.headerCollapsed {
+  align-items: center;
+  justify-content: center;
+}
+
+.trafficLightInset {
+  padding-left: var(--shell-traffic-light-padding);
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.125rem;
+  padding-right: 0.25rem;
+  -webkit-app-region: no-drag;
+}
+
+.menubarSlot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  height: 100%;
+  max-height: var(--shell-header-height);
+  overflow: hidden;
+  padding-left: 0.25rem;
+  -webkit-app-region: no-drag;
+}
+
+.spacer {
+  flex: 1;
+  min-width: 0;
+}

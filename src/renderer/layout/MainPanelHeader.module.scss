@@ -1,0 +1,42 @@
+.header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: stretch;
+  height: var(--shell-header-height);
+  min-height: var(--shell-header-height);
+  max-height: var(--shell-header-height);
+  border-bottom: 1px solid var(--color-border);
+  -webkit-app-region: drag;
+  box-sizing: border-box;
+  background: var(--color-title-bar);
+}
+
+.title {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  pointer-events: none;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.titleText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-foreground);
+  opacity: 0.8;
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.125rem;
+  padding-right: 0.25rem;
+  -webkit-app-region: no-drag;
+}

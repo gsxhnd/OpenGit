@@ -25,17 +25,18 @@
 
   /* Light mode: solid sidebar background */
   background: var(--color-sidebar);
-
-  /* Dark mode: semi-transparent + blur for frosted glass effect */
-  .dark & {
-    background: color-mix(in oklab, var(--color-sidebar) 85%, transparent);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-  }
 }
 
-/* macOS: let Electron vibrancy show through */
-[data-platform="darwin"] .primaryPanel {
+/* Dark mode: semi-transparent + blur for frosted glass effect.
+   :global() is required because .dark lives on <html>, outside CSS module scope. */
+:global(.dark) .primaryPanel {
+  background: color-mix(in oklab, var(--color-sidebar) 85%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* macOS: let Electron vibrancy show through — transparent bg, no CSS blur */
+:global([data-platform="darwin"]) .primaryPanel {
   background: transparent;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;

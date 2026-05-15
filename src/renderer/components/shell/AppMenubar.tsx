@@ -30,10 +30,10 @@ export function AppMenubar() {
   }
 
   return (
-    <Menubar className="h-auto border-0 rounded-none bg-transparent p-0 gap-0">
+    <Menubar className="h-[var(--shell-header-height)] max-h-[var(--shell-header-height)] min-h-0 border-0 rounded-none bg-transparent p-0 gap-0">
       {/* File */}
       <MenubarMenu>
-        <MenubarTrigger className="text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] text-xs px-2 py-1">
+        <MenubarTrigger className="h-[var(--shell-header-height)] text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] text-xs px-2 py-0">
           {t('menu.file')}
         </MenubarTrigger>
         <MenubarContent>
@@ -57,7 +57,7 @@ export function AppMenubar() {
 
       {/* Edit */}
       <MenubarMenu>
-        <MenubarTrigger className="text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] text-xs px-2 py-1">
+        <MenubarTrigger className="h-[var(--shell-header-height)] text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] text-xs px-2 py-0">
           {t('menu.edit')}
         </MenubarTrigger>
         <MenubarContent>
@@ -78,7 +78,7 @@ export function AppMenubar() {
 
       {/* View */}
       <MenubarMenu>
-        <MenubarTrigger className="text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] text-xs px-2 py-1">
+        <MenubarTrigger className="h-[var(--shell-header-height)] text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] text-xs px-2 py-0">
           {t('menu.view')}
         </MenubarTrigger>
         <MenubarContent>
@@ -100,7 +100,7 @@ export function AppMenubar() {
 
       {/* Help */}
       <MenubarMenu>
-        <MenubarTrigger className="text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] text-xs px-2 py-1">
+        <MenubarTrigger className="h-[var(--shell-header-height)] text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] text-xs px-2 py-0">
           {t('menu.help')}
         </MenubarTrigger>
         <MenubarContent>

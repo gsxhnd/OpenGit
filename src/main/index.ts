@@ -14,6 +14,7 @@ import { loadSettings, saveSettings } from "./config-manager";
 import { initLogger, createLogger } from "./logger";
 import { IPC_CHANNELS } from "../shared/ipc";
 import { isDev, rendererUrl } from "../shared/build";
+import { getShellChrome, SHELL_CHROME } from "../shared/shell-chrome";
 
 const log = () => createLogger("main");
 let mainWindow: BrowserWindow | null = null;
@@ -25,6 +26,8 @@ function getMainWindow(): BrowserWindow | null {
 function createWindow() {
   const settings = loadSettings();
   const isMac = process.platform === "darwin";
+  const isWin = process.platform === "win32";
+  const chrome = getShellChrome(process.platform);
 
   mainWindow = new BrowserWindow({
     width: settings.window.width,
@@ -34,10 +37,25 @@ function createWindow() {
     minWidth: 800,
     minHeight: 500,
     titleBarStyle: isMac ? "hiddenInset" : "hidden",
-    trafficLightPosition: isMac ? { x: 12, y: 13 } : undefined,
+    trafficLightPosition: isMac
+      ? {
+          x: SHELL_CHROME.darwin.trafficLight.x,
+          y: SHELL_CHROME.darwin.trafficLight.y,
+        }
+      : undefined,
+    // Windows: transparent overlay so custom headers align with shell chrome height
+    ...(isWin
+      ? {
+          titleBarOverlay: {
+            height: chrome.headerHeight,
+            color: "#00000000",
+          },
+        }
+      : {}),
+    // Linux: frameless for fully custom panel headers (Win uses overlay + frame)
+    frame: isMac || isWin,
     // macOS: vibrancy on the sidebar area; CSS backdrop-filter handles Win/Linux
     vibrancy: isMac ? "sidebar" : undefined,
-    frame: true,
     show: false,
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),

@@ -15,9 +15,8 @@ import { SettingsDialog } from "./components/settings/SettingsDialog";
 import { SidebarProvider } from "./components/ui/sidebar";
 import { WorkbenchLayout } from "./layout";
 import { workbenchRoutes, pathToView } from "./routes";
+import { platform } from "@renderer/lib/shell-chrome";
 import styles from "./App.module.scss";
-
-const platform = (window.api as { platform?: string }).platform ?? "linux";
 
 function AppContent() {
   const { loadSettings, language } = useAppStore(useShallow((s) => ({ loadSettings: s.loadSettings, language: s.language })));

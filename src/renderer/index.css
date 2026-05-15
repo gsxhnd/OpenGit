@@ -147,6 +147,24 @@ body,
   background: var(--color-muted-foreground);
 }
 
+/* Shell panel header metrics — synced with src/shared/shell-chrome.ts */
+[data-platform="darwin"] {
+  --shell-header-height: 38px;
+  --shell-traffic-light-padding: 76px;
+  --shell-icon-size: 15px;
+  --shell-control-size: 28px;
+  --shell-win-control-width: 46px;
+}
+
+[data-platform="win32"],
+[data-platform="linux"] {
+  --shell-header-height: 32px;
+  --shell-traffic-light-padding: 0px;
+  --shell-icon-size: 13px;
+  --shell-control-size: 24px;
+  --shell-win-control-width: 46px;
+}
+
 /* Drag region for title bar */
 .drag-region {
   -webkit-app-region: drag;
