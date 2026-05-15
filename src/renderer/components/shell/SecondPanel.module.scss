@@ -1,4 +1,4 @@
-.inspector {
+.panel {
   width: 280px;
   min-width: 220px;
   max-width: min(40vw, 400px);
@@ -9,29 +9,6 @@
   background: var(--color-sidebar);
   color: var(--color-foreground);
   min-height: 0;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  min-height: 38px;
-  padding: 0 0.35rem 0 0.65rem;
-  border-bottom: 1px solid var(--color-border);
-  flex-shrink: 0;
-}
-
-.title {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.closeBtn {
-  color: var(--color-muted-foreground);
 }
 
 .tabBar {

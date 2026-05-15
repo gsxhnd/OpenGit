@@ -35,6 +35,8 @@ function createWindow() {
     minHeight: 500,
     titleBarStyle: isMac ? "hiddenInset" : "hidden",
     trafficLightPosition: isMac ? { x: 12, y: 13 } : undefined,
+    // macOS: vibrancy on the sidebar area; CSS backdrop-filter handles Win/Linux
+    vibrancy: isMac ? "sidebar" : undefined,
     frame: true,
     show: false,
     webPreferences: {

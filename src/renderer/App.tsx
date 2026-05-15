@@ -1,6 +1,6 @@
 /**
- * App root — shared providers, global shortcuts, and route-level layouts:
- * `SettingsLayout` (standalone settings) vs `WorkbenchLayout` (main shell).
+ * App root — shared providers, global shortcuts, and route-level layouts.
+ * Settings is no longer a route — it opens as a Dialog (SettingsDialog).
  */
 import { useEffect } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router";
@@ -11,11 +11,13 @@ import { useAppKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useTheme } from "./hooks/useTheme";
 import { ToastContainer } from "./components/shell/ToastContainer";
 import { CommandPalette } from "./components/shell/command-palette";
+import { SettingsDialog } from "./components/settings/SettingsDialog";
 import { SidebarProvider } from "./components/ui/sidebar";
-import { SettingsLayout, WorkbenchLayout } from "./layout";
-import { SettingsView } from "./views/SettingsView";
-import { workbenchRoutes, pathToView, SETTINGS_PATH } from "./routes";
+import { WorkbenchLayout } from "./layout";
+import { workbenchRoutes, pathToView } from "./routes";
 import styles from "./App.module.scss";
+
+const platform = (window.api as { platform?: string }).platform ?? "linux";
 
 function AppContent() {
   const { loadSettings, language } = useAppStore(useShallow((s) => ({ loadSettings: s.loadSettings, language: s.language })));
@@ -51,11 +53,8 @@ function AppContent() {
 
   return (
     <SidebarProvider defaultOpen={false} style={{ display: "contents" }}>
-      <div className={styles.appContainer}>
+      <div className={styles.appContainer} data-platform={platform}>
         <Routes>
-          <Route element={<SettingsLayout />}>
-            <Route path={SETTINGS_PATH} element={<SettingsView />} />
-          </Route>
           <Route element={<WorkbenchLayout />}>
             {workbenchRoutes.map((route) => (
               <Route key={route.path} path={route.path} element={route.element} />
@@ -65,6 +64,7 @@ function AppContent() {
         </Routes>
         <ToastContainer />
         <CommandPalette />
+        <SettingsDialog />
       </div>
     </SidebarProvider>
   );

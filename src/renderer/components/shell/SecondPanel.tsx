@@ -1,6 +1,10 @@
 /**
- * Phase 0 — **Inspector Panel**：右侧属性 / 任务区。
- * 包含 Properties（连接详情）、Transfers（传输队列）、Diagnostics（诊断信息）标签。
+ * SecondPanel — optional right panel (formerly InspectorPanel).
+ * Has its own header. On Win/Linux, window controls appear in this header
+ * when the panel is open (they move here from MainHeader).
+ *
+ * Contains Properties (connection details), Transfers, Diagnostics tabs.
+ * Toggled via `secondPanelOpen` in the Zustand UiSlice.
  */
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -9,15 +13,18 @@ import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../store'
 import { Button } from '../ui/button'
 import { ShellTooltip } from './ShellTooltip'
-import styles from './InspectorPanel.module.scss'
+import { WinControlButtons } from './WinControlButtons'
+import styles from './SecondPanel.module.scss'
 
-type InspectorTab = 'properties' | 'transfers' | 'diagnostics'
+const isMac = (window.api as { platform?: string }).platform === 'darwin'
 
-interface InspectorPanelProps {
+type SecondPanelTab = 'properties' | 'transfers' | 'diagnostics'
+
+interface SecondPanelProps {
   onClose: () => void
 }
 
-const TAB_ITEMS: { key: InspectorTab; icon: typeof Server; labelKey: string }[] = [
+const TAB_ITEMS: { key: SecondPanelTab; icon: typeof Server; labelKey: string }[] = [
   { key: 'properties', icon: Server, labelKey: 'workbench.inspectorTabProperties' },
   { key: 'transfers', icon: FileUp, labelKey: 'workbench.inspectorTabTransfers' },
   { key: 'diagnostics', icon: Bug, labelKey: 'workbench.inspectorTabDiagnostics' },
@@ -84,29 +91,40 @@ function DiagnosticsTab() {
   )
 }
 
-export function InspectorPanel({ onClose }: InspectorPanelProps) {
+export function SecondPanel({ onClose }: SecondPanelProps) {
   const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState<InspectorTab>('properties')
+  const [activeTab, setActiveTab] = useState<SecondPanelTab>('properties')
+
+  const height = isMac ? 'h-[38px]' : 'h-[32px]'
 
   return (
-    <aside className={styles.inspector} aria-label={t('workbench.inspectorTitle')}>
-      <header className={styles.header}>
-        <span className={styles.title}>{t('workbench.inspectorTitle')}</span>
-        <ShellTooltip content={t('workbench.inspectorClose')} side="bottom" delay={300}>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            className={styles.closeBtn}
-            onClick={onClose}
-            aria-label={t('workbench.inspectorClose')}
-          >
-            <PanelRightClose size={16} />
-          </Button>
-        </ShellTooltip>
+    <aside className={styles.panel} aria-label={t('workbench.secondPanelTitle')}>
+      {/* Second Panel Header */}
+      <header className={`drag-region flex shrink-0 items-stretch border-b border-[var(--color-border)] ${height}`}>
+        <div className="no-drag flex shrink-0 items-center pl-2">
+          <ShellTooltip content={t('workbench.secondPanelClose')} side="bottom" delay={300}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              onClick={onClose}
+              aria-label={t('workbench.secondPanelClose')}
+            >
+              <PanelRightClose size={16} />
+            </Button>
+          </ShellTooltip>
+        </div>
+        <div className="pointer-events-none flex flex-1 items-center px-2">
+          <span className="text-[0.72rem] font-semibold uppercase tracking-wider text-[var(--color-muted-foreground)]">
+            {t('workbench.secondPanelTitle')}
+          </span>
+        </div>
+        {/* Win/Linux: window controls in the rightmost panel */}
+        {!isMac && <WinControlButtons />}
       </header>
 
-      <nav className={styles.tabBar} aria-label="Inspector tabs">
+      {/* Tabs */}
+      <nav className={styles.tabBar} aria-label="Second panel tabs">
         {TAB_ITEMS.map(({ key, icon: Icon, labelKey }) => (
           <button
             key={key}
@@ -121,6 +139,7 @@ export function InspectorPanel({ onClose }: InspectorPanelProps) {
         ))}
       </nav>
 
+      {/* Body */}
       <div className={styles.body}>
         {activeTab === 'properties' && <PropertiesTab />}
         {activeTab === 'transfers' && <TransfersTab />}

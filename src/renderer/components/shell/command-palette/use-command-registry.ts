@@ -17,7 +17,14 @@ function formatKeybinding(keys: string): string {
 export function useCommandRegistry(onClose: () => void): PaletteCommand[] {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { removeSession, sessions, toggleInspector } = useAppStore(useShallow((s) => ({ removeSession: s.removeSession, sessions: s.sessions, toggleInspector: s.toggleInspector })))
+  const { removeSession, sessions, toggleSecondPanel, setSettingsOpen } = useAppStore(
+    useShallow((s) => ({
+      removeSession: s.removeSession,
+      sessions: s.sessions,
+      toggleSecondPanel: s.toggleSecondPanel,
+      setSettingsOpen: s.setSettingsOpen,
+    })),
+  )
   const { toggleSidebar } = useSidebar()
 
   return useMemo(() => {
@@ -53,7 +60,10 @@ export function useCommandRegistry(onClose: () => void): PaletteCommand[] {
       {
         id: 'workbench.action.openSettings',
         label: t('commands.openSettings'),
-        action: () => go('/settings'),
+        action: () => {
+          setSettingsOpen(true)
+          close()
+        },
         keybinding: formatKeybinding('Ctrl+,'),
       },
       {
@@ -66,11 +76,11 @@ export function useCommandRegistry(onClose: () => void): PaletteCommand[] {
         keybinding: formatKeybinding('Ctrl+B'),
       },
       {
-        id: 'workbench.action.toggleInspector',
-        label: t('commands.toggleInspector'),
-        description: t('workbench.inspectorToggleHint'),
+        id: 'workbench.action.toggleSecondPanel',
+        label: t('commands.toggleSecondPanel'),
+        description: t('workbench.secondPanelToggleHint'),
         action: () => {
-          toggleInspector()
+          toggleSecondPanel()
           close()
         },
         keybinding: formatKeybinding('Ctrl+Alt+I'),
@@ -87,5 +97,5 @@ export function useCommandRegistry(onClose: () => void): PaletteCommand[] {
         },
       },
     ]
-  }, [navigate, onClose, removeSession, sessions, t, toggleInspector, toggleSidebar])
+  }, [navigate, onClose, removeSession, sessions, t, toggleSecondPanel, toggleSidebar, setSettingsOpen])
 }

@@ -46,8 +46,9 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
 
 export function useAppKeyboardShortcuts() {
   const navigate = useNavigate()
-  const toggleInspector = useAppStore((s) => s.toggleInspector)
+  const toggleSecondPanel = useAppStore((s) => s.toggleSecondPanel)
   const toggleCommandPalette = useAppStore((s) => s.toggleCommandPalette)
+  const setSettingsOpen = useAppStore((s) => s.setSettingsOpen)
 
   const shortcuts: KeyboardShortcut[] = useMemo(
     () => [
@@ -69,18 +70,19 @@ export function useAppKeyboardShortcuts() {
         action: () => navigate('/local-terminal'),
       },
       {
+        // ⌘, / Ctrl+, opens Settings Dialog
         key: ',',
         ctrl: true,
-        action: () => navigate('/settings'),
+        action: () => setSettingsOpen(true),
       },
       {
         key: 'i',
         ctrl: true,
         alt: true,
-        action: () => toggleInspector(),
+        action: () => toggleSecondPanel(),
       },
     ],
-    [navigate, toggleCommandPalette, toggleInspector],
+    [navigate, toggleCommandPalette, toggleSecondPanel, setSettingsOpen],
   )
 
   useKeyboardShortcuts(shortcuts)

@@ -14,7 +14,6 @@ const VIEW_TO_PATH: Record<ViewType, string> = {
   'local-terminal': '/local-terminal',
   session: '/sessions',
   files: '/files',
-  settings: '/settings',
 }
 
 const PATH_TO_VIEW: Record<string, ViewType> = {
@@ -24,7 +23,6 @@ const PATH_TO_VIEW: Record<string, ViewType> = {
   '/sessions': 'session',
   '/files': 'files',
   '/session': 'session',
-  '/settings': 'settings',
 }
 
 export function viewToPath(view: ViewType): string {
@@ -35,8 +33,6 @@ export function pathToView(pathname: string): ViewType {
   if (pathname.startsWith('/session')) return 'session'
   return PATH_TO_VIEW[pathname] || 'dashboard'
 }
-
-export const SETTINGS_PATH = '/settings'
 
 function LazyRoute({ children }: { children: React.ReactNode }) {
   return <Suspense fallback={null}>{children}</Suspense>

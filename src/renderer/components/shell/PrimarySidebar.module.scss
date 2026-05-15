@@ -1,8 +1,7 @@
 .sidebar {
   width: 248px;
   flex-shrink: 0;
-  border-right: 1px solid var(--color-border);
-  background: var(--color-sidebar);
+  /* background and border-right are provided by the parent .primaryPanel container */
   padding: 0;
   overflow: auto;
 }

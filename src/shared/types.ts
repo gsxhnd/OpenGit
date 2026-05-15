@@ -82,8 +82,7 @@ export type ViewType =
   | "connections"
   | "local-terminal"
   | "session"
-  | "files"
-  | "settings";
+  | "files";
 
 /**
  * Workbench session tab metadata (see docs/dev/05-information-architecture.md, session model).

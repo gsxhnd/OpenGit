@@ -1,6 +1,6 @@
 import { NavLink, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { Folder, LayoutDashboard, MonitorPlay, Plug, Search, Server, Settings, TerminalSquare } from 'lucide-react'
+import { Folder, LayoutDashboard, MonitorPlay, Plug, Search, Server, TerminalSquare } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../store'
 import { useSshConnect } from '../../hooks/useSshConnect'
@@ -10,7 +10,6 @@ function getSection(pathname: string) {
   if (pathname.startsWith('/connections')) return 'connections'
   if (pathname.startsWith('/session') || pathname.startsWith('/sessions') || pathname.startsWith('/local-terminal')) return 'sessions'
   if (pathname.startsWith('/files')) return 'files'
-  if (pathname.startsWith('/settings')) return 'settings'
   return 'dashboard'
 }
 
@@ -31,7 +30,6 @@ export function PrimarySidebar() {
       connections: [t('workbench.connections'), t('workbench.connectionsHint')],
       sessions: [t('workbench.sessions'), t('workbench.sessionsHint')],
       files: [t('workbench.files'), t('workbench.filesHint')],
-      settings: [t('settings.title'), t('settings.shortcuts')],
     }[section]
 
     return (
@@ -151,24 +149,6 @@ export function PrimarySidebar() {
     </div>
   )
 
-  const renderSettings = () => (
-    <div className={styles.group}>
-      <div className={styles.groupTitle}>{t('settings.title')}</div>
-      <NavLink to="/settings" end className={({ isActive }) => linkClass(isActive)}>
-        <Settings size={14} />
-        {t('workbench.settingsAppearance')}
-      </NavLink>
-      <NavLink to="/settings" className={({ isActive }) => linkClass(isActive)}>
-        <TerminalSquare size={14} />
-        {t('workbench.settingsTerminal')}
-      </NavLink>
-      <NavLink to="/settings" className={({ isActive }) => linkClass(isActive)}>
-        <Plug size={14} />
-        {t('workbench.settingsRemoteHosts')}
-      </NavLink>
-    </div>
-  )
-
   return (
     <aside className={styles.sidebar} aria-label="Primary Sidebar">
       {renderHeader()}
@@ -176,7 +156,6 @@ export function PrimarySidebar() {
       {section === 'connections' && renderConnections()}
       {section === 'sessions' && renderSessions()}
       {section === 'files' && renderFiles()}
-      {section === 'settings' && renderSettings()}
     </aside>
   )
 }

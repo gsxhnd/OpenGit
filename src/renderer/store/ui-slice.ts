@@ -1,16 +1,19 @@
 import type { AppStoreCreator, UiSlice } from "./types";
 
 export const createUiSlice: AppStoreCreator<UiSlice> = (set) => ({
-  inspectorOpen: false,
+  secondPanelOpen: false,
   commandPaletteOpen: false,
+  settingsOpen: false,
 
-  setInspectorOpen: (open) => set({ inspectorOpen: open }),
+  setSecondPanelOpen: (open) => set({ secondPanelOpen: open }),
 
-  toggleInspector: () =>
-    set((state) => ({ inspectorOpen: !state.inspectorOpen })),
+  toggleSecondPanel: () =>
+    set((state) => ({ secondPanelOpen: !state.secondPanelOpen })),
 
   toggleCommandPalette: () =>
     set((state) => ({ commandPaletteOpen: !state.commandPaletteOpen })),
 
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
+
+  setSettingsOpen: (open) => set({ settingsOpen: open }),
 });

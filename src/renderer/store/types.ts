@@ -45,12 +45,14 @@ export interface NotificationSlice {
 }
 
 export interface UiSlice {
-  inspectorOpen: boolean;
+  secondPanelOpen: boolean;
   commandPaletteOpen: boolean;
-  setInspectorOpen: (open: boolean) => void;
-  toggleInspector: () => void;
+  settingsOpen: boolean;
+  setSecondPanelOpen: (open: boolean) => void;
+  toggleSecondPanel: () => void;
   toggleCommandPalette: () => void;
   setCommandPaletteOpen: (open: boolean) => void;
+  setSettingsOpen: (open: boolean) => void;
 }
 
 export type AppStore = SettingsSlice &
