@@ -4,6 +4,9 @@ import { join } from 'path'
 import { randomUUID } from 'crypto'
 import { IPC_CHANNELS } from '../shared/ipc'
 import type { AppSettings, HostProfile, KnownHostEntry } from '../shared/types'
+import { createLogger } from './logger'
+
+const log = () => createLogger('settings')
 
 let _configDir: string | null = null
 let _configFile: string | null = null
@@ -50,7 +53,7 @@ export function loadSettings(): AppSettings {
       return migrateSettings({ ...DEFAULT_SETTINGS, ...parsed })
     }
   } catch (err) {
-    console.error('Failed to load settings:', err)
+    log().error('Failed to load settings', { error: String(err) })
     try {
       const backupPath = getConfigFile() + '.bak'
       if (existsSync(getConfigFile())) {
@@ -83,7 +86,7 @@ export function saveSettings(settings: AppSettings) {
     }
     writeFileSync(getConfigFile(), JSON.stringify(settings, null, 2))
   } catch (err) {
-    console.error('Failed to save settings:', err)
+    log().error('Failed to save settings', { error: String(err) })
   }
 }
 
@@ -113,7 +116,7 @@ function saveKnownHosts(hosts: KnownHostEntry[]) {
     }
     writeFileSync(getKnownHostsFile(), JSON.stringify(hosts, null, 2))
   } catch (err) {
-    console.error('Failed to save known_hosts:', err)
+    log().error('Failed to save known_hosts', { error: String(err) })
   }
 }
 

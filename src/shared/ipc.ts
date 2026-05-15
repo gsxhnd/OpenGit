@@ -64,4 +64,6 @@ export const IPC_CHANNELS = {
   LOCAL_RMDIR: "local:rmdir",
   LOCAL_UNLINK: "local:unlink",
   LOCAL_RENAME: "local:rename",
+
+  LOG_WRITE: "log:write",
 } as const;

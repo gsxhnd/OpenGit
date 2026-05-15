@@ -12,6 +12,7 @@ import { sshApi } from "./ssh";
 import { knownHostsApi } from "./known-hosts";
 import { sftpApi } from "./sftp";
 import { localFilesApi } from "./local-files";
+import { logApi } from "./log";
 
 /**
  * 合并所有API模块为统一的api对象
@@ -84,6 +85,9 @@ export const api = {
   localRmdir: localFilesApi.rmdir,
   localUnlink: localFilesApi.unlink,
   localRename: localFilesApi.rename,
+
+  // Logging | Logging
+  logWrite: logApi.logWrite,
 };
 
 /**
@@ -100,4 +104,5 @@ export {
   knownHostsApi,
   sftpApi,
   localFilesApi,
+  logApi,
 };

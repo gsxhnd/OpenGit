@@ -14,6 +14,9 @@ import {
 import { join } from "path";
 import { randomUUID } from "crypto";
 import type { AppSettings, HostProfile } from "../shared/types";
+import { createLogger } from "./logger";
+
+const log = () => createLogger("config");
 
 // ============================================================================
 // 常量定义 | Constants
@@ -114,7 +117,7 @@ export function loadSettings(): AppSettings {
       return migrateSettings({ ...DEFAULT_SETTINGS, ...parsed });
     }
   } catch (err) {
-    console.error("Failed to load settings:", err);
+    log().error("Failed to load settings", { error: String(err) });
     // 配置文件损坏时创建备份 | Create backup when config file is corrupted
     try {
       const backupPath = getConfigFile() + ".bak";
@@ -170,7 +173,7 @@ export function saveSettings(settings: AppSettings) {
     }
     writeFileSync(getConfigFile(), JSON.stringify(settings, null, 2));
   } catch (err) {
-    console.error("Failed to save settings:", err);
+    log().error("Failed to save settings", { error: String(err) });
   }
 }
 

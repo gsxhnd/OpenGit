@@ -11,9 +11,12 @@ import { registerSshSftpHandlers } from "./handlers/ssh-sftp-handler";
 import { registerLocalFilesHandlers } from "./handlers/local-files-handler";
 import { loadSettings, saveSettings } from "./config-manager";
 import { registerPtyHandlers } from "./pty-handlers";
+import { registerLogHandlers } from "./handlers/log-handler";
+import { initLogger, createLogger } from "./logger";
 import { IPC_CHANNELS } from "../shared/ipc";
 import { isDev, rendererUrl } from "../shared/build";
 
+const log = () => createLogger("main");
 let mainWindow: BrowserWindow | null = null;
 
 // ============================================================================
@@ -30,7 +33,7 @@ async function loadDevExtensions() {
   try {
     const extensionsDir = join(__dirname, "../../extensions");
     const reactDevToolsPath = join(extensionsDir, "react_dev_tool", "7.0.1_0");
-    console.log("[main] React DevTools extension path:", reactDevToolsPath);
+    log().debug("React DevTools extension path", { path: reactDevToolsPath });
 
     // Load React DevTools extension
     if (existsSync(reactDevToolsPath)) {
@@ -39,21 +42,21 @@ async function loadDevExtensions() {
           reactDevToolsPath,
           { allowFileAccess: true },
         );
-        console.log("[main] React DevTools extension loaded successfully");
-      } catch (err: any) {
-        console.warn(
-          "[main] Failed to load React DevTools extension:",
-          err?.message || err,
-        );
+        log().info("React DevTools extension loaded successfully");
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        log().warn("Failed to load React DevTools extension", {
+          error: message,
+        });
       }
     } else {
-      console.warn(
-        "[main] React DevTools extension path not found:",
-        reactDevToolsPath,
-      );
+      log().warn("React DevTools extension path not found", {
+        path: reactDevToolsPath,
+      });
     }
-  } catch (err: any) {
-    console.warn("[main] Error loading extensions:", err?.message || err);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    log().warn("Error loading extensions", { error: message });
   }
 }
 
@@ -266,22 +269,40 @@ function createWindow() {
  * Register all IPC handlers, create main window
  */
 app.whenReady().then(async () => {
-  console.log(`[main] App is ready (dev=${isDev}), starting initialization...`);
+  initLogger();
+
+  process.on("uncaughtException", (error) => {
+    log().error("Uncaught Exception", {
+      error: error.message,
+      stack: error.stack,
+    });
+  });
+
+  process.on("unhandledRejection", (reason, promise) => {
+    log().error("Unhandled Rejection", {
+      reason: reason instanceof Error ? reason.message : String(reason),
+      stack: reason instanceof Error ? reason.stack : undefined,
+      promise: String(promise),
+    });
+  });
+
+  log().info(`App is ready (dev=${isDev}), starting initialization...`);
 
   if (isDev) {
-    console.log("[main] Loading developer extensions...");
+    log().debug("Loading developer extensions...");
     await loadDevExtensions();
   }
 
-  console.log("[main] Registering IPC handlers...");
+  log().debug("Registering IPC handlers...");
+  registerLogHandlers();
   registerSettingsHandlers();
   registerPtyHandlers();
   registerSshSftpHandlers();
   registerLocalFilesHandlers();
 
-  console.log("[main] Creating main window...");
+  log().debug("Creating main window...");
   createWindow();
-  console.log("[main] Main window created successfully");
+  log().info("Main window created successfully");
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -295,16 +316,5 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
-
-// Global error handling
-process.on("uncaughtException", (error) => {
-  console.error("[main] Uncaught Exception:", error);
-});
-
-process.on("unhandledRejection", (reason, promise) => {
-  console.error("[main] Unhandled Rejection at:", promise, "reason:", reason);
-});
-
-console.log("[main] Electron main process initialized");
 
 export { mainWindow };

@@ -7,6 +7,9 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import type { KnownHostEntry } from "../shared/types";
 import { getConfigDir } from "./config-manager";
+import { createLogger } from "./logger";
+
+const log = () => createLogger("known-hosts");
 
 // ============================================================================
 // 私有缓存变量 | Private cached variables
@@ -66,7 +69,7 @@ function saveKnownHosts(hosts: KnownHostEntry[]) {
     }
     writeFileSync(getKnownHostsFile(), JSON.stringify(hosts, null, 2));
   } catch (err) {
-    console.error("Failed to save known_hosts:", err);
+    log().error("Failed to save known_hosts", { error: String(err) });
   }
 }
 
