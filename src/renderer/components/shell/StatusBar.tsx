@@ -11,13 +11,13 @@ import styles from './StatusBar.module.scss'
 
 export function StatusBar() {
   const { t } = useTranslation()
-  const { sessions, activeSessionId, inspectorOpen, toggleInspector } = useAppStore()
+  const { sessions, activeSessionId, inspectorOpen, toggleInspector, toggleCommandPalette } = useAppStore()
   const active = sessions.find((session) => session.connectionId === activeSessionId)
 
   return (
     <footer className={styles.statusBar} aria-label="Status Bar">
       <ShellTooltip content={t('workbench.status.commandPalette')} side="top" delay={400}>
-        <button type="button" className={styles.item} onClick={() => {}} aria-label={t('workbench.status.commandPalette')}>
+        <button type="button" className={styles.item} onClick={toggleCommandPalette} aria-label={t('workbench.status.commandPalette')}>
           <Search size={12} />
           <span>Ctrl+Shift+P</span>
         </button>

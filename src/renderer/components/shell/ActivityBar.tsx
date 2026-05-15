@@ -11,13 +11,21 @@ import {
 } from '../ui/sidebar'
 import { Button } from '../ui/button'
 
-const items = [
+interface ActivityBarItem {
+  to: string
+  icon: typeof LayoutDashboard
+  labelKey: string
+  end?: boolean
+  shortcut?: string
+}
+
+const items: ActivityBarItem[] = [
   { to: '/', icon: LayoutDashboard, labelKey: 'workbench.dashboard', end: true, shortcut: 'Ctrl+Shift+D' },
   { to: '/connections', icon: Plug, labelKey: 'workbench.connections', shortcut: 'Ctrl+Shift+C' },
   { to: '/sessions', icon: MonitorPlay, labelKey: 'workbench.sessions', shortcut: 'Ctrl+Shift+S' },
   { to: '/files', icon: Folder, labelKey: 'workbench.files', shortcut: 'Ctrl+Shift+F' },
   { to: '/settings', icon: Settings, labelKey: 'nav.settings', shortcut: '⌘,' },
-] as const
+]
 
 export function ActivityBar() {
   const { t } = useTranslation()

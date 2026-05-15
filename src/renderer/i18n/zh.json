@@ -194,6 +194,7 @@
   "workbench.loadFailed": "加载目录失败",
   "workbench.folderCreated": "文件夹已创建",
   "workbench.confirmDelete": "删除",
+  "workbench.delete": "删除",
   "workbench.deleteSuccess": "已删除",
   "workbench.operationFailed": "操作失败"
 }

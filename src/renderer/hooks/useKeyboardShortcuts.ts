@@ -8,7 +8,17 @@ export interface KeyboardShortcut {
   shift?: boolean
   alt?: boolean
   meta?: boolean
+  /** If true, shortcut fires even when a terminal element is focused */
+  allowInTerminal?: boolean
   action: () => void
+}
+
+/** Returns true when the keyboard event originates from inside an xterm.js canvas/textarea */
+function isTerminalFocused(): boolean {
+  const el = document.activeElement
+  if (!el) return false
+  // xterm renders into a .xterm-helper-textarea or canvas inside a .xterm element
+  return el.closest('.xterm') !== null
 }
 
 export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
@@ -21,6 +31,7 @@ export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
         const altMatches = (shortcut.alt ?? false) === e.altKey
 
         if (keyMatches && ctrlMatches && shiftMatches && altMatches) {
+          if (!shortcut.allowInTerminal && isTerminalFocused()) continue
           e.preventDefault()
           shortcut.action()
           break

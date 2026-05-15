@@ -157,14 +157,14 @@ export function PrimarySidebar() {
         <Settings size={14} />
         {t('workbench.settingsAppearance')}
       </NavLink>
-      <button type="button" className={styles.action}>
+      <NavLink to="/settings" className={({ isActive }) => linkClass(isActive)}>
         <TerminalSquare size={14} />
         {t('workbench.settingsTerminal')}
-      </button>
-      <button type="button" className={styles.action}>
+      </NavLink>
+      <NavLink to="/settings" className={({ isActive }) => linkClass(isActive)}>
         <Plug size={14} />
         {t('workbench.settingsRemoteHosts')}
-      </button>
+      </NavLink>
     </div>
   )
 

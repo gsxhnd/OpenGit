@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { motion } from 'motion/react'
+import { Server, TerminalSquare } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { useAppStore } from '../store'
@@ -11,8 +12,8 @@ import styles from './DashboardView.module.scss'
 export function DashboardView() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { loadSettings, addToast } = useAppStore()
-  const { connecting, doConnect } = useSshConnect()
+  const { loadSettings, addToast, settings, sessions } = useAppStore()
+  const { connecting, doConnect, connectSaved } = useSshConnect()
 
   const [host, setHost] = useState('')
   const [port, setPort] = useState('22')
@@ -41,6 +42,8 @@ export function DashboardView() {
     )
   }
 
+  const hosts = settings?.hosts ?? []
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={styles.container}>
       <header className={styles.header}>
@@ -50,12 +53,59 @@ export function DashboardView() {
 
       <div className={styles.actions}>
         <Button variant="secondary" onClick={() => navigate('/local-terminal')}>
+          <TerminalSquare size={14} className="mr-1" />
           {t('welcome.localTerminal')}
         </Button>
         <Button variant="outline" onClick={() => navigate('/connections')}>
           {t('workbench.connections')}
         </Button>
       </div>
+
+      {sessions.length > 0 && (
+        <section className={styles.panel}>
+          <h2 className={styles.panelTitle}>{t('workbench.sessions')}</h2>
+          <ul className={styles.hostList}>
+            {sessions.map((session) => (
+              <li key={session.connectionId} className={styles.hostItem}>
+                <div>
+                  <div className={styles.hostName}>{session.hostLabel}</div>
+                  <div className={styles.hostMeta}>{session.username}@{session.host}:{session.port}</div>
+                </div>
+                <Button size="sm" variant="secondary" onClick={() => navigate(`/session/${session.connectionId}`)}>
+                  {t('workbench.openSession')}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {hosts.length > 0 && (
+        <section className={styles.panel}>
+          <div className={styles.panelHead}>
+            <h2 className={styles.panelTitle}>{t('welcome.savedHosts')}</h2>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/connections')}>
+              {t('workbench.connections')} →
+            </Button>
+          </div>
+          <ul className={styles.hostList}>
+            {hosts.slice(0, 5).map((h) => (
+              <li key={h.id} className={styles.hostItem}>
+                <div className={styles.hostInfo}>
+                  <Server size={14} className={styles.hostIcon} />
+                  <div>
+                    <div className={styles.hostName}>{h.label}</div>
+                    <div className={styles.hostMeta}>{h.username}@{h.host}:{h.port}</div>
+                  </div>
+                </div>
+                <Button size="sm" variant="secondary" disabled={connecting} onClick={() => void connectSaved(h)}>
+                  {t('welcome.connect')}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className={styles.panel}>
         <h2 className={styles.panelTitle}>{t('welcome.quickConnect')}</h2>

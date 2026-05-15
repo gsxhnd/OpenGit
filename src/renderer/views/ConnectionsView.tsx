@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router'
 import { motion } from 'motion/react'
+import { Plus } from 'lucide-react'
 import { useAppStore } from '../store'
 import { Button } from '../components/ui/button'
 import { useSshConnect } from '../hooks/useSshConnect'
@@ -8,6 +10,7 @@ import styles from './ConnectionsView.module.scss'
 
 export function ConnectionsView() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { settings, loadSettings } = useAppStore()
   const { connectSaved, connecting } = useSshConnect()
 
@@ -27,13 +30,25 @@ export function ConnectionsView() {
       <section className={styles.panel}>
         <div className={styles.panelHead}>
           <h2 className={styles.panelTitle}>{t('welcome.savedHosts')}</h2>
-          <Button variant="outline" size="sm" onClick={() => void loadSettings()}>
-            {t('welcome.refreshHosts')}
-          </Button>
+          <div className={styles.panelActions}>
+            <Button variant="outline" size="sm" onClick={() => void loadSettings()}>
+              {t('welcome.refreshHosts')}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => navigate('/settings')}>
+              <Plus size={14} className="mr-1" />
+              {t('settings.addHost')}
+            </Button>
+          </div>
         </div>
 
         {hosts.length === 0 ? (
-          <div className={styles.empty}>{t('workbench.noSavedConnections')}</div>
+          <div className={styles.empty}>
+            <p>{t('workbench.noSavedConnections')}</p>
+            <Button variant="outline" size="sm" className={styles.emptyAction} onClick={() => navigate('/settings')}>
+              <Plus size={14} className="mr-1" />
+              {t('settings.addHost')}
+            </Button>
+          </div>
         ) : (
           <ul className={styles.hostList}>
             {hosts.map((host) => (

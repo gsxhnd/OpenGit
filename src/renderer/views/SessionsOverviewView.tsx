@@ -36,7 +36,9 @@ export function SessionsOverviewView() {
         {sessions.map((session) => (
           <article key={session.connectionId} className={styles.card}>
             <div>
-              <div className={styles.status}>{t('workbench.connected')}</div>
+              <div className={styles.status} data-status={session.status ?? 'connected'}>
+                {session.status ?? t('workbench.connected')}
+              </div>
               <div className={styles.cardTitle}>{session.hostLabel}</div>
               <div className={styles.cardMeta}>{session.username}@{session.host}:{session.port}</div>
             </div>

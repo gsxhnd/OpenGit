@@ -123,6 +123,7 @@
   "workbench.loadFailed": "Failed to load directory",
   "workbench.folderCreated": "Folder created",
   "workbench.confirmDelete": "Delete",
+  "workbench.delete": "Delete",
   "workbench.deleteSuccess": "Deleted",
   "workbench.operationFailed": "Operation failed",
   "editor.save": "Save",

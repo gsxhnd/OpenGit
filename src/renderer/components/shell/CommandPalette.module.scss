@@ -1,120 +1,215 @@
 /**
- * CommandPalette - 命令面板样式
+ * CommandPalette — VSCode-style
+ *
+ * Layout: fixed top-center, slides down from title bar area.
+ * No heavy backdrop — just a subtle scrim so the panel stands out.
  */
 
-.overlay {
+// ── Backdrop ─────────────────────────────────────────────────────────────────
+
+.backdrop {
   position: fixed;
   inset: 0;
-  background: rgb(0 0 0 / 0.5);
-  z-index: 40;
+  z-index: 200;
+  // Very subtle — VSCode uses no backdrop at all; we add a faint one so
+  // clicking outside closes the palette.
+  background: transparent;
 }
+
+// ── Panel ─────────────────────────────────────────────────────────────────────
 
 .panel {
   position: fixed;
-  top: 25%;
+  top: 48px; // just below the title bar
   left: 50%;
   transform: translateX(-50%);
-  width: 100%;
-  max-width: 42rem;
-  z-index: 50;
-}
+  width: min(640px, calc(100vw - 2rem));
+  z-index: 201;
 
-.container {
-  background: var(--color-background);
+  background: var(--color-popover, var(--color-background));
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  border-radius: 6px;
+  box-shadow:
+    0 8px 32px rgb(0 0 0 / 0.45),
+    0 2px 8px rgb(0 0 0 / 0.25);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 80px);
 }
 
-.searchBar {
+// ── Input row ─────────────────────────────────────────────────────────────────
+
+.inputRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
+  padding: 0 12px;
   border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
 }
 
-.searchIcon {
-  color: var(--color-muted-foreground);
+.input {
+  flex: 1;
+  height: 40px;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: var(--color-foreground);
+  caret-color: var(--color-primary);
+
+  &::placeholder {
+    color: var(--color-muted-foreground);
+  }
 }
 
-.commandList {
-  max-height: 24rem;
+// ── Results list ──────────────────────────────────────────────────────────────
+
+.list {
+  list-style: none;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding: 4px 0;
+
+  // Thin scrollbar
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+  }
 }
 
-.emptyState {
-  padding: 2rem 1rem;
+.empty {
+  padding: 24px 16px;
   text-align: center;
+  font-size: 13px;
   color: var(--color-muted-foreground);
 }
 
-.commandGroup {
-  padding: 0.5rem 0;
+// ── Group header ──────────────────────────────────────────────────────────────
+
+.groupHeader {
+  padding: 6px 12px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+  user-select: none;
 }
 
-.commandItem {
-  width: 100%;
-  padding: 0.5rem 1rem;
-  text-align: left;
-  transition: background-color 0.15s, color 0.15s;
+// ── Command item ──────────────────────────────────────────────────────────────
+
+.item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  background: none;
-  border: none;
+  gap: 8px;
+  padding: 5px 12px;
   cursor: pointer;
+  user-select: none;
+  border-radius: 0;
   color: var(--color-foreground);
 
   &:hover {
-    background: var(--color-secondary);
-  }
-
-  &.selected {
-    background: var(--color-primary);
-    color: var(--color-primary-foreground);
+    background: var(--color-accent, var(--color-muted));
   }
 }
 
-.itemSelected {
-  background: var(--color-primary) !important;
-  color: var(--color-primary-foreground) !important;
+.itemActive {
+  background: var(--color-accent, var(--color-muted)) !important;
+  // Left accent bar — VSCode's signature selection indicator
+  box-shadow: inset 2px 0 0 var(--color-primary);
 }
 
-.commandLabel {
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-.commandDescription {
-  font-size: 0.75rem;
-  opacity: 0.7;
-}
-
-.commandMeta {
+.itemIcon {
+  flex-shrink: 0;
+  width: 20px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  color: var(--color-muted-foreground);
+
+  .itemActive & {
+    color: var(--color-foreground);
+  }
 }
 
-.commandCategory {
-  font-size: 10px;
-  opacity: 0.5;
+.itemBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
-.commandShortcut {
-  font-size: 0.75rem;
-  opacity: 0.5;
-  margin-left: 0.5rem;
+.itemLabel {
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+.itemDesc {
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ── Match highlight ───────────────────────────────────────────────────────────
+
+.highlight {
+  background: transparent;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+// ── Keybinding chip ───────────────────────────────────────────────────────────
+
+.keybinding {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+// ── Footer hint bar ───────────────────────────────────────────────────────────
 
 .footer {
-  padding: 0.5rem 1rem;
-  border-top: 1px solid var(--color-border);
-  font-size: 0.75rem;
-  color: var(--color-muted-foreground);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 16px;
+  padding: 5px 12px;
+  border-top: 1px solid var(--color-border);
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 10px;
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin-right: 3px;
+  color: var(--color-foreground);
 }

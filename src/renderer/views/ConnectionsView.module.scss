@@ -39,6 +39,11 @@
   gap: 0.5rem;
 }
 
+.panelActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .panelTitle {
   font-size: 0.875rem;
   font-weight: 600;
@@ -48,6 +53,13 @@
   margin-top: 0.75rem;
   color: var(--color-muted-foreground);
   font-size: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.emptyAction {
+  align-self: flex-start;
 }
 
 .hostList {

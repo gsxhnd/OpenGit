@@ -64,37 +64,37 @@ function AppContent() {
   return (
     <div className={styles.appContainer}>
       <TitleBar onOpenCommandPalette={() => toggleCommandPalette()} />
-      <div className={styles.bodyRow}>
-        <SidebarProvider defaultOpen={false} style={{ display: "contents" }}>
+      <SidebarProvider defaultOpen={false} style={{ display: "contents" }}>
+        <div className={styles.bodyRow}>
           <ActivityBar />
-        </SidebarProvider>
-        <PrimarySidebar />
-        <main className={styles.mainContent}>
-          <div className={styles.workbenchSplit}>
-            <div className={styles.workbenchMain}>
-              {showSessionTabs ? <SessionTabs /> : null}
-              <PanelContainer>
-                <Routes>
-                  {appRoutes.map((route) => (
-                    <Route
-                      key={route.path}
-                      path={route.path}
-                      element={route.element}
-                    />
-                  ))}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </PanelContainer>
+          <PrimarySidebar />
+          <main className={styles.mainContent}>
+            <div className={styles.workbenchSplit}>
+              <div className={styles.workbenchMain}>
+                {showSessionTabs ? <SessionTabs /> : null}
+                <PanelContainer>
+                  <Routes>
+                    {appRoutes.map((route) => (
+                      <Route
+                        key={route.path}
+                        path={route.path}
+                        element={route.element}
+                      />
+                    ))}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </PanelContainer>
+              </div>
+              {inspectorOpen ? (
+                <InspectorPanel onClose={() => setInspectorOpen(false)} />
+              ) : null}
             </div>
-            {inspectorOpen ? (
-              <InspectorPanel onClose={() => setInspectorOpen(false)} />
-            ) : null}
-          </div>
-        </main>
-      </div>
-      <StatusBar />
-      <ToastContainer />
-      <CommandPalette />
+          </main>
+        </div>
+        <StatusBar />
+        <ToastContainer />
+        <CommandPalette />
+      </SidebarProvider>
     </div>
   );
 }
