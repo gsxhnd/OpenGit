@@ -29,7 +29,7 @@ export function FilesView() {
   const [state, setState] = useReducer(
     (s: FilesState, a: Partial<FilesState>) => ({ ...s, ...a }),
     {
-      localCwd: process.env.HOME || process.env.USERPROFILE || "/",
+      localCwd: "/",
       localEntries: [],
       localLoading: false,
       localError: null,
