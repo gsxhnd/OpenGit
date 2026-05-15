@@ -8,7 +8,7 @@ import styles from './SessionsOverviewView.module.scss'
 export function SessionsOverviewView() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { sessions } = useAppStore()
+  const sessions = useAppStore((s) => s.sessions)
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={styles.container}>

@@ -30,7 +30,7 @@ const items: ActivityBarItem[] = [
 export function ActivityBar() {
   const { t } = useTranslation()
   const location = useLocation()
-  const { sessions } = useAppStore()
+  const sessions = useAppStore((s) => s.sessions)
   const { state, toggleSidebar } = useSidebar()
   const collapsed = state === 'collapsed'
 

@@ -4,6 +4,7 @@
  */
 import { ipcRenderer } from "electron";
 import { IPC_CHANNELS } from "../../shared/ipc";
+import type { SftpTransferProgress } from "../../shared/types";
 
 /**
  * SFTP文件操作API接口
@@ -128,28 +129,10 @@ export const sftpApi = {
    * Includes upload and download operations
    * Returns function to remove listener
    */
-  onTransferProgress: (
-    cb: (payload: {
-      connectionId: string;
-      remotePath: string;
-      kind: "upload" | "download";
-      bytes: number;
-      total: number;
-      done: boolean;
-      error?: string;
-    }) => void,
-  ) => {
+  onTransferProgress: (cb: (payload: SftpTransferProgress) => void) => {
     const fn = (
       _: Electron.IpcRendererEvent,
-      payload: {
-        connectionId: string;
-        remotePath: string;
-        kind: "upload" | "download";
-        bytes: number;
-        total: number;
-        done: boolean;
-        error?: string;
-      },
+      payload: SftpTransferProgress,
     ) => cb(payload);
     ipcRenderer.on(IPC_CHANNELS.SFTP_TRANSFER_PROGRESS, fn);
     return () => {

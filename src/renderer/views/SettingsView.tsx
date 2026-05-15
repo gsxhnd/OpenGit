@@ -1,8 +1,6 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { useAppStore } from "../store";
-import { useState, useEffect, useMemo, useCallback } from "react";
-import type { Language } from "../i18n/translations";
+import { useState, useMemo } from "react";
 import {
   PaletteIcon,
   TerminalIcon,
@@ -15,50 +13,15 @@ import { TerminalSection } from "../components/settings/TerminalSection";
 import { EditorSection } from "../components/settings/EditorSection";
 import { HostsSection } from "../components/settings/HostsSection";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
+import { useSettingsDraftState } from "../hooks/useSettingsDraftState";
+import { type SettingsSection, SECTION_META, isDarwin, modKey } from "./settings/constants";
+import { SettingsNav, type NavEntry } from "./settings/SettingsNav";
 import styles from "./SettingsView.module.scss";
-
-const isDarwin = window.api.platform === "darwin";
-const modKey = isDarwin ? "\u2318" : "Ctrl";
-
-type SettingsSection = "appearance" | "terminal" | "editor" | "hosts" | "shortcuts";
-
-interface NavEntry {
-  id: SettingsSection;
-  label: string;
-  Icon: typeof PaletteIcon;
-}
 
 interface ShortcutEntry {
   label: string;
   shortcut: string;
 }
-
-const SECTION_META: Record<
-  SettingsSection,
-  { titleKey: string; descKey: string; wide?: boolean }
-> = {
-  appearance: {
-    titleKey: "settings.appearance",
-    descKey: "settings.appearanceDesc",
-  },
-  terminal: {
-    titleKey: "settings.terminal",
-    descKey: "settings.terminalDesc",
-  },
-  editor: {
-    titleKey: "settings.editor",
-    descKey: "settings.editorDesc",
-  },
-  hosts: {
-    titleKey: "settings.remoteHosts",
-    descKey: "settings.remoteHostsHint",
-    wide: true,
-  },
-  shortcuts: {
-    titleKey: "settings.shortcuts",
-    descKey: "settings.shortcutsDesc",
-  },
-};
 
 function ShortcutRow({ label, shortcut }: ShortcutEntry) {
   return (
@@ -71,113 +34,21 @@ function ShortcutRow({ label, shortcut }: ShortcutEntry) {
 
 export function SettingsView() {
   const { t } = useTranslation();
-  const {
-    settings,
-    loadSettings,
-    updateSettings,
-    addToast,
-    setLanguage,
-    language,
-  } = useAppStore();
-
   const [activeSection, setActiveSection] = useState<SettingsSection>("appearance");
 
-  const [theme, setTheme] = useState(settings?.theme ?? "Standard Dark");
-  const [selectedLang, setSelectedLang] = useState<Language>(language);
-
-  const [termValues, setTermValues] = useState({
-    fontSize: settings?.terminal.fontSize ?? 14,
-    scrollback: settings?.terminal.scrollback ?? 5000,
-    fontFamily:
-      settings?.terminal.fontFamily ??
-      'Menlo, Monaco, "Courier New", monospace',
-    cursorStyle: settings?.terminal.cursorStyle ?? "block",
-    windowsShell: settings?.terminal.windowsShell ?? "powershell",
-  });
-
-  const [edValues, setEdValues] = useState({
-    fontSize: settings?.editor.fontSize ?? 14,
-    tabSize: settings?.editor.tabSize ?? 2,
-    wordWrap: (settings?.editor.wordWrap ?? "off") === "on",
-    minimap: settings?.editor.minimap ?? true,
-  });
-
-  useEffect(() => {
-    void loadSettings();
-  }, [loadSettings]);
-
-  useEffect(() => {
-    if (settings) {
-      setTheme(settings.theme);
-      setTermValues({
-        fontSize: settings.terminal.fontSize,
-        scrollback: settings.terminal.scrollback,
-        fontFamily: settings.terminal.fontFamily,
-        cursorStyle: settings.terminal.cursorStyle,
-        windowsShell: settings.terminal.windowsShell,
-      });
-      setEdValues({
-        fontSize: settings.editor.fontSize,
-        tabSize: settings.editor.tabSize,
-        wordWrap: settings.editor.wordWrap === "on",
-        minimap: settings.editor.minimap,
-      });
-    }
-  }, [settings]);
-
-  const handleThemeChange = useCallback(
-    (newTheme: string) => {
-      setTheme(newTheme);
-      void updateSettings({ theme: newTheme });
-    },
-    [updateSettings],
-  );
-
-  const handleLanguageChange = useCallback(
-    (lang: Language) => {
-      setSelectedLang(lang);
-      void setLanguage(lang);
-      addToast(t("settings.languageChanged"), "success");
-    },
-    [setLanguage, addToast, t],
-  );
-
-  const updateTermField = useCallback(
-    <K extends keyof typeof termValues>(key: K, value: (typeof termValues)[K]) =>
-      setTermValues((prev) => ({ ...prev, [key]: value })),
-    [],
-  );
-
-  const updateEdField = useCallback(
-    <K extends keyof typeof edValues>(key: K, value: (typeof edValues)[K]) =>
-      setEdValues((prev) => ({ ...prev, [key]: value })),
-    [],
-  );
-
-  const saveTerminal = useCallback(() => {
-    void updateSettings({
-      terminal: {
-        fontSize: termValues.fontSize,
-        scrollback: termValues.scrollback,
-        fontFamily: termValues.fontFamily,
-        cursorStyle: termValues.cursorStyle as "block" | "underline" | "bar",
-        windowsShell: termValues.windowsShell as "powershell" | "cmd" | "wsl",
-      },
-    });
-    addToast(t("settings.terminalSaved"), "success");
-  }, [termValues, updateSettings, addToast, t]);
-
-  const saveEditor = useCallback(() => {
-    void updateSettings({
-      editor: {
-        fontSize: edValues.fontSize,
-        tabSize: edValues.tabSize,
-        wordWrap: edValues.wordWrap ? "on" : "off",
-        minimap: edValues.minimap,
-      },
-    });
-    addToast(t("settings.editorSaved"), "success");
-  }, [edValues, updateSettings, addToast, t]);
+  const {
+    settings,
+    theme,
+    selectedLang,
+    termValues,
+    edValues,
+    handleThemeChange,
+    handleLanguageChange,
+    updateTermField,
+    updateEdField,
+    saveTerminal,
+    saveEditor,
+  } = useSettingsDraftState();
 
   const hostLabels = useMemo(
     () => ({
@@ -266,25 +137,12 @@ export function SettingsView() {
       className={styles.container}
     >
       <div className={styles.body}>
-        <nav className={styles.sidebar} aria-label="Settings sections">
-          <div className={styles.sidebarHeading}>{t("settings.navGroup")}</div>
-          {navEntries.map(({ id, label, Icon }) => (
-            <button
-              key={id}
-              type="button"
-              className={
-                id === activeSection ? styles.navItemActive : styles.navItem
-              }
-              onClick={() => setActiveSection(id)}
-              aria-current={id === activeSection ? "page" : undefined}
-            >
-              <span className={styles.navIcon}>
-                <Icon />
-              </span>
-              <span className="truncate">{label}</span>
-            </button>
-          ))}
-        </nav>
+        <SettingsNav
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          navEntries={navEntries}
+          heading={t("settings.navGroup")}
+        />
 
         <div className={styles.content}>
           <div

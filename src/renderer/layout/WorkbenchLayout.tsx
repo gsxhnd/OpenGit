@@ -4,6 +4,7 @@
  */
 import { Outlet, useLocation } from "react-router";
 import { useAppStore } from "../store";
+import { useShallow } from "zustand/react/shallow";
 import { ActivityBar } from "../components/shell/ActivityBar";
 import { PrimarySidebar } from "../components/shell/PrimarySidebar";
 import { SessionTabs } from "../components/shell/SessionTabs";
@@ -15,7 +16,7 @@ import styles from "./WorkbenchLayout.module.scss";
 
 export function WorkbenchLayout() {
   const location = useLocation();
-  const { inspectorOpen, setInspectorOpen, toggleCommandPalette } = useAppStore();
+  const { inspectorOpen, setInspectorOpen, toggleCommandPalette } = useAppStore(useShallow((s) => ({ inspectorOpen: s.inspectorOpen, setInspectorOpen: s.setInspectorOpen, toggleCommandPalette: s.toggleCommandPalette })));
   const showSessionTabs = location.pathname !== "/";
 
   return (

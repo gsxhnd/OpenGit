@@ -3,52 +3,29 @@ import { useNavigate } from 'react-router'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store'
+import { useShallow } from 'zustand/react/shallow'
+import { useSshConnect } from '../hooks/useSshConnect'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
-import type { HostProfile, SshConnectPayload } from '@shared/types'
 import styles from './WelcomeView.module.scss'
 
 export function WelcomeView() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { settings, loadSettings, addSession, addToast } = useAppStore()
+  const { settings, loadSettings, addToast } = useAppStore(useShallow((s) => ({ settings: s.settings, loadSettings: s.loadSettings, addToast: s.addToast })))
+  const { connecting, doConnect, connectSaved } = useSshConnect()
+
   const [host, setHost] = useState('')
   const [port, setPort] = useState('22')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [label, setLabel] = useState('')
-  const [connecting, setConnecting] = useState(false)
 
   const hosts = settings?.hosts ?? []
 
   useEffect(() => {
     void loadSettings()
   }, [loadSettings])
-
-  const doConnect = async (payload: SshConnectPayload, meta: { hostLabel: string }) => {
-    setConnecting(true)
-    try {
-      const { connectionId, fingerprint, isNewHost } = await window.api.sshConnect(payload)
-      addSession({
-        connectionId,
-        hostLabel: meta.hostLabel,
-        username: payload.username,
-        host: payload.host,
-        port: payload.port,
-        fingerprint,
-      })
-      if (isNewHost) {
-        addToast(t('welcome.newHostKey', { fingerprint }), 'info')
-      } else {
-        addToast(t('welcome.connected', { fingerprint }), 'info')
-      }
-      navigate(`/session/${connectionId}`)
-    } catch (e: unknown) {
-      addToast(e instanceof Error ? e.message : t('err.connectionFailed'), 'error')
-    } finally {
-      setConnecting(false)
-    }
-  }
 
   const handleQuickConnect = () => {
     const p = Number(port) || 22
@@ -63,31 +40,6 @@ export function WelcomeView() {
     void doConnect(
       { host: host.trim(), port: p, username: username.trim(), password },
       { hostLabel: label.trim() || host.trim() },
-    )
-  }
-
-  const connectSaved = (h: HostProfile) => {
-    const pass = h.password
-    const pk = h.privateKeyPath
-    if (h.authType === 'password' && !pass) {
-      addToast(t('welcome.noPasswordStored'), 'error')
-      return
-    }
-    if (h.authType === 'privateKey' && !pk) {
-      addToast(t('welcome.noKeyPath'), 'error')
-      return
-    }
-    void doConnect(
-      {
-        host: h.host,
-        port: h.port || 22,
-        username: h.username,
-        password: h.authType === 'password' ? pass : undefined,
-        privateKeyPath: h.authType === 'privateKey' ? pk : undefined,
-        passphrase: h.passphrase,
-        expectedFingerprint: h.trustedFingerprint,
-      },
-      { hostLabel: h.label },
     )
   }
 
@@ -153,7 +105,7 @@ export function WelcomeView() {
                     {h.username}@{h.host}:{h.port}
                   </div>
                 </div>
-                <Button size="sm" variant="secondary" disabled={connecting} onClick={() => connectSaved(h)}>
+                <Button size="sm" variant="secondary" disabled={connecting} onClick={() => void connectSaved(h)}>
                   {t('welcome.connect')}
                 </Button>
               </li>

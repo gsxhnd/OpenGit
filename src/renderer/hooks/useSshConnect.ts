@@ -2,12 +2,13 @@ import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '../store'
+import { useShallow } from 'zustand/react/shallow'
 import type { HostProfile, SshConnectPayload } from '@shared/types'
 
 export function useSshConnect() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { addSession, addToast } = useAppStore()
+  const { addSession, addToast } = useAppStore(useShallow((s) => ({ addSession: s.addSession, addToast: s.addToast })))
   const [connecting, setConnecting] = useState(false)
 
   const doConnect = useCallback(

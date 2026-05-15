@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router'
 import { motion } from 'motion/react'
 import { Plus } from 'lucide-react'
 import { useAppStore } from '../store'
+import { useShallow } from 'zustand/react/shallow'
 import { Button } from '../components/ui/button'
 import { useSshConnect } from '../hooks/useSshConnect'
 import styles from './ConnectionsView.module.scss'
@@ -11,7 +12,7 @@ import styles from './ConnectionsView.module.scss'
 export function ConnectionsView() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { settings, loadSettings } = useAppStore()
+  const { settings, loadSettings } = useAppStore(useShallow((s) => ({ settings: s.settings, loadSettings: s.loadSettings })))
   const { connectSaved, connecting } = useSshConnect()
 
   useEffect(() => {

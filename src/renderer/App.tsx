@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "./store";
+import { useShallow } from "zustand/react/shallow";
 import { useAppKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useTheme } from "./hooks/useTheme";
 import { ToastContainer } from "./components/shell/ToastContainer";
@@ -17,7 +18,7 @@ import { workbenchRoutes, pathToView, SETTINGS_PATH } from "./routes";
 import styles from "./App.module.scss";
 
 function AppContent() {
-  const { loadSettings, language } = useAppStore();
+  const { loadSettings, language } = useAppStore(useShallow((s) => ({ loadSettings: s.loadSettings, language: s.language })));
   const location = useLocation();
   const { i18n } = useTranslation();
 

@@ -5,7 +5,7 @@ import { SftpTreeView } from '../sftp/SftpTreeView'
 import { parentPath } from '../../lib/sftp/path'
 import type { TransferItem } from './types'
 import { TransferQueue } from './TransferQueue'
-import styles from '../../views/SessionView.module.scss'
+import styles from './SftpPane.module.scss'
 
 interface SftpPaneProps {
   connectionId: string

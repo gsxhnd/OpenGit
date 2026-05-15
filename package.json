@@ -20,7 +20,7 @@
     "electron": "electron .",
     "make": "npm run build && electron-forge make",
     "publish": "npm run build && electron-forge publish",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "echo 'No linter configured yet — install eslint and add eslint.config.js'",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

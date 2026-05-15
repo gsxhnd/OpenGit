@@ -8,6 +8,7 @@ import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'motion/react'
+import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../../store'
 import { fuzzyMatch } from '../../../lib/fuzzy-filter'
 import { useCommandRegistry } from './use-command-registry'
@@ -94,7 +95,7 @@ function scoreCommands(
 
 export function CommandPalette() {
   const { t } = useTranslation()
-  const { commandPaletteOpen, setCommandPaletteOpen } = useAppStore()
+  const { commandPaletteOpen, setCommandPaletteOpen } = useAppStore(useShallow((s) => ({ commandPaletteOpen: s.commandPaletteOpen, setCommandPaletteOpen: s.setCommandPaletteOpen })))
   const { recordRecent, recentRank } = useCommandRecents()
 
   const close = useCallback(() => setCommandPaletteOpen(false), [setCommandPaletteOpen])

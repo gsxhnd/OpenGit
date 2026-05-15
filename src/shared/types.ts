@@ -9,8 +9,8 @@ export interface WindowConfig {
   y?: number;
 }
 
-/** Saved SSH host bookmark */
-export interface HostProfile {
+/** Base fields shared by all host profiles */
+interface HostProfileBase {
   id: string;
   label: string;
   host: string;
@@ -18,12 +18,25 @@ export interface HostProfile {
   username: string;
   /** If set, host key must match (from ssh:connect result) */
   trustedFingerprint?: string;
-  authType: "password" | "privateKey";
+}
+
+interface HostProfilePassword extends HostProfileBase {
+  authType: "password";
   /** Stored only if user chooses to save password (local config) */
   password?: string;
+  privateKeyPath?: never;
+  passphrase?: never;
+}
+
+interface HostProfilePrivateKey extends HostProfileBase {
+  authType: "privateKey";
+  password?: never;
   privateKeyPath?: string;
   passphrase?: string;
 }
+
+/** Saved SSH host bookmark (discriminated on `authType`) */
+export type HostProfile = HostProfilePassword | HostProfilePrivateKey;
 
 export interface TerminalSettings {
   fontSize: number;
@@ -78,30 +91,25 @@ export type ViewType =
  */
 export type WorkbenchSessionConnectionType = "ssh" | "local-terminal" | "sftp";
 
+export type SessionStatus =
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "failed"
+  | "disconnected";
+
 export interface WorkbenchSessionTabModel {
   /** Stable row key (equals `connectionId` for SSH; fixed id for local tab). */
   id: string;
   connectionId: string;
   connectionType: WorkbenchSessionConnectionType;
   title: string;
-  status:
-    | "connecting"
-    | "connected"
-    | "reconnecting"
-    | "failed"
-    | "disconnected";
+  status: SessionStatus;
   /** Hash route for NavLink / navigate when the tab is selected */
   routePath: string;
   /** Local shell tab is not closed from the strip */
   closable: boolean;
 }
-
-export type SessionStatus =
-  | 'connecting'
-  | 'connected'
-  | 'reconnecting'
-  | 'failed'
-  | 'disconnected'
 
 /** Active remote session (after connect) */
 export interface RemoteSessionMeta {
@@ -157,4 +165,15 @@ export interface SshConnectResult {
   fingerprint: string;
   /** true when this is the first connection to this host (fingerprint newly saved) */
   isNewHost: boolean;
+}
+
+/** SFTP file transfer progress event payload (shared across main/preload/renderer) */
+export interface SftpTransferProgress {
+  connectionId: string;
+  remotePath: string;
+  kind: "upload" | "download";
+  bytes: number;
+  total: number;
+  done: boolean;
+  error?: string;
 }

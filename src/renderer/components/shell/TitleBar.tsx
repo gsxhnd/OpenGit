@@ -11,6 +11,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Minus, Square, X, Maximize2, Menu, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../store'
 import { InspectorToggle } from './InspectorToggle'
 import { ShellTooltip } from './ShellTooltip'
@@ -161,7 +162,7 @@ function WinTitleBar({ title, isMaximized, onOpenCommandPalette }: { title: stri
 // Root export
 // ---------------------------------------------------------------------------
 export function TitleBar({ onOpenCommandPalette }: TitleBarProps = {}) {
-  const { sessions, activeSessionId } = useAppStore()
+  const { sessions, activeSessionId } = useAppStore(useShallow((s) => ({ sessions: s.sessions, activeSessionId: s.activeSessionId })))
   const activeSession = sessions.find((s) => s.connectionId === activeSessionId)
 
   const title = activeSession ? `${activeSession.username}@${activeSession.host}` : 'Puck'

@@ -1,10 +1,15 @@
 import type { SftpListEntry } from '@shared/types'
 
 export function formatSize(bytes: number): string {
-  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)}G`
-  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)}M`
-  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)}K`
+  if (bytes === 0) return '--'
+  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)}GB`
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
+  if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)}KB`
   return `${bytes}B`
+}
+
+export function formatDate(ms: number): string {
+  return new Date(ms).toLocaleDateString()
 }
 
 export function formatPerms(entry: SftpListEntry): string {

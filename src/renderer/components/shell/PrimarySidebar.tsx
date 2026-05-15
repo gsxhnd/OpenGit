@@ -1,6 +1,7 @@
 import { NavLink, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Folder, LayoutDashboard, MonitorPlay, Plug, Search, Server, Settings, TerminalSquare } from 'lucide-react'
+import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../store'
 import { useSshConnect } from '../../hooks/useSshConnect'
 import styles from './PrimarySidebar.module.scss'
@@ -17,7 +18,7 @@ export function PrimarySidebar() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { sessions, settings } = useAppStore()
+  const { sessions, settings } = useAppStore(useShallow((s) => ({ sessions: s.sessions, settings: s.settings })))
   const { connectSaved, connecting } = useSshConnect()
   const section = getSection(location.pathname)
   const hosts = settings?.hosts ?? []

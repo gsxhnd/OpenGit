@@ -4,8 +4,8 @@
  */
 
 import { ipcRenderer } from "electron";
-import { IPC_CHANNELS } from "@shared/ipc";
-import type { LocalFileEntry } from "@shared/types";
+import { IPC_CHANNELS } from "../../shared/ipc";
+import type { LocalFileEntry } from "../../shared/types";
 
 /**
  * 本地文件系统API对象

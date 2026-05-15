@@ -8,6 +8,7 @@ import {
   XCircle,
 } from "lucide-react";
 import type { AppNotification, ToastKind } from "@shared/types";
+import { useShallow } from 'zustand/react/shallow';
 import { useAppStore } from "../../store";
 import { Button } from "../ui/button";
 import {
@@ -95,7 +96,7 @@ export function NotificationPopover() {
     removeNotification,
     clearNotifications,
     markNotificationsRead,
-  } = useAppStore();
+  } = useAppStore(useShallow((s) => ({ notifications: s.notifications, removeNotification: s.removeNotification, clearNotifications: s.clearNotifications, markNotificationsRead: s.markNotificationsRead })));
 
   const unreadCount = useMemo(
     () => notifications.filter((n) => !n.read).length,

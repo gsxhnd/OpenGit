@@ -1,10 +1,13 @@
+import { lazy, Suspense } from 'react'
 import type { ViewType } from '@shared/types'
-import { DashboardView } from './views/DashboardView'
-import { ConnectionsView } from './views/ConnectionsView'
-import { LocalTerminalView } from './views/LocalTerminalView'
-import { SessionView } from './views/SessionView'
-import { SessionsOverviewView } from './views/SessionsOverviewView'
-import { FilesView } from './views/FilesView'
+
+const DashboardView = lazy(() => import('./views/DashboardView').then((m) => ({ default: m.DashboardView })))
+const ConnectionsView = lazy(() => import('./views/ConnectionsView').then((m) => ({ default: m.ConnectionsView })))
+const LocalTerminalView = lazy(() => import('./views/LocalTerminalView').then((m) => ({ default: m.LocalTerminalView })))
+const SessionView = lazy(() => import('./views/SessionView').then((m) => ({ default: m.SessionView })))
+const SessionsOverviewView = lazy(() => import('./views/SessionsOverviewView').then((m) => ({ default: m.SessionsOverviewView })))
+const FilesView = lazy(() => import('./views/FilesView').then((m) => ({ default: m.FilesView })))
+
 const VIEW_TO_PATH: Record<ViewType, string> = {
   dashboard: '/',
   connections: '/connections',
@@ -35,11 +38,15 @@ export function pathToView(pathname: string): ViewType {
 
 export const SETTINGS_PATH = '/settings'
 
+function LazyRoute({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={null}>{children}</Suspense>
+}
+
 export const workbenchRoutes = [
-  { path: '/', element: <DashboardView /> },
-  { path: '/connections', element: <ConnectionsView /> },
-  { path: '/local-terminal', element: <LocalTerminalView /> },
-  { path: '/sessions', element: <SessionsOverviewView /> },
-  { path: '/session/:connectionId', element: <SessionView /> },
-  { path: '/files', element: <FilesView /> },
+  { path: '/', element: <LazyRoute><DashboardView /></LazyRoute> },
+  { path: '/connections', element: <LazyRoute><ConnectionsView /></LazyRoute> },
+  { path: '/local-terminal', element: <LazyRoute><LocalTerminalView /></LazyRoute> },
+  { path: '/sessions', element: <LazyRoute><SessionsOverviewView /></LazyRoute> },
+  { path: '/session/:connectionId', element: <LazyRoute><SessionView /></LazyRoute> },
+  { path: '/files', element: <LazyRoute><FilesView /></LazyRoute> },
 ] as const

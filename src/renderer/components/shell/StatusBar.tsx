@@ -4,6 +4,7 @@
  */
 import { useTranslation } from 'react-i18next'
 import { Search, Server, Terminal } from 'lucide-react'
+import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../store'
 import { NotificationPopover } from './NotificationPopover'
 import { ShellTooltip } from './ShellTooltip'
@@ -11,7 +12,7 @@ import styles from './StatusBar.module.scss'
 
 export function StatusBar() {
   const { t } = useTranslation()
-  const { sessions, activeSessionId, toggleCommandPalette } = useAppStore()
+  const { sessions, activeSessionId, toggleCommandPalette } = useAppStore(useShallow((s) => ({ sessions: s.sessions, activeSessionId: s.activeSessionId, toggleCommandPalette: s.toggleCommandPalette })))
   const active = sessions.find((session) => session.connectionId === activeSessionId)
 
   return (

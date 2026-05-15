@@ -7,13 +7,14 @@ import { useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertCircle, RotateCw } from "lucide-react";
 import { useAppStore } from "../store";
+import { useShallow } from "zustand/react/shallow";
 import { TerminalPanel } from "../components/terminal/TerminalPanel";
 import { Button } from "../components/ui/button";
 import styles from "./LocalTerminalView.module.scss";
 
 export function LocalTerminalView() {
   const { t } = useTranslation();
-  const { settings, addToast } = useAppStore();
+  const { settings, addToast } = useAppStore(useShallow((s) => ({ settings: s.settings, addToast: s.addToast })));
   const term = settings?.terminal;
   /** 递增 key 以在 PTY 退出后强制重新挂载 `XtermPane`，从而再次调用 `ptyLocalCreate`。 */
   const [terminalKey, setTerminalKey] = useState(0);

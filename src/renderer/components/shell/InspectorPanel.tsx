@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PanelRightClose, Server, FileUp, Bug } from 'lucide-react'
+import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../store'
 import { Button } from '../ui/button'
 import { ShellTooltip } from './ShellTooltip'
@@ -24,7 +25,7 @@ const TAB_ITEMS: { key: InspectorTab; icon: typeof Server; labelKey: string }[] 
 
 function PropertiesTab() {
   const { t } = useTranslation()
-  const { sessions, activeSessionId } = useAppStore()
+  const { sessions, activeSessionId } = useAppStore(useShallow((s) => ({ sessions: s.sessions, activeSessionId: s.activeSessionId })))
   const active = sessions.find((s) => s.connectionId === activeSessionId)
 
   if (!active) {

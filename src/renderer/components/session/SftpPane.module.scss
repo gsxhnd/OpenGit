@@ -1,0 +1,49 @@
+.sftp {
+  width: 240px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-sidebar);
+  min-height: 0;
+}
+
+.sftpToolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 38px;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.72rem;
+}
+
+.breadcrumbItem {
+  border: none;
+  background: transparent;
+  color: var(--color-foreground);
+  cursor: pointer;
+  padding: 0.1rem 0.2rem;
+  border-radius: 3px;
+  font-size: inherit;
+}
+
+.breadcrumbItem:hover {
+  background: var(--color-muted);
+  color: var(--color-primary);
+}
+
+.breadcrumbSep {
+  color: var(--color-muted-foreground);
+  padding: 0 0.15rem;
+  pointer-events: none;
+}

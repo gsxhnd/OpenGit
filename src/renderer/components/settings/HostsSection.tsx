@@ -12,6 +12,7 @@ import {
   SelectGroup,
 } from "../ui/select";
 import { Badge } from "../ui/badge";
+import { useShallow } from 'zustand/react/shallow';
 import { useAppStore } from "../../store";
 import { useTranslation } from "react-i18next";
 import { SettingsPanel, settingsPanelStyles as ps } from "./SettingsPanel";
@@ -39,7 +40,7 @@ interface HostsSectionProps {
 
 export function HostsSection({ labels, hosts }: HostsSectionProps) {
   const { t } = useTranslation();
-  const { loadSettings, addToast } = useAppStore();
+  const { loadSettings, addToast } = useAppStore(useShallow((s) => ({ loadSettings: s.loadSettings, addToast: s.addToast })));
 
   const [newLabel, setNewLabel] = useState("");
   const [newHost, setNewHost] = useState("");

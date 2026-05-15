@@ -7,6 +7,7 @@ import { useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { X, SquareX, Trash2 } from 'lucide-react'
+import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../store'
 import { buildWorkbenchSessionTabs, isWorkbenchTabActive } from '../../lib/workbenchSessionTabs'
 import {
@@ -24,7 +25,7 @@ export function SessionTabs() {
   const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
-  const { sessions, removeSession } = useAppStore()
+  const { sessions, removeSession } = useAppStore(useShallow((s) => ({ sessions: s.sessions, removeSession: s.removeSession })))
 
   const tabs = useMemo(
     () => buildWorkbenchSessionTabs(sessions, t('nav.localShell')),

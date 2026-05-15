@@ -1,7 +1,17 @@
-import { useEffect, useRef } from 'react'
-import * as monaco from 'monaco-editor'
+import { useEffect, useRef, useState } from 'react'
+import type * as MonacoTypes from 'monaco-editor'
 import { useTranslation } from 'react-i18next'
 import { Button } from './ui/button'
+
+let monacoModule: typeof MonacoTypes | null = null
+
+async function ensureMonaco(): Promise<typeof MonacoTypes> {
+  if (monacoModule) return monacoModule
+  await import('../monaco-setup')
+  const m = await import('monaco-editor')
+  monacoModule = m
+  return m
+}
 
 function languageFromPath(remotePath: string): string {
   const ext = remotePath.split('.').pop()?.toLowerCase() || ''
@@ -71,9 +81,20 @@ export function RemoteMonacoEditor({
 }: RemoteMonacoEditorProps) {
   const { t } = useTranslation()
   const divRef = useRef<HTMLDivElement>(null)
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
+  const editorRef = useRef<MonacoTypes.editor.IStandaloneCodeEditor | null>(null)
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
+    void ensureMonaco().then(() => {
+      if (!cancelled) setReady(true)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    if (!ready) return
+    const monaco = monacoModule!
     const el = divRef.current
     if (!el) return
     const model = monaco.editor.createModel(initialText, languageFromPath(remotePath), monaco.Uri.parse(`sftp://${connectionId}${remotePath}`))
@@ -88,7 +109,6 @@ export function RemoteMonacoEditor({
     })
     editorRef.current = ed
 
-    // Cmd+S / Ctrl+S keyboard shortcut
     const disposer = ed.addAction({
       id: 'save-remote',
       label: 'Save to remote',
@@ -102,7 +122,7 @@ export function RemoteMonacoEditor({
       model.dispose()
       editorRef.current = null
     }
-  }, [connectionId, remotePath, initialText, fontSize, tabSize, wordWrap, minimap])
+  }, [ready, connectionId, remotePath, initialText, fontSize, tabSize, wordWrap, minimap])
 
   const handleSave = async () => {
     const ed = editorRef.current

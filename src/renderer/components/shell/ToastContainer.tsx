@@ -1,9 +1,10 @@
 import { motion, AnimatePresence } from 'motion/react'
+import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '../../store'
 import styles from './ToastContainer.module.scss'
 
 export function ToastContainer() {
-  const { toasts, removeToast } = useAppStore()
+  const { toasts, removeToast } = useAppStore(useShallow((s) => ({ toasts: s.toasts, removeToast: s.removeToast })))
 
   return (
     <div className={styles.container}>

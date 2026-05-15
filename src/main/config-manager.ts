@@ -19,13 +19,6 @@ import { createLogger } from "./logger";
 const log = () => createLogger("config");
 
 // ============================================================================
-// 常量定义 | Constants
-// ============================================================================
-
-/** 配置文件的最大化版本，用于兼容性检查 | Configuration file version for compatibility checks */
-const CONFIG_VERSION = 1;
-
-// ============================================================================
 // 私有缓存变量 | Private cached variables
 // ============================================================================
 
@@ -188,7 +181,7 @@ export function saveSettings(settings: AppSettings) {
  */
 export function addHost(host: Omit<HostProfile, "id">): HostProfile {
   const settings = loadSettings();
-  const entry: HostProfile = { ...host, id: randomUUID() };
+  const entry = { ...host, id: randomUUID() } as HostProfile;
   settings.hosts.push(entry);
   saveSettings(settings);
   return entry;
@@ -206,7 +199,7 @@ export function updateHost(
   const settings = loadSettings();
   const i = settings.hosts.findIndex((h) => h.id === id);
   if (i >= 0) {
-    settings.hosts[i] = { ...settings.hosts[i], ...updates };
+    settings.hosts[i] = { ...settings.hosts[i], ...updates } as HostProfile;
     saveSettings(settings);
   }
   return loadSettings().hosts;
