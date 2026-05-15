@@ -59,14 +59,6 @@ npm run lint           # eslint — FAILS (no ESLint config exists)
 
 Always run `npm run build` after changes — it catches type errors, import issues, and bundling failures across all three processes. `npm run typecheck` for strict type checks. No test suite exists yet.
 
-## Dev Server Quirk
-
-`scripts/dev.mjs` temporarily renames `node_modules/electron` to `electron.bak` during dev to avoid `require('electron')` shim conflicts. If the process crashes without restoring:
-
-```bash
-mv node_modules/electron.bak node_modules/electron
-```
-
 ## Conventions
 
 - UI: shadcn/ui patterns + `@base-ui/react`, Tailwind CSS v4 (`@tailwindcss/vite`), SCSS modules (`sass` devDep)

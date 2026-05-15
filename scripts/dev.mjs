@@ -1,138 +1,83 @@
 import { spawn } from "node:child_process";
 import { createServer, build } from "vite";
 import { watch } from "node:fs";
-import { existsSync, renameSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createRequire } from "node:module";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const ROOT = join(__dirname, "..");
-const PORT = 5173;
-
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
 
-const ELECTRON_PKG = join(ROOT, "node_modules", "electron");
-const ELECTRON_PKG_BAK = ELECTRON_PKG + ".bak";
+const VITE_MAIN = join(ROOT, "vite.main.config.ts");
+const VITE_PRELOAD = join(ROOT, "vite.preload.config.ts");
+const VITE_RENDERER = join(ROOT, "vite.renderer.config.ts");
 
-function isElectronShimPresent() {
-  return existsSync(ELECTRON_PKG) && !existsSync(ELECTRON_PKG_BAK);
+const RENDERER_URL = "http://127.0.0.1:5173";
+
+function electronBinaryPath() {
+  return String(require(join(ROOT, "node_modules", "electron")));
 }
 
-function disableElectronNpmModule() {
-  if (isElectronShimPresent()) {
-    renameSync(ELECTRON_PKG, ELECTRON_PKG_BAK);
+function pipeElectronLogs(proc) {
+  const prefix = (line, log) => log(`[Electron] ${line}`);
+  for (const stream of [proc.stdout, proc.stderr]) {
+    if (!stream) continue;
+    stream.on("data", (data) => {
+      for (const line of String(data).split("\n")) {
+        if (!line.trim()) continue;
+        prefix(line, stream === proc.stderr ? console.error : console.log);
+      }
+    });
   }
 }
 
-function restoreElectronNpmModule() {
-  if (existsSync(ELECTRON_PKG_BAK) && !existsSync(ELECTRON_PKG)) {
-    renameSync(ELECTRON_PKG_BAK, ELECTRON_PKG);
-  }
-}
-
-function viteConfig(target) {
-  return join(ROOT, `vite.${target}.config.ts`);
-}
-
-/**
- * Resolve the real Electron executable path via the npm shim.
- * Must be called BEFORE disableElectronNpmShim() since it loads the shim.
- */
-function resolveElectronPath() {
-  // Trigger download if needed and get the electron binary path from the shim
-  const electronPath = String(require(join(ROOT, "node_modules", "electron")));
-  return electronPath;
-}
-
-function startElectron(url, electronPath) {
-  const electronProc = spawn(electronPath, ["."], {
+function startElectron(binary) {
+  const proc = spawn(binary, ["."], {
     cwd: ROOT,
-    env: {
-      ...process.env,
-      ELECTRON_RENDERER_URL: url,
-      NODE_ENV: "development",
-    },
     stdio: ["inherit", "pipe", "pipe"],
     shell: false,
   });
-
-  // Capture and display Electron stdout with [Electron] prefix
-  if (electronProc.stdout) {
-    electronProc.stdout.on("data", (data) => {
-      const lines = String(data)
-        .split("\n")
-        .filter((line) => line.trim());
-      lines.forEach((line) => {
-        console.log(`[Electron] ${line}`);
-      });
-    });
-  }
-
-  // Capture and display Electron stderr with [Electron] prefix
-  if (electronProc.stderr) {
-    electronProc.stderr.on("data", (data) => {
-      const lines = String(data)
-        .split("\n")
-        .filter((line) => line.trim());
-      lines.forEach((line) => {
-        console.error(`[Electron] ${line}`);
-      });
-    });
-  }
-
-  return electronProc;
+  pipeElectronLogs(proc);
+  return proc;
 }
 
 async function dev() {
   console.log("[dev] Building main and preload...");
-  await build({ configFile: viteConfig("main") });
-  await build({ configFile: viteConfig("preload") });
+  await build({ configFile: VITE_MAIN });
+  await build({ configFile: VITE_PRELOAD });
 
   const server = await createServer({
-    configFile: viteConfig("renderer"),
-    server: { port: PORT, host: "127.0.0.1" },
+    configFile: VITE_RENDERER,
+    server: { port: 5173, host: "127.0.0.1" },
   });
   await server.listen();
+  console.log(`[dev] Renderer: ${RENDERER_URL}`);
 
-  const rendererUrl = `http://127.0.0.1:${PORT}`;
-  console.log(`[dev] Renderer: ${rendererUrl}`);
-
-  // Resolve the real Electron binary path from the shim BEFORE disabling it
   console.log("[dev] Resolving Electron executable...");
-  let electronPath = resolveElectronPath();
-  console.log(`[dev] Electron path: ${electronPath}`);
+  const binary = electronBinaryPath();
+  console.log(`[dev] Electron path: ${binary}`);
 
-  // Move the entire node_modules/electron directory aside so that
-  // require('electron') inside the Electron process resolves to the
-  // built-in Electron API rather than the npm shim.
-  // After moving, the electron binary path shifts from node_modules/electron/dist/electron
-  // to node_modules/electron.bak/dist/electron.
-  disableElectronNpmModule();
-  electronPath = electronPath.replace(ELECTRON_PKG, ELECTRON_PKG_BAK);
+  let electronProc = startElectron(binary);
 
-  let electronProc = startElectron(rendererUrl, electronPath);
-
-  const watchPaths = [
+  const watchDirs = [
     join(ROOT, "src", "main"),
     join(ROOT, "src", "preload"),
     join(ROOT, "src", "shared"),
   ];
 
-  const watched = new Set();
-  let rebuildTimer = null;
+  const debounce = new Set();
+  let timer = null;
 
   async function rebuildAndRestart(filename) {
     if (!filename || !/\.(ts|tsx|js|jsx)$/.test(filename)) return;
-    if (watched.has(filename)) return;
-    watched.add(filename);
-    setTimeout(() => watched.delete(filename), 1000);
+    if (debounce.has(filename)) return;
+    debounce.add(filename);
+    setTimeout(() => debounce.delete(filename), 1000);
 
     console.log(`[dev] Change detected: ${filename}`);
     try {
-      await build({ configFile: viteConfig("main") });
-      await build({ configFile: viteConfig("preload") });
+      await build({ configFile: VITE_MAIN });
+      await build({ configFile: VITE_PRELOAD });
     } catch (err) {
       console.error("[dev] Build failed:", err.message);
       return;
@@ -142,44 +87,32 @@ async function dev() {
       electronProc.kill("SIGTERM");
       await new Promise((r) => setTimeout(r, 500));
     }
-    // Ensure electron npm module is still moved aside
-    disableElectronNpmModule();
-    electronProc = startElectron(rendererUrl, electronPath);
+    electronProc = startElectron(binary);
   }
 
-  for (const dir of watchPaths) {
+  for (const dir of watchDirs) {
     try {
-      watch(dir, { recursive: true }, (event, filename) => {
-        if (rebuildTimer) clearTimeout(rebuildTimer);
-        rebuildTimer = setTimeout(() => rebuildAndRestart(filename), 300);
+      watch(dir, { recursive: true }, (_event, filename) => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => rebuildAndRestart(filename), 300);
       });
     } catch (err) {
       console.error(`[dev] Failed to watch ${dir}:`, err.message);
     }
   }
 
-  process.on("SIGINT", () => {
+  const exit = () => {
     if (electronProc) electronProc.kill();
     server.close();
-    restoreElectronNpmModule();
     process.exit(0);
-  });
-  process.on("SIGTERM", () => {
-    if (electronProc) electronProc.kill();
-    server.close();
-    restoreElectronNpmModule();
-    process.exit(0);
-  });
-}
-
-function cleanupAndExit() {
-  restoreElectronNpmModule();
-  process.exit(1);
+  };
+  process.on("SIGINT", exit);
+  process.on("SIGTERM", exit);
 }
 
 process.on("uncaughtException", (err) => {
   console.error("[dev] Fatal error:", err);
-  cleanupAndExit();
+  process.exit(1);
 });
 
 dev().catch(console.error);

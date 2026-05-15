@@ -250,7 +250,7 @@ function createWindow() {
   );
 
   if (!app.isPackaged) {
-    mainWindow.loadURL("https://localhost:3000");
+    mainWindow.loadURL("http://127.0.0.1:5173");
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
