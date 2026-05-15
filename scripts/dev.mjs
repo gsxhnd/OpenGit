@@ -12,8 +12,6 @@ const VITE_MAIN = join(ROOT, "vite.main.config.ts");
 const VITE_PRELOAD = join(ROOT, "vite.preload.config.ts");
 const VITE_RENDERER = join(ROOT, "vite.renderer.config.ts");
 
-const RENDERER_URL = "http://127.0.0.1:5173";
-
 function electronBinaryPath() {
   return String(require(join(ROOT, "node_modules", "electron")));
 }
@@ -43,15 +41,14 @@ function startElectron(binary) {
 
 async function dev() {
   console.log("[dev] Building main and preload...");
-  await build({ configFile: VITE_MAIN });
-  await build({ configFile: VITE_PRELOAD });
+  await build({ configFile: VITE_MAIN, mode: "development" });
+  await build({ configFile: VITE_PRELOAD, mode: "development" });
 
   const server = await createServer({
     configFile: VITE_RENDERER,
-    server: { port: 5173, host: "127.0.0.1" },
+    server: { port: 5173, host: "localhost" },
   });
   await server.listen();
-  console.log(`[dev] Renderer: ${RENDERER_URL}`);
 
   console.log("[dev] Resolving Electron executable...");
   const binary = electronBinaryPath();
@@ -76,8 +73,8 @@ async function dev() {
 
     console.log(`[dev] Change detected: ${filename}`);
     try {
-      await build({ configFile: VITE_MAIN });
-      await build({ configFile: VITE_PRELOAD });
+      await build({ configFile: VITE_MAIN, mode: "development" });
+      await build({ configFile: VITE_PRELOAD, mode: "development" });
     } catch (err) {
       console.error("[dev] Build failed:", err.message);
       return;

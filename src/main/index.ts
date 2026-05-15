@@ -12,6 +12,7 @@ import { registerLocalFilesHandlers } from "./handlers/local-files-handler";
 import { loadSettings, saveSettings } from "./config-manager";
 import { registerPtyHandlers } from "./pty-handlers";
 import { IPC_CHANNELS } from "../shared/ipc";
+import { isDev, rendererUrl } from "../shared/build";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -24,10 +25,7 @@ let mainWindow: BrowserWindow | null = null;
  * Load developer extensions (dev mode only)
  */
 async function loadDevExtensions() {
-  // Only load extensions in dev mode
-  if (app.isPackaged) {
-    return;
-  }
+  if (!isDev) return;
 
   try {
     const extensionsDir = join(__dirname, "../../extensions");
@@ -249,8 +247,8 @@ function createWindow() {
     },
   );
 
-  if (!app.isPackaged) {
-    mainWindow.loadURL("http://localhost:5173");
+  if (isDev) {
+    mainWindow.loadURL(rendererUrl);
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
@@ -268,12 +266,9 @@ function createWindow() {
  * Register all IPC handlers, create main window
  */
 app.whenReady().then(async () => {
-  console.log(
-    `[main] App is ready (${app.isPackaged ? "production" : "development"}), starting initialization...`,
-  );
+  console.log(`[main] App is ready (dev=${isDev}), starting initialization...`);
 
-  // Load developer extensions in dev mode
-  if (!app.isPackaged) {
+  if (isDev) {
     console.log("[main] Loading developer extensions...");
     await loadDevExtensions();
   }
@@ -309,12 +304,6 @@ process.on("uncaughtException", (error) => {
 process.on("unhandledRejection", (reason, promise) => {
   console.error("[main] Unhandled Rejection at:", promise, "reason:", reason);
 });
-
-if (!app.isPackaged) {
-  console.log("[main] Development mode - DevTools and extensions enabled");
-} else {
-  console.log("[main] Production mode - DevTools and extensions disabled");
-}
 
 console.log("[main] Electron main process initialized");
 
