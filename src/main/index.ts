@@ -2,8 +2,9 @@
  * Electron 主进程 - 窗口生命周期、IPC处理、事件处理
  * Electron Main Process - Window lifecycle, IPC handling, event management
  */
-import { app, BrowserWindow, ipcMain, dialog, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, Menu, session } from "electron";
 import { join } from "path";
+import { existsSync } from "fs";
 import { updateElectronApp } from "update-electron-app";
 import { registerSettingsHandlers } from "./handlers/settings-handler";
 import { registerSshSftpHandlers } from "./handlers/ssh-sftp-handler";
@@ -17,6 +18,46 @@ let mainWindow: BrowserWindow | null = null;
 // ============================================================================
 // 应用菜单 | Application Menu
 // ============================================================================
+
+/**
+ * 加载开发者扩展 (仅在 dev 模式)
+ * Load developer extensions (dev mode only)
+ */
+async function loadDevExtensions() {
+  // Only load extensions in dev mode
+  if (app.isPackaged) {
+    return;
+  }
+
+  try {
+    const extensionsDir = join(__dirname, "../../extensions");
+    const reactDevToolsPath = join(extensionsDir, "react_dev_tool", "7.0.1_0");
+    console.log("[main] React DevTools extension path:", reactDevToolsPath);
+
+    // Load React DevTools extension
+    if (existsSync(reactDevToolsPath)) {
+      try {
+        await session.defaultSession.extensions.loadExtension(
+          reactDevToolsPath,
+          { allowFileAccess: true },
+        );
+        console.log("[main] React DevTools extension loaded successfully");
+      } catch (err: any) {
+        console.warn(
+          "[main] Failed to load React DevTools extension:",
+          err?.message || err,
+        );
+      }
+    } else {
+      console.warn(
+        "[main] React DevTools extension path not found:",
+        reactDevToolsPath,
+      );
+    }
+  } catch (err: any) {
+    console.warn("[main] Error loading extensions:", err?.message || err);
+  }
+}
 
 /**
  * 构建应用菜单模板
@@ -208,8 +249,8 @@ function createWindow() {
     },
   );
 
-  if (process.env.ELECTRON_RENDERER_URL) {
-    mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL);
+  if (!app.isPackaged) {
+    mainWindow.loadURL("https://localhost:3000");
   } else {
     mainWindow.loadFile(join(__dirname, "../renderer/index.html"));
   }
@@ -226,12 +267,26 @@ function createWindow() {
  * Execute when Electron app is ready
  * Register all IPC handlers, create main window
  */
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  console.log(
+    `[main] App is ready (${app.isPackaged ? "production" : "development"}), starting initialization...`,
+  );
+
+  // Load developer extensions in dev mode
+  if (!app.isPackaged) {
+    console.log("[main] Loading developer extensions...");
+    await loadDevExtensions();
+  }
+
+  console.log("[main] Registering IPC handlers...");
   registerSettingsHandlers();
   registerPtyHandlers();
   registerSshSftpHandlers();
   registerLocalFilesHandlers();
+
+  console.log("[main] Creating main window...");
   createWindow();
+  console.log("[main] Main window created successfully");
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -245,5 +300,22 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+// Global error handling
+process.on("uncaughtException", (error) => {
+  console.error("[main] Uncaught Exception:", error);
+});
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("[main] Unhandled Rejection at:", promise, "reason:", reason);
+});
+
+if (!app.isPackaged) {
+  console.log("[main] Development mode - DevTools and extensions enabled");
+} else {
+  console.log("[main] Production mode - DevTools and extensions disabled");
+}
+
+console.log("[main] Electron main process initialized");
 
 export { mainWindow };
