@@ -54,8 +54,6 @@ function createWindow() {
       : {}),
     // Linux: frameless for fully custom panel headers (Win uses overlay + frame)
     frame: isMac || isWin,
-    // macOS: vibrancy on the sidebar area; CSS backdrop-filter handles Win/Linux
-    vibrancy: isMac ? "sidebar" : undefined,
     show: false,
     webPreferences: {
       preload: join(__dirname, "../preload/index.js"),

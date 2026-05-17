@@ -35,29 +35,6 @@
   background: var(--color-sidebar);
 }
 
-/* Dark themes on Win/Linux: frosted sidebar using theme sidebar token */
-:global([data-theme-appearance="dark"]) :global([data-platform="win32"]) .primaryPanel,
-:global([data-theme-appearance="dark"]) :global([data-platform="linux"]) .primaryPanel {
-  background: color-mix(in oklab, var(--color-sidebar) 88%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-}
-
-/* Light themes on Win/Linux: solid sidebar from theme */
-:global([data-theme-appearance="light"]) :global([data-platform="win32"]) .primaryPanel,
-:global([data-theme-appearance="light"]) :global([data-platform="linux"]) .primaryPanel {
-  background: var(--color-sidebar);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-/* macOS: Electron vibrancy — transparent, no CSS blur (all themes) */
-:global([data-platform="darwin"]) .primaryPanel {
-  background: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
 .primaryPanelBody {
   display: flex;
   flex-direction: row;

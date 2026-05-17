@@ -12,7 +12,7 @@
   color: var(--color-shell-header-foreground);
 }
 
-/* macOS: vibrancy — all panel headers stay transparent like Standard Dark */
+/* macOS: transparent header for traffic-light inset */
 :global([data-platform="darwin"]) .header {
   background: transparent;
 }
