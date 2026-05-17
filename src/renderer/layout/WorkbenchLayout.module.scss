@@ -7,20 +7,30 @@
   overflow: hidden;
 }
 
-/* 3-column panel row */
+/* Resizable panel row — Group supplies flex layout */
 .panelRow {
-  display: flex;
-  flex-direction: row;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+}
+
+.resizeHandle {
+  flex-shrink: 0;
+  width: 4px;
+  background: transparent;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: color-mix(in oklab, var(--color-border) 80%, transparent);
+  }
 }
 
 /* ── Primary Panel ── */
 .primaryPanel {
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
 
   /* Light mode: solid sidebar background */
   background: var(--color-sidebar);
@@ -41,26 +51,39 @@
   backdrop-filter: none;
 }
 
-.primaryPanelCollapsed {
-  width: var(--activity-bar-width);
-  min-width: var(--activity-bar-width);
-  max-width: var(--activity-bar-width);
-}
-
 .primaryPanelBody {
   display: flex;
   flex-direction: row;
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  border-right: 1px solid var(--color-border);
 }
 
 /* ── Main Panel ── */
 .mainPanel {
   display: flex;
   flex-direction: column;
-  flex: 1;
   min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Second Panel ── */
+.secondPanel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-background);
+}
+
+.secondPanelBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   min-height: 0;
   overflow: hidden;
+  border-left: 1px solid var(--color-border);
 }

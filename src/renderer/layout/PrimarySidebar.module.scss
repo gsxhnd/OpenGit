@@ -1,7 +1,7 @@
 .sidebar {
-  width: 248px;
-  flex-shrink: 0;
-  /* background and border-right are provided by the parent .primaryPanel container */
+  flex: 1;
+  min-width: 0;
+  /* background is provided by the parent .primaryPanel container */
   padding: 0;
   overflow: auto;
 }
