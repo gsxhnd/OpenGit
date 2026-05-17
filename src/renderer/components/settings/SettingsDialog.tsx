@@ -17,7 +17,7 @@ export function SettingsDialog() {
   return (
     <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
       <DialogContent
-        className="max-w-3xl w-full h-[80vh] p-0 overflow-hidden flex flex-col rounded-xl"
+        className="flex h-[80vh] w-full max-w-[calc(100%-2rem)] flex-col overflow-hidden rounded-xl p-0 sm:max-w-6xl"
         showCloseButton
       >
         <SettingsView />
