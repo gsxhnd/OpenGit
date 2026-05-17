@@ -5,21 +5,66 @@
   height: var(--shell-header-height);
   min-height: var(--shell-header-height);
   max-height: var(--shell-header-height);
-  border-bottom: 1px solid var(--color-border);
   -webkit-app-region: drag;
   box-sizing: border-box;
   background: var(--color-title-bar);
 }
 
-.title {
+.leading,
+.trailing {
   display: flex;
   flex: 1;
+  min-width: 0;
+  align-items: center;
+}
+
+.leading {
+  justify-content: flex-start;
+}
+
+.leadingTrafficLightInset {
+  padding-left: var(--shell-traffic-light-padding);
+}
+
+.menubarSlot {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  height: 100%;
+  max-height: var(--shell-header-height);
+  overflow: hidden;
+  padding-left: 0.25rem;
+  -webkit-app-region: no-drag;
+}
+
+.trailing {
+  justify-content: flex-end;
+}
+
+.titleBlock {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  max-width: min(100%, 28rem);
+  -webkit-app-region: drag;
+}
+
+.title {
+  display: flex;
   align-items: center;
   min-width: 0;
   overflow: hidden;
   pointer-events: none;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
+  padding-right: 0.25rem;
+}
+
+.commandPaletteTrigger {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  -webkit-app-region: no-drag;
 }
 
 .titleText {
@@ -37,6 +82,13 @@
   flex-shrink: 0;
   align-items: center;
   gap: 0.125rem;
-  padding-right: 0.25rem;
   -webkit-app-region: no-drag;
+}
+
+.leading .actions {
+  padding-left: 0.25rem;
+}
+
+.trailing .actions {
+  padding-right: 0.25rem;
 }

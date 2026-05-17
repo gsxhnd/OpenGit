@@ -5,18 +5,9 @@
   height: var(--shell-header-height);
   min-height: var(--shell-header-height);
   max-height: var(--shell-header-height);
-  border-bottom: 1px solid var(--color-border);
   -webkit-app-region: drag;
   box-sizing: border-box;
   background: var(--color-title-bar);
-}
-
-.actions {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  padding-left: 0.5rem;
-  -webkit-app-region: no-drag;
 }
 
 .title {

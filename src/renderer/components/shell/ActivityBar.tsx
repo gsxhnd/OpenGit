@@ -42,11 +42,11 @@ export function ActivityBar() {
     <nav
       aria-label="Activity Bar"
       className="group flex shrink-0 flex-col items-center"
-      style={{ width: 'var(--sidebar-width-icon)' }}
+      style={{ width: 'var(--activity-bar-width)' }}
       data-state={state}
     >
       {/* Main nav items */}
-      <SidebarMenu className="flex-1 gap-1 py-2 items-center">
+      <SidebarMenu className="flex-1 gap-0.5 py-1.5 items-center">
         {items.map((item) => {
           const Icon = item.icon
           const label = t(item.labelKey)
@@ -61,9 +61,11 @@ export function ActivityBar() {
               <SidebarMenuButton
                 render={<NavLink to={item.to} end={item.end} viewTransition />}
                 isActive={isActive}
+                size="sm"
+                className="size-7! p-1.5!"
                 tooltip={tooltip}
               >
-                <Icon />
+                <Icon className="size-[15px]!" />
               </SidebarMenuButton>
               {badgeCount > 0 ? (
                 <span className="pointer-events-none absolute -top-0.5 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground tabular-nums leading-none select-none">
@@ -76,7 +78,7 @@ export function ActivityBar() {
       </SidebarMenu>
 
       {/* Settings button pinned to bottom */}
-      <div className="flex shrink-0 justify-center pb-2">
+      <div className="flex shrink-0 justify-center pb-1.5">
         <ShellTooltip
           content={`${t('nav.settings')} (⌘,)`}
           side="right"
@@ -85,11 +87,11 @@ export function ActivityBar() {
           <Button
             variant="ghost"
             size="icon-sm"
-            className="text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
+            className="size-7 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
             onClick={() => setSettingsOpen(true)}
             aria-label={t('nav.settings')}
           >
-            <Settings size={16} />
+            <Settings size={15} />
           </Button>
         </ShellTooltip>
       </div>

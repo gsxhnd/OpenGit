@@ -16,6 +16,7 @@ import { PrimarySidebar } from "@renderer/components/shell/PrimarySidebar";
 import { SessionTabs } from "@renderer/components/shell/SessionTabs";
 import { StatusBar } from "@renderer/components/shell/StatusBar";
 import { useSidebar } from "@renderer/components/ui/sidebar";
+import { cn } from "@renderer/lib/utils";
 import { useAppStore } from "@renderer/store";
 import { MainPanelHeader } from "./MainPanelHeader";
 import { PrimaryPanelHeader } from "./PrimaryPanelHeader";
@@ -25,10 +26,9 @@ import styles from "./WorkbenchLayout.module.scss";
 
 export function WorkbenchLayout() {
   const location = useLocation();
-  const { secondPanelOpen, setSecondPanelOpen, toggleCommandPalette } = useAppStore(
+  const { secondPanelOpen, toggleCommandPalette } = useAppStore(
     useShallow((s) => ({
       secondPanelOpen: s.secondPanelOpen,
-      setSecondPanelOpen: s.setSecondPanelOpen,
       toggleCommandPalette: s.toggleCommandPalette,
     })),
   );
@@ -39,7 +39,7 @@ export function WorkbenchLayout() {
   return (
     <div className={styles.container}>
       <div className={styles.panelRow}>
-        <div className={styles.primaryPanel}>
+        <div className={cn(styles.primaryPanel, collapsed && styles.primaryPanelCollapsed)}>
           <PrimaryPanelHeader />
           <div className={styles.primaryPanelBody}>
             <ActivityBar />
@@ -60,7 +60,7 @@ export function WorkbenchLayout() {
             className={styles.secondPanel}
             aria-label="Second panel"
           >
-            <SecondPanelHeader onClose={() => setSecondPanelOpen(false)} />
+            <SecondPanelHeader />
             <SecondPanel />
           </aside>
         ) : null}

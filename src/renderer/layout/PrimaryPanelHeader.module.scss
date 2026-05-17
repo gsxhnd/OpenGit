@@ -5,7 +5,6 @@
   height: var(--shell-header-height);
   min-height: var(--shell-header-height);
   max-height: var(--shell-header-height);
-  border-bottom: 1px solid var(--color-border);
   -webkit-app-region: drag;
   box-sizing: border-box;
   background: var(--color-title-bar);
@@ -16,21 +15,13 @@
 }
 
 .headerCollapsed {
-  align-items: center;
-  justify-content: center;
+  width: var(--activity-bar-width);
+  min-width: var(--activity-bar-width);
+  max-width: var(--activity-bar-width);
 }
 
 .trafficLightInset {
   padding-left: var(--shell-traffic-light-padding);
-}
-
-.actions {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 0.125rem;
-  padding-right: 0.25rem;
-  -webkit-app-region: no-drag;
 }
 
 .menubarSlot {
@@ -44,7 +35,3 @@
   -webkit-app-region: no-drag;
 }
 
-.spacer {
-  flex: 1;
-  min-width: 0;
-}

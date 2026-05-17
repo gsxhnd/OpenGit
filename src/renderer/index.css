@@ -147,6 +147,11 @@ body,
   background: var(--color-muted-foreground);
 }
 
+/* Activity bar — icon-only rail width (narrower than shadcn sidebar icon mode) */
+:root {
+  --activity-bar-width: 36px;
+}
+
 /* Shell panel header metrics — synced with src/shared/shell-chrome.ts */
 [data-platform="darwin"] {
   --shell-header-height: 38px;
