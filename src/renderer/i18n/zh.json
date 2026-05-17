@@ -19,6 +19,7 @@
   "workbench.localFiles": "本地",
   "workbench.remoteFiles": "远程",
   "workbench.openRemoteFiles": "打开远程文件",
+  "workbench.download": "下载",
   "workbench.transferQueue": "传输队列",
   "workbench.transferQueueEmpty": "暂无传输任务",
   "workbench.tasks": "任务",

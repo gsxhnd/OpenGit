@@ -192,6 +192,7 @@
 
 .queueBody {
   display: flex;
+  flex-direction: column;
   flex: 1;
   align-items: center;
   justify-content: center;
@@ -199,6 +200,30 @@
   font-size: 0.8rem;
   padding: 0.75rem;
   text-align: center;
+}
+
+.queueSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.queueItem {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.8rem;
+}
+
+.editorPanel {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 320px;
 }
 
 @media (max-width: 900px) {

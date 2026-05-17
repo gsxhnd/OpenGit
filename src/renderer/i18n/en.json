@@ -19,6 +19,7 @@
   "workbench.localFiles": "Local",
   "workbench.remoteFiles": "Remote",
   "workbench.openRemoteFiles": "Open remote files",
+  "workbench.download": "Download",
   "workbench.transferQueue": "Transfer queue",
   "workbench.transferQueueEmpty": "No active transfers",
   "workbench.tasks": "tasks",
