@@ -43,7 +43,7 @@ export function WorkbenchLayout() {
   );
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const showSessionTabs = location.pathname !== "/";
+  const showSessionTabs = location.pathname !== "/" && location.pathname !== "/connections";
   const primaryPanelRef = usePanelRef();
 
   const defaultLayout = useMemo(
