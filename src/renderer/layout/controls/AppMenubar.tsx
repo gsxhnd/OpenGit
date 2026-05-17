@@ -4,6 +4,7 @@
  */
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@renderer/store'
+import { useShallow } from 'zustand/react/shallow'
 import {
   Menubar,
   MenubarMenu,
@@ -16,11 +17,11 @@ import {
 
 export function AppMenubar() {
   const { t } = useTranslation()
-  const { toggleSecondPanel, toggleCommandPalette, setSettingsOpen } = useAppStore((s) => ({
+  const { toggleSecondPanel, toggleCommandPalette, setSettingsOpen } = useAppStore(useShallow((s) => ({
     toggleSecondPanel: s.toggleSecondPanel,
     toggleCommandPalette: s.toggleCommandPalette,
     setSettingsOpen: s.setSettingsOpen,
-  }))
+  })))
 
   const handleQuit = () => window.api.close()
   const handleMinimize = () => window.api.minimize()
