@@ -1,4 +1,29 @@
 import type { ThemeTokens } from './types'
+import {
+  deriveShellHeaderBackground,
+  deriveShellHeaderForeground,
+} from './shell-chrome'
+
+/** Derived shell tokens so command palette / workbench chrome follow every theme */
+function applyShellTokens(root: HTMLElement, tokens: ThemeTokens): void {
+  const shellHeader = deriveShellHeaderBackground(tokens)
+  const shellHeaderForeground = deriveShellHeaderForeground(tokens)
+
+  root.style.setProperty('--color-shell-header', shellHeader)
+  root.style.setProperty('--color-shell-header-foreground', shellHeaderForeground)
+  root.style.setProperty('--color-title-bar', shellHeader)
+  root.style.setProperty('--color-status-bar', shellHeader)
+  root.style.setProperty('--color-widget', tokens.popover)
+  root.style.setProperty('--color-widget-border', tokens.border)
+  root.style.setProperty('--color-list-hover', tokens.sidebarAccent)
+  root.style.setProperty('--color-list-active', tokens.sidebarPrimary)
+  root.style.setProperty('--color-list-active-foreground', tokens.sidebarPrimaryForeground)
+  root.style.setProperty(
+    '--color-keybinding-bg',
+    tokens.dark ? tokens.secondary : tokens.muted,
+  )
+  root.style.setProperty('--color-keybinding-border', tokens.inputBorder)
+}
 
 export function applyTheme(tokens: ThemeTokens): void {
   const root = document.documentElement
@@ -28,8 +53,6 @@ export function applyTheme(tokens: ThemeTokens): void {
   root.style.setProperty('--color-input', tokens.inputBorder)
   root.style.setProperty('--color-scrollbar', tokens.scrollbar)
   root.style.setProperty('--color-scrollbar-thumb', tokens.scrollbarThumb)
-  root.style.setProperty('--color-title-bar', tokens.titleBar)
-  root.style.setProperty('--color-status-bar', tokens.statusBar)
   root.style.setProperty('--color-sidebar', tokens.sidebar)
   root.style.setProperty('--color-sidebar-foreground', tokens.sidebarForeground)
   root.style.setProperty('--color-sidebar-primary', tokens.sidebarPrimary)
@@ -43,5 +66,8 @@ export function applyTheme(tokens: ThemeTokens): void {
   root.style.setProperty('--color-diff-added-bg', tokens.diffAddedBg)
   root.style.setProperty('--color-diff-deleted-bg', tokens.diffDeletedBg)
 
+  applyShellTokens(root, tokens)
+
   root.classList.toggle('dark', tokens.dark)
+  root.dataset.themeAppearance = tokens.dark ? 'dark' : 'light'
 }

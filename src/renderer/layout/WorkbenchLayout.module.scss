@@ -20,7 +20,7 @@
   transition: background 0.15s ease;
 
   &:hover {
-    background: color-mix(in oklab, var(--color-border) 80%, transparent);
+    background: color-mix(in oklab, var(--color-sidebar-border) 70%, transparent);
   }
 }
 
@@ -31,20 +31,27 @@
   min-width: 0;
   height: 100%;
   overflow: hidden;
-
-  /* Light mode: solid sidebar background */
+  color: var(--color-sidebar-foreground);
   background: var(--color-sidebar);
 }
 
-/* Dark mode: semi-transparent + blur for frosted glass effect.
-   :global() is required because .dark lives on <html>, outside CSS module scope. */
-:global(.dark) .primaryPanel {
-  background: color-mix(in oklab, var(--color-sidebar) 85%, transparent);
+/* Dark themes on Win/Linux: frosted sidebar using theme sidebar token */
+:global([data-theme-appearance="dark"]) :global([data-platform="win32"]) .primaryPanel,
+:global([data-theme-appearance="dark"]) :global([data-platform="linux"]) .primaryPanel {
+  background: color-mix(in oklab, var(--color-sidebar) 88%, transparent);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 
-/* macOS: let Electron vibrancy show through — transparent bg, no CSS blur */
+/* Light themes on Win/Linux: solid sidebar from theme */
+:global([data-theme-appearance="light"]) :global([data-platform="win32"]) .primaryPanel,
+:global([data-theme-appearance="light"]) :global([data-platform="linux"]) .primaryPanel {
+  background: var(--color-sidebar);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* macOS: Electron vibrancy — transparent, no CSS blur (all themes) */
 :global([data-platform="darwin"]) .primaryPanel {
   background: transparent;
   -webkit-backdrop-filter: none;
@@ -57,7 +64,7 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  border-right: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-sidebar-border);
 }
 
 /* ── Main Panel ── */
@@ -76,7 +83,8 @@
   min-width: 0;
   height: 100%;
   overflow: hidden;
-  background: var(--color-background);
+  color: var(--color-card-foreground);
+  background: var(--color-card);
 }
 
 .secondPanelBody {

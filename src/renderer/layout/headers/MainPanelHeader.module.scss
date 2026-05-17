@@ -1,13 +1,9 @@
 .header {
-  display: flex;
-  flex-shrink: 0;
-  align-items: stretch;
-  height: var(--shell-header-height);
-  min-height: var(--shell-header-height);
-  max-height: var(--shell-header-height);
-  -webkit-app-region: drag;
-  box-sizing: border-box;
-  background: var(--color-title-bar);
+  composes: header from "./shell-header.module.scss";
+}
+
+.menubarSlot {
+  composes: menubarSlot from "./shell-header.module.scss";
 }
 
 .leading,
@@ -24,17 +20,6 @@
 
 .leadingTrafficLightInset {
   padding-left: var(--shell-traffic-light-padding);
-}
-
-.menubarSlot {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  height: 100%;
-  max-height: var(--shell-header-height);
-  overflow: hidden;
-  padding-left: 0.25rem;
-  -webkit-app-region: no-drag;
 }
 
 .trailing {
@@ -73,8 +58,8 @@
   white-space: nowrap;
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-foreground);
-  opacity: 0.8;
+  color: var(--color-shell-header-foreground);
+  opacity: 0.85;
 }
 
 .actions {

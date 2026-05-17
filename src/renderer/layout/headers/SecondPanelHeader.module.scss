@@ -1,13 +1,5 @@
 .header {
-  display: flex;
-  flex-shrink: 0;
-  align-items: stretch;
-  height: var(--shell-header-height);
-  min-height: var(--shell-header-height);
-  max-height: var(--shell-header-height);
-  -webkit-app-region: drag;
-  box-sizing: border-box;
-  background: var(--color-title-bar);
+  composes: header from "./shell-header.module.scss";
 }
 
 .title {
@@ -27,5 +19,6 @@
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--color-muted-foreground);
+  color: var(--color-shell-header-foreground);
+  opacity: 0.65;
 }

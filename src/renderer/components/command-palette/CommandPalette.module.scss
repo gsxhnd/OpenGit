@@ -21,12 +21,12 @@
   width: min(600px, calc(100vw - 2rem));
   z-index: 201;
 
-  background: var(--color-widget, var(--color-popover, #252526));
-  border: 1px solid var(--color-widget-border, var(--color-border));
+  background: var(--color-widget);
+  border: 1px solid var(--color-widget-border);
   border-radius: 6px;
   box-shadow:
-    0 0 8px 2px rgb(0 0 0 / 0.36),
-    0 0 0 1px rgb(0 0 0 / 0.28);
+    0 4px 16px color-mix(in oklab, var(--color-foreground) 12%, transparent),
+    0 0 0 1px var(--color-widget-border);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -37,7 +37,7 @@
   align-items: center;
   gap: 4px;
   padding: 0 10px;
-  border-bottom: 1px solid var(--color-widget-border, var(--color-border));
+  border-bottom: 1px solid var(--color-widget-border);
   flex-shrink: 0;
 }
 
@@ -76,14 +76,14 @@
   padding: 2px 0;
 
   scrollbar-width: thin;
-  scrollbar-color: var(--color-scrollbar-thumb, var(--color-border)) transparent;
+  scrollbar-color: var(--color-scrollbar-thumb) transparent;
 
   &::-webkit-scrollbar {
     width: 10px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--color-scrollbar-thumb, var(--color-border));
+    background: var(--color-scrollbar-thumb);
     border: 3px solid transparent;
     background-clip: padding-box;
     border-radius: 5px;
@@ -107,27 +107,27 @@
   color: var(--color-foreground);
 
   &:hover {
-    background: var(--color-list-hover, var(--color-accent));
+    background: var(--color-list-hover);
   }
 }
 
 .itemActive {
-  background: var(--color-list-active, #04395e) !important;
-  color: var(--color-list-active-foreground, #ffffff);
+  background: var(--color-list-active) !important;
+  color: var(--color-list-active-foreground);
 
   .keybindingKey {
-    color: var(--color-list-active-foreground, #ffffff);
-    background: rgb(255 255 255 / 0.12);
-    border-color: rgb(255 255 255 / 0.2);
+    color: var(--color-list-active-foreground);
+    background: color-mix(in oklab, var(--color-list-active-foreground) 12%, transparent);
+    border-color: color-mix(in oklab, var(--color-list-active-foreground) 22%, transparent);
   }
 
   .keybindingSep {
-    color: var(--color-list-active-foreground, #ffffff);
+    color: var(--color-list-active-foreground);
     opacity: 0.7;
   }
 
   .match {
-    color: var(--color-list-active-foreground, #ffffff);
+    color: var(--color-list-active-foreground);
   }
 }
 
@@ -142,7 +142,7 @@
 }
 
 .match {
-  color: var(--color-primary, #3794ff);
+  color: var(--color-primary);
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -177,8 +177,8 @@
   font-size: 11px;
   line-height: 1;
   color: var(--color-muted-foreground);
-  background: var(--color-keybinding-bg, rgb(128 128 128 / 0.17));
-  border: 1px solid var(--color-keybinding-border, rgb(128 128 128 / 0.3));
+  background: var(--color-keybinding-bg);
+  border: 1px solid var(--color-keybinding-border);
   border-radius: 3px;
   border-bottom-width: 2px;
 }
