@@ -1,7 +1,7 @@
 /**
  * Main workbench layout — 3-column panel architecture with horizontal resize.
  */
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Outlet, useLocation } from "react-router";
 import { usePanelRef } from "react-resizable-panels";
 import { useShallow } from "zustand/react/shallow";
@@ -35,10 +35,13 @@ import styles from "./WorkbenchLayout.module.scss";
 
 export function WorkbenchLayout() {
   const location = useLocation();
-  const { secondPanelOpen, toggleCommandPalette } = useAppStore(
+  const { secondPanelOpen, toggleCommandPalette, setSecondPanelOpen, settings, updateSettings } = useAppStore(
     useShallow((s) => ({
       secondPanelOpen: s.secondPanelOpen,
       toggleCommandPalette: s.toggleCommandPalette,
+      setSecondPanelOpen: s.setSecondPanelOpen,
+      settings: s.settings,
+      updateSettings: s.updateSettings,
     })),
   );
   const { state } = useSidebar();
@@ -60,6 +63,27 @@ export function WorkbenchLayout() {
       panel.expand();
     }
   }, [collapsed, primaryPanelRef]);
+
+  const sidebarRestored = useRef(false);
+
+  useEffect(() => {
+    if (!sidebarRestored.current && settings?.sidebar) {
+      sidebarRestored.current = true;
+      setSecondPanelOpen(settings.sidebar.secondOpen);
+    }
+  }, [settings, setSecondPanelOpen]);
+
+  useEffect(() => {
+    if (sidebarRestored.current) {
+      const s = useAppStore.getState().settings;
+      if (s) {
+        void updateSettings({
+          ...s,
+          sidebar: { ...s.sidebar, secondOpen: secondPanelOpen },
+        });
+      }
+    }
+  }, [secondPanelOpen, updateSettings]);
 
   return (
     <div className={styles.container}>

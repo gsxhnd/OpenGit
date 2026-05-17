@@ -89,6 +89,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
     wordWrap: "on",
     minimap: true,
   },
+  sidebar: {
+    primaryExpanded: true,
+    secondOpen: false,
+  },
 };
 
 // ============================================================================
@@ -147,6 +151,11 @@ function migrateSettings(s: AppSettings): AppSettings {
   // 确保editor配置存在 | Ensure editor config exists
   if (!s.editor) {
     s.editor = { ...DEFAULT_SETTINGS.editor };
+  }
+
+  // 确保sidebar配置存在 | Ensure sidebar config exists
+  if (!s.sidebar) {
+    s.sidebar = { ...DEFAULT_SETTINGS.sidebar };
   }
 
   return s;

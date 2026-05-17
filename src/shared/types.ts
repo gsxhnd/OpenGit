@@ -53,6 +53,11 @@ export interface EditorSettings {
   minimap: boolean;
 }
 
+export interface SidebarConfig {
+  primaryExpanded: boolean;
+  secondOpen: boolean;
+}
+
 export interface AppSettings {
   window: WindowConfig;
   theme: string;
@@ -60,6 +65,7 @@ export interface AppSettings {
   hosts: HostProfile[];
   terminal: TerminalSettings;
   editor: EditorSettings;
+  sidebar: SidebarConfig;
 }
 
 export type ToastKind = "success" | "error" | "info";

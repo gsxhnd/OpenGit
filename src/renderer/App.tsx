@@ -2,7 +2,7 @@
  * App root — shared providers, global shortcuts, and route-level layouts.
  * Settings is no longer a route — it opens as a Dialog (SettingsDialog).
  */
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "./store";
@@ -20,9 +20,16 @@ import { platform } from "@renderer/lib/shell-chrome";
 import styles from "./App.module.scss";
 
 function AppContent() {
-  const { loadSettings, language } = useAppStore(useShallow((s) => ({ loadSettings: s.loadSettings, language: s.language })));
+  const { loadSettings, language, settings, updateSettings } = useAppStore(useShallow((s) => ({
+    loadSettings: s.loadSettings,
+    language: s.language,
+    settings: s.settings,
+    updateSettings: s.updateSettings,
+  })));
   const location = useLocation();
   const { i18n } = useTranslation();
+
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useAppKeyboardShortcuts();
   useTheme();
@@ -32,6 +39,9 @@ function AppContent() {
       const state = useAppStore.getState();
       if (state.language && i18n.language !== state.language) {
         void i18n.changeLanguage(state.language);
+      }
+      if (state.settings?.sidebar) {
+        setSidebarOpen(state.settings.sidebar.primaryExpanded);
       }
     });
   }, [loadSettings, i18n]);
@@ -51,8 +61,19 @@ function AppContent() {
     }
   }, [location.pathname]);
 
+  const handleSidebarChange = useCallback((open: boolean) => {
+    setSidebarOpen(open);
+    const s = useAppStore.getState().settings;
+    if (s) {
+      void updateSettings({
+        ...s,
+        sidebar: { ...s.sidebar, primaryExpanded: open },
+      });
+    }
+  }, [updateSettings]);
+
   return (
-    <SidebarProvider defaultOpen={false} style={{ display: "contents" }}>
+    <SidebarProvider open={sidebarOpen} onOpenChange={handleSidebarChange} style={{ display: "contents" }}>
       <div className={styles.appContainer} data-platform={platform}>
         <Routes>
           <Route element={<WorkbenchLayout />}>
