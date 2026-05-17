@@ -13,9 +13,9 @@ import { TerminalSection } from "../components/settings/TerminalSection";
 import { EditorSection } from "../components/settings/EditorSection";
 import { HostsSection } from "../components/settings/HostsSection";
 import { SettingsPanel } from "../components/settings/SettingsPanel";
-import { useSettingsDraftState } from "../hooks/useSettingsDraftState";
-import { type SettingsSection, SECTION_META, isDarwin, modKey } from "./settings/constants";
-import { SettingsNav, type NavEntry } from "./settings/SettingsNav";
+import { useSettingsDraftState } from "../hooks/settings/useSettingsDraftState";
+import { type SettingsSection, SECTION_META, isDarwin, modKey } from "../components/settings/constants";
+import { SettingsNav, type NavEntry } from "../components/settings/SettingsNav";
 import styles from "./SettingsView.module.scss";
 
 interface ShortcutEntry {

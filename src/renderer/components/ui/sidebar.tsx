@@ -5,7 +5,10 @@ import { mergeProps } from "@base-ui/react/merge-props"
 import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
 
-import { useIsMobile } from "@renderer/hooks/use-mobile"
+// Desktop-only Electron app — always returns false
+function useIsMobile() {
+  return false;
+}
 import { cn } from "@renderer/lib/utils"
 import { Button } from "@renderer/components/ui/button"
 import { Input } from "@renderer/components/ui/input"

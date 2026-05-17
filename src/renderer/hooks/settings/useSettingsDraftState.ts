@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { useAppStore } from "../store";
+import { useAppStore } from "@renderer/store";
 import { useShallow } from "zustand/react/shallow";
-import type { Language } from "../i18n/translations";
+import type { Language } from "@renderer/i18n/translations";
 
 export function useSettingsDraftState() {
   const { t } = useTranslation();

@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import type * as MonacoTypes from 'monaco-editor'
 import { useTranslation } from 'react-i18next'
-import { Button } from './ui/button'
+import { Button } from '../ui/button'
 
 let monacoModule: typeof MonacoTypes | null = null
 
 async function ensureMonaco(): Promise<typeof MonacoTypes> {
   if (monacoModule) return monacoModule
-  await import('../monaco-setup')
+  await import('../../monaco-setup')
   const m = await import('monaco-editor')
   monacoModule = m
   return m

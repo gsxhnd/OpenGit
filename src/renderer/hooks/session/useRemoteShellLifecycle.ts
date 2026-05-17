@@ -1,10 +1,10 @@
 import { useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { useAppStore } from '../store'
+import { useAppStore } from '@renderer/store'
 import { useShallow } from 'zustand/react/shallow'
 import type { RemoteSessionMeta } from '@shared/types'
-import type { SessionUIState } from '../components/session/types'
+import type { SessionUIState } from '@renderer/components/session/types'
 
 export function useRemoteShellLifecycle(
   cid: string,

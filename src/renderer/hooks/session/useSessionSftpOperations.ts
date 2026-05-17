@@ -1,11 +1,11 @@
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAppStore } from '../store'
+import { useAppStore } from '@renderer/store'
 import { useShallow } from 'zustand/react/shallow'
 import type { SftpListEntry } from '@shared/types'
-import type { SessionUIState } from '../components/session/types'
-import { joinRemote } from '../lib/sftp/path'
-import { formatSize } from '../lib/sftp/format'
+import type { SessionUIState } from '@renderer/components/session/types'
+import { joinRemote } from '@renderer/lib/sftp/path'
+import { formatSize } from '@renderer/lib/sftp/format'
 
 export function useSessionSftpOperations(
   cid: string,

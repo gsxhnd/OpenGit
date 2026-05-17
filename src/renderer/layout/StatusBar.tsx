@@ -5,9 +5,9 @@
 import { useTranslation } from 'react-i18next'
 import { Search, Server, Terminal } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
-import { useAppStore } from '../../store'
-import { NotificationPopover } from './NotificationPopover'
-import { ShellTooltip } from './ShellTooltip'
+import { useAppStore } from '@renderer/store'
+import { NotificationPopover } from '@renderer/components/notification/NotificationPopover'
+import { ShellTooltip } from '@renderer/components/common/ShellTooltip'
 import styles from './StatusBar.module.scss'
 
 export function StatusBar() {

@@ -4,7 +4,7 @@
  */
 import { useTranslation } from "react-i18next";
 import { isDesktopChrome } from "@renderer/lib/shell-chrome";
-import { WinControls } from "./WinControls";
+import { WinControls } from "../controls/WinControls";
 import styles from "./SecondPanelHeader.module.scss";
 
 export function SecondPanelHeader() {

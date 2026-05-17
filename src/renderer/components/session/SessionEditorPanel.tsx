@@ -1,5 +1,5 @@
 import type { AppSettings, ToastKind } from '@shared/types'
-import { RemoteMonacoEditor } from '../RemoteMonacoEditor'
+import { RemoteMonacoEditor } from '../editor/RemoteMonacoEditor'
 import styles from '../../views/SessionView.module.scss'
 
 interface SessionEditorPanelProps {

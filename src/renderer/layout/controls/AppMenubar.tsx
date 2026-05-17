@@ -3,7 +3,7 @@
  * Not rendered on macOS (system menu bar handles this).
  */
 import { useTranslation } from 'react-i18next'
-import { useAppStore } from '../../store'
+import { useAppStore } from '@renderer/store'
 import {
   Menubar,
   MenubarMenu,
@@ -12,7 +12,7 @@ import {
   MenubarItem,
   MenubarSeparator,
   MenubarShortcut,
-} from '../ui/menubar'
+} from '@renderer/components/ui/menubar'
 
 export function AppMenubar() {
   const { t } = useTranslation()

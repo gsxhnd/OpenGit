@@ -5,10 +5,10 @@
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { AppMenubar } from "@renderer/components/shell/AppMenubar";
-import { PrimaryPanelToggle } from "@renderer/components/shell/PrimaryPanelToggle";
-import { SecondPanelToggle } from "@renderer/components/shell/SecondPanelToggle";
-import { ShellTooltip } from "@renderer/components/shell/ShellTooltip";
+import { AppMenubar } from "../controls/AppMenubar";
+import { PrimaryPanelToggle } from "../controls/PrimaryPanelToggle";
+import { SecondPanelToggle } from "../controls/SecondPanelToggle";
+import { ShellTooltip } from "@renderer/components/common/ShellTooltip";
 import { useSidebar } from "@renderer/components/ui/sidebar";
 import {
   isDarwin,
@@ -18,7 +18,7 @@ import {
 } from "@renderer/lib/shell-chrome";
 import { cn } from "@renderer/lib/utils";
 import { useAppStore } from "@renderer/store";
-import { WinControls } from "./WinControls";
+import { WinControls } from "../controls/WinControls";
 import styles from "./MainPanelHeader.module.scss";
 
 interface MainPanelHeaderProps {

@@ -1,9 +1,9 @@
 import { PanelRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "../../lib/utils";
+import { cn } from "@renderer/lib/utils";
 import { useShallow } from 'zustand/react/shallow';
-import { useAppStore } from "../../store";
-import { ShellTooltip } from "./ShellTooltip";
+import { useAppStore } from "@renderer/store";
+import { ShellTooltip } from "@renderer/components/common/ShellTooltip";
 
 interface SecondPanelToggleProps {
   className?: string;

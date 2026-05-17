@@ -10,18 +10,18 @@
  */
 import { Outlet, useLocation } from "react-router";
 import { useShallow } from "zustand/react/shallow";
-import { ActivityBar } from "@renderer/components/shell/ActivityBar";
-import { PanelContainer } from "@renderer/components/shell/PanelContainer";
-import { PrimarySidebar } from "@renderer/components/shell/PrimarySidebar";
-import { SessionTabs } from "@renderer/components/shell/SessionTabs";
-import { StatusBar } from "@renderer/components/shell/StatusBar";
+import { ActivityBar } from "./ActivityBar";
+import { PanelContainer } from "./PanelContainer";
+import { PrimarySidebar } from "./PrimarySidebar";
+import { SessionTabs } from "./SessionTabs";
+import { StatusBar } from "./StatusBar";
 import { useSidebar } from "@renderer/components/ui/sidebar";
 import { cn } from "@renderer/lib/utils";
 import { useAppStore } from "@renderer/store";
-import { MainPanelHeader } from "./MainPanelHeader";
-import { PrimaryPanelHeader } from "./PrimaryPanelHeader";
+import { MainPanelHeader } from "./headers/MainPanelHeader";
+import { PrimaryPanelHeader } from "./headers/PrimaryPanelHeader";
 import { SecondPanel } from "./SecondPanel";
-import { SecondPanelHeader } from "./SecondPanelHeader";
+import { SecondPanelHeader } from "./headers/SecondPanelHeader";
 import styles from "./WorkbenchLayout.module.scss";
 
 export function WorkbenchLayout() {

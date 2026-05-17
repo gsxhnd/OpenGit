@@ -6,7 +6,7 @@ import { TerminalSquare } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useAppStore } from "../store";
 import { useShallow } from "zustand/react/shallow";
-import { useSshConnect } from "../hooks/useSshConnect";
+import { useSshConnect } from "../hooks/connection/useSshConnect";
 import { ActiveSessionsPanel } from "../components/dashboard/ActiveSessionsPanel";
 import { SavedHostsPreview } from "../components/dashboard/SavedHostsPreview";
 import { QuickConnectSection } from "../components/dashboard/QuickConnectSection";

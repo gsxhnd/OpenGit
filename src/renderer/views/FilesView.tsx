@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { Button } from "../components/ui/button";
 import { useAppStore } from "../store";
 import { useShallow } from "zustand/react/shallow";
-import { useLocalFilesPane } from "../hooks/useLocalFilesPane";
+import { useLocalFilesPane } from "../hooks/files/useLocalFilesPane";
 import { LocalFilesPane } from "../components/files/LocalFilesPane";
 import styles from "./FilesView.module.scss";
 

@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Maximize2, Minus, Square, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { ShellTooltip } from "@renderer/components/shell/ShellTooltip";
+import { ShellTooltip } from "@renderer/components/common/ShellTooltip";
 
 const controlWidth = "w-[var(--shell-win-control-width)]";
 

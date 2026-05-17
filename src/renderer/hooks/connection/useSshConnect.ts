@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
-import { useAppStore } from '../store'
+import { useAppStore } from '@renderer/store'
 import { useShallow } from 'zustand/react/shallow'
 import type { HostProfile, SshConnectPayload } from '@shared/types'
 

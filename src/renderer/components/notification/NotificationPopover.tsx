@@ -19,7 +19,7 @@ import {
   PopoverTrigger,
 } from "../ui/popover";
 import { ScrollArea } from "../ui/scroll-area";
-import { ShellTooltip } from "./ShellTooltip";
+import { ShellTooltip } from "../common/ShellTooltip";
 import styles from "./NotificationPopover.module.scss";
 
 function formatNotificationTime(

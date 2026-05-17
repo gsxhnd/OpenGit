@@ -2,8 +2,8 @@ import { NavLink, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Folder, LayoutDashboard, MonitorPlay, Plug, Search, Server, TerminalSquare } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
-import { useAppStore } from '../../store'
-import { useSshConnect } from '../../hooks/useSshConnect'
+import { useAppStore } from '@renderer/store'
+import { useSshConnect } from '@renderer/hooks/connection/useSshConnect'
 import styles from './PrimarySidebar.module.scss'
 
 function getSection(pathname: string) {

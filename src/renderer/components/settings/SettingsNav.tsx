@@ -1,6 +1,6 @@
 import type { SettingsSection } from "./constants";
 import type { LucideIcon } from "lucide-react";
-import styles from "../SettingsView.module.scss";
+import styles from "../../views/SettingsView.module.scss";
 
 export interface NavEntry {
   id: SettingsSection;

@@ -7,7 +7,7 @@ import {
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { formatSize, formatDate } from "../../lib/sftp/format";
-import type { FilesState } from "../../hooks/useLocalFilesPane";
+import type { FilesState } from "../../hooks/files/useLocalFilesPane";
 import type { LocalFileEntry } from "@shared/types";
 
 interface LocalFilesPaneProps {

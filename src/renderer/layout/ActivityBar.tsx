@@ -1,16 +1,16 @@
 import { NavLink, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Folder, LayoutDashboard, MonitorPlay, Plug, Settings } from 'lucide-react'
-import { useAppStore } from '../../store'
-import { cn } from '../../lib/utils'
+import { useAppStore } from '@renderer/store'
+import { cn } from '@renderer/lib/utils'
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from '../ui/sidebar'
-import { Button } from '../ui/button'
-import { ShellTooltip } from './ShellTooltip'
+} from '@renderer/components/ui/sidebar'
+import { Button } from '@renderer/components/ui/button'
+import { ShellTooltip } from '@renderer/components/common/ShellTooltip'
 
 interface ActivityBarItem {
   to: string

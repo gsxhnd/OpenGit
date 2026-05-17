@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react'
 import { useAppStore } from '../store'
 import { useShallow } from 'zustand/react/shallow'
 import { Button } from '../components/ui/button'
-import { useSshConnect } from '../hooks/useSshConnect'
+import { useSshConnect } from '../hooks/connection/useSshConnect'
 import styles from './ConnectionsView.module.scss'
 
 export function ConnectionsView() {

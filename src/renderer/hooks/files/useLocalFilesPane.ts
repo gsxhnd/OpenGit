@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useAppStore } from "../store";
+import { useAppStore } from "@renderer/store";
 import { useShallow } from "zustand/react/shallow";
 import type { LocalFileEntry } from "@shared/types";
 

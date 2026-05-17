@@ -2,7 +2,7 @@ import { PanelLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@renderer/lib/utils";
 import { useSidebar } from "@renderer/components/ui/sidebar";
-import { ShellTooltip } from "./ShellTooltip";
+import { ShellTooltip } from "@renderer/components/common/ShellTooltip";
 
 interface PrimaryPanelToggleProps {
   className?: string;

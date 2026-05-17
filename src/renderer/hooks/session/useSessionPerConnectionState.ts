@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef } from 'react'
-import { useAppStore } from '../store'
+import { useAppStore } from '@renderer/store'
 import { useShallow } from 'zustand/react/shallow'
-import type { SessionUIState } from '../components/session/types'
+import type { SessionUIState } from '@renderer/components/session/types'
 
 let transferIdCounter = 0
 

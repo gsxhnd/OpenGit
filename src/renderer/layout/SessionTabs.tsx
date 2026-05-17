@@ -8,8 +8,8 @@ import { useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { X, SquareX, Trash2 } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
-import { useAppStore } from '../../store'
-import { buildWorkbenchSessionTabs, isWorkbenchTabActive } from '../../lib/workbenchSessionTabs'
+import { useAppStore } from '@renderer/store'
+import { buildWorkbenchSessionTabs, isWorkbenchTabActive } from '@renderer/lib/workbenchSessionTabs'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -17,8 +17,8 @@ import {
   ContextMenuSeparator,
   ContextMenuShortcut,
   ContextMenuTrigger,
-} from '../ui/context-menu'
-import { ShellTooltip } from './ShellTooltip'
+} from '@renderer/components/ui/context-menu'
+import { ShellTooltip } from '@renderer/components/common/ShellTooltip'
 import styles from './SessionTabs.module.scss'
 
 export function SessionTabs() {

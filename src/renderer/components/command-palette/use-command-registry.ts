@@ -2,8 +2,8 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
-import { useAppStore } from '../../../store'
-import { useSidebar } from '../../ui/sidebar'
+import { useAppStore } from '@renderer/store'
+import { useSidebar } from '@renderer/components/ui/sidebar'
 import type { PaletteCommand } from './types'
 
 function formatKeybinding(keys: string): string {
