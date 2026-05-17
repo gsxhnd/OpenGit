@@ -48,11 +48,13 @@ export interface UiSlice {
   secondPanelOpen: boolean;
   commandPaletteOpen: boolean;
   settingsOpen: boolean;
+  addHostOpen: boolean;
   setSecondPanelOpen: (open: boolean) => void;
   toggleSecondPanel: () => void;
   toggleCommandPalette: () => void;
   setCommandPaletteOpen: (open: boolean) => void;
   setSettingsOpen: (open: boolean) => void;
+  setAddHostOpen: (open: boolean) => void;
 }
 
 export type AppStore = SettingsSlice &

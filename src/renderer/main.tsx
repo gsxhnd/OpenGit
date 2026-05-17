@@ -4,6 +4,7 @@ import App from './App'
 import './i18n'
 import './index.css'
 import { TooltipProvider } from './components/ui/tooltip'
+import {} from "@dnd-kit/helpers"
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <TooltipProvider delay={350} closeDelay={80}>

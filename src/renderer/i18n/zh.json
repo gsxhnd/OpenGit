@@ -27,7 +27,7 @@
   "workbench.connected": "已连接",
   "workbench.noActiveSessions": "暂无活跃会话",
   "workbench.noRemoteFiles": "连接 SSH 主机后可浏览远程文件。",
-  "workbench.noSavedConnections": "暂无已保存主机，请在设置中添加。",
+  "workbench.noSavedConnections": "暂无已保存主机",
   "workbench.sessionTabs": "会话标签",
   "workbench.status.ready": "就绪",
   "workbench.status.sessions": "会话数: {{count}}",

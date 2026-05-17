@@ -4,6 +4,7 @@ export const createUiSlice: AppStoreCreator<UiSlice> = (set) => ({
   secondPanelOpen: false,
   commandPaletteOpen: false,
   settingsOpen: false,
+  addHostOpen: false,
 
   setSecondPanelOpen: (open) => set({ secondPanelOpen: open }),
 
@@ -16,4 +17,6 @@ export const createUiSlice: AppStoreCreator<UiSlice> = (set) => ({
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
 
   setSettingsOpen: (open) => set({ settingsOpen: open }),
+
+  setAddHostOpen: (open) => set({ addHostOpen: open }),
 });

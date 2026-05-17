@@ -12,6 +12,7 @@ import { useTheme } from "./hooks/useTheme";
 import { ToastContainer } from "./components/notification/ToastContainer";
 import { CommandPalette } from "./components/command-palette";
 import { SettingsDialog } from "./components/settings/SettingsDialog";
+import { AddHostDialog } from "./components/connections/AddHostDialog";
 import { SidebarProvider } from "./components/ui/sidebar";
 import { WorkbenchLayout } from "./layout";
 import { workbenchRoutes, pathToView } from "./routes";
@@ -64,6 +65,7 @@ function AppContent() {
         <ToastContainer />
         <CommandPalette />
         <SettingsDialog />
+        <AddHostDialog />
       </div>
     </SidebarProvider>
   );

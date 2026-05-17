@@ -27,7 +27,7 @@
   "workbench.connected": "Connected",
   "workbench.noActiveSessions": "No active sessions",
   "workbench.noRemoteFiles": "Connect to an SSH host to browse remote files.",
-  "workbench.noSavedConnections": "No saved hosts. Add one from Settings.",
+  "workbench.noSavedConnections": "No saved hosts yet.",
   "workbench.sessionTabs": "Session Tabs",
   "workbench.status.ready": "Ready",
   "workbench.status.sessions": "Sessions: {{count}}",
