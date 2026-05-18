@@ -2,7 +2,7 @@
  * Primary panel title bar — macOS traffic-light inset when expanded; Win/Linux logo menu.
  * Collapsed: narrow strip matching activity bar; no app menu.
  */
-import { AppLogoMenu } from "../controls/AppLogoMenu";
+import { AppMenubar } from "../controls/AppMenubar";
 import { useSidebar } from "@renderer/components/ui/sidebar";
 import { cn } from "@renderer/lib/utils";
 import { isDarwin, isDesktopChrome } from "@renderer/lib/shell-chrome";
@@ -20,9 +20,9 @@ export function PrimaryPanelHeader() {
         isDarwin && !collapsed && styles.trafficLightInset,
       )}
     >
-      {isDesktopChrome && !collapsed ? (
+      {isDesktopChrome ? (
         <div className={styles.logoMenuSlot}>
-          <AppLogoMenu />
+          <AppMenubar />
         </div>
       ) : null}
     </header>

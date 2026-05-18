@@ -1,28 +1,38 @@
 /**
- * AppMenubar — Win/Linux only custom menu bar using shadcn Menubar.
+ * AppMenubar — Win/Linux app logo dropdown with application menu items.
  * Not rendered on macOS (system menu bar handles this).
  */
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import {
-  Menubar,
-  MenubarMenu,
-  MenubarTrigger,
-  MenubarContent,
-  MenubarItem,
-  MenubarSeparator,
-  MenubarShortcut,
-} from "@renderer/components/ui/menubar";
+  PlugIcon,
+  TerminalIcon,
+  CopyIcon,
+  ClipboardPasteIcon,
+  TextSelectIcon,
+  PanelRightIcon,
+  SearchIcon,
+  MaximizeIcon,
+  InfoIcon,
+  SettingsIcon,
+  LogOutIcon,
+} from "lucide-react";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuTrigger,
+} from "@renderer/components/ui/dropdown-menu";
+import { ShellTooltip } from "@renderer/components/common/ShellTooltip";
 import { useAppStore } from "@renderer/store";
+import styles from "./AppMenubar.module.scss";
 
-interface AppMenubarProps {
-  /** Render inside logo popover instead of inline in the header strip */
-  embedded?: boolean;
-  /** Called after a menu action (e.g. to close the logo popover) */
-  onAction?: () => void;
-}
-
-export function AppMenubar({ embedded = false, onAction }: AppMenubarProps) {
+export function AppMenubar() {
   const { t } = useTranslation();
   const { toggleSecondPanel, toggleCommandPalette, setSettingsOpen } =
     useAppStore(
@@ -33,116 +43,114 @@ export function AppMenubar({ embedded = false, onAction }: AppMenubarProps) {
       })),
     );
 
-  const run = (action: () => void) => () => {
-    action();
-    onAction?.();
-  };
-
-  const handleQuit = run(() => window.api.close());
-  const handleFullscreen = run(() => {
-    (window.api as { toggleFullscreen?: () => void }).toggleFullscreen?.();
-  });
-
-  const menubarClass = embedded
-    ? "h-auto min-h-0 border-0 rounded-none bg-transparent p-0 gap-0"
-    : "h-[var(--shell-header-height)] max-h-[var(--shell-header-height)] min-h-0 border-0 rounded-none bg-transparent p-0 gap-0";
-
-  const triggerClass = embedded
-    ? "h-8 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] text-xs px-2 py-0"
-    : "h-[var(--shell-header-height)] text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)] text-xs px-2 py-0";
-
   return (
-    <Menubar className={menubarClass}>
-      {/* File */}
-      <MenubarMenu>
-        <MenubarTrigger className={triggerClass}>
-          {t("menu.file")}
-        </MenubarTrigger>
-        <MenubarContent>
-          <MenubarItem
-            onClick={run(() => {
+    <DropdownMenu>
+      <ShellTooltip content={t("titleBar.menu")} side="bottom" delay={400}>
+        <DropdownMenuTrigger
+          className={styles.trigger}
+          aria-label={t("titleBar.menu")}
+        >
+          <svg
+            width={18}
+            height={18}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </DropdownMenuTrigger>
+      </ShellTooltip>
+      <DropdownMenuContent align="start" side="bottom" sideOffset={4} className="w-52">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{t("menu.file")}</DropdownMenuLabel>
+          <DropdownMenuItem
+            onClick={() => {
               window.location.hash = "#/connections";
-            })}
+            }}
           >
+            <PlugIcon />
             {t("menu.newConnection")}
-          </MenubarItem>
-          <MenubarItem
-            onClick={run(() => {
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
               window.location.hash = "#/local-terminal";
-            })}
+            }}
           >
+            <TerminalIcon />
             {t("menu.newLocalTerminal")}
-          </MenubarItem>
-          <MenubarSeparator />
-          <MenubarItem onClick={run(() => setSettingsOpen(true))}>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+            <SettingsIcon />
             {t("nav.settings")}
-            <MenubarShortcut>Ctrl+,</MenubarShortcut>
-          </MenubarItem>
-          <MenubarSeparator />
-          <MenubarItem onClick={handleQuit} variant="destructive">
+            <DropdownMenuShortcut>Ctrl+,</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => window.api.close()} variant="destructive">
+            <LogOutIcon />
             {t("menu.quit")}
-          </MenubarItem>
-        </MenubarContent>
-      </MenubarMenu>
-
-      {/* Edit */}
-      <MenubarMenu>
-        <MenubarTrigger className={triggerClass}>
-          {t("menu.edit")}
-        </MenubarTrigger>
-        <MenubarContent>
-          <MenubarItem onClick={run(() => document.execCommand("copy"))}>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{t("menu.edit")}</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => document.execCommand("copy")}>
+            <CopyIcon />
             {t("menu.copy")}
-            <MenubarShortcut>Ctrl+C</MenubarShortcut>
-          </MenubarItem>
-          <MenubarItem onClick={run(() => document.execCommand("paste"))}>
+            <DropdownMenuShortcut>Ctrl+C</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => document.execCommand("paste")}>
+            <ClipboardPasteIcon />
             {t("menu.paste")}
-            <MenubarShortcut>Ctrl+V</MenubarShortcut>
-          </MenubarItem>
-          <MenubarItem onClick={run(() => document.execCommand("selectAll"))}>
+            <DropdownMenuShortcut>Ctrl+V</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => document.execCommand("selectAll")}>
+            <TextSelectIcon />
             {t("menu.selectAll")}
-            <MenubarShortcut>Ctrl+A</MenubarShortcut>
-          </MenubarItem>
-        </MenubarContent>
-      </MenubarMenu>
-
-      {/* View */}
-      <MenubarMenu>
-        <MenubarTrigger className={triggerClass}>
-          {t("menu.view")}
-        </MenubarTrigger>
-        <MenubarContent>
-          <MenubarItem onClick={run(toggleSecondPanel)}>
+            <DropdownMenuShortcut>Ctrl+A</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{t("menu.view")}</DropdownMenuLabel>
+          <DropdownMenuItem onClick={toggleSecondPanel}>
+            <PanelRightIcon />
             {t("menu.toggleSecondPanel")}
-            <MenubarShortcut>Ctrl+Alt+I</MenubarShortcut>
-          </MenubarItem>
-          <MenubarItem onClick={run(toggleCommandPalette)}>
+            <DropdownMenuShortcut>Ctrl+Alt+I</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={toggleCommandPalette}>
+            <SearchIcon />
             {t("menu.commandPalette")}
-            <MenubarShortcut>Ctrl+Shift+P</MenubarShortcut>
-          </MenubarItem>
-          <MenubarSeparator />
-          <MenubarItem onClick={handleFullscreen}>
-            {t("menu.toggleFullscreen")}
-            <MenubarShortcut>F11</MenubarShortcut>
-          </MenubarItem>
-        </MenubarContent>
-      </MenubarMenu>
-
-      {/* Help */}
-      <MenubarMenu>
-        <MenubarTrigger className={triggerClass}>
-          {t("menu.help")}
-        </MenubarTrigger>
-        <MenubarContent>
-          <MenubarItem
-            onClick={run(() => {
-              (window.api as { showAbout?: () => void }).showAbout?.();
-            })}
+            <DropdownMenuShortcut>Ctrl+Shift+P</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() => {
+              (window.api as { toggleFullscreen?: () => void }).toggleFullscreen?.();
+            }}
           >
+            <MaximizeIcon />
+            {t("menu.toggleFullscreen")}
+            <DropdownMenuShortcut>F11</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{t("menu.help")}</DropdownMenuLabel>
+          <DropdownMenuItem
+            onClick={() => {
+              (window.api as { showAbout?: () => void }).showAbout?.();
+            }}
+          >
+            <InfoIcon />
             {t("menu.about")}
-          </MenubarItem>
-        </MenubarContent>
-      </MenubarMenu>
-    </Menubar>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
