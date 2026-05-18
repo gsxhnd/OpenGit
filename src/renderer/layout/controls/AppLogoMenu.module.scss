@@ -1,0 +1,39 @@
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: calc(var(--shell-header-height) - 4px);
+  height: calc(var(--shell-header-height) - 6px);
+  margin-left: 0.125rem;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+
+  &:hover {
+    background: var(--color-secondary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 1px;
+  }
+}
+
+.logo {
+  display: block;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.popover {
+  width: auto;
+  min-width: 0;
+  padding: 0.25rem;
+  gap: 0;
+}

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <defs>
+    <linearGradient id="mainStarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4895ef;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0077b6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0077b6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00b4d8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Orbit Path -->
+  <path d="M100 250 A 150 50 0 0 1 300 250" fill="none" stroke="url(#orbitGrad)" stroke-width="6" stroke-linecap="round" />
+  <circle cx="98" cy="250" r="6" fill="#003566" />
+  <circle cx="315" cy="180" r="8" fill="#00b4d8" />
+  
+  <!-- Main Star -->
+  <path d="M200 150 L 230 200 L 280 200 L 230 230 L 250 280 L 200 250 L 150 280 L 170 230 L 120 200 L 170 200 Z" fill="url(#mainStarGrad)" stroke="#003566" stroke-width="4" stroke-linejoin="round" />
+  
+  <!-- Inner Highlight -->
+  <path d="M200 170 L 215 200 L 200 230 L 185 200 Z" fill="#ffffff" opacity="0.6" />
+  
+  <!-- Accessory Shapes -->
+  <path d="M230 140 C 240 120 250 120 250 140 C 250 160 230 160 230 140 Z" fill="#003566" />
+  <circle cx="250" cy="220" r="5" fill="#00b4d8" />
+  
+  <!-- Small Stars -->
+  <path d="M150 140 L 155 155 L 170 160 L 155 165 L 150 180 L 145 165 L 130 160 L 145 155 Z" fill="#003566" />
+  <path d="M140 210 L 142 215 L 150 217 L 142 219 L 140 225 L 138 219 L 130 217 L 138 215 Z" fill="#003566" />
+</svg>

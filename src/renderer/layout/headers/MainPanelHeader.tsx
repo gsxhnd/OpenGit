@@ -5,7 +5,6 @@
 import { Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
-import { AppMenubar } from "../controls/AppMenubar";
 import { PrimaryPanelToggle } from "../controls/PrimaryPanelToggle";
 import { SecondPanelToggle } from "../controls/SecondPanelToggle";
 import { ShellTooltip } from "@renderer/components/common/ShellTooltip";
@@ -29,7 +28,6 @@ interface MainPanelHeaderProps {
 export function MainPanelHeader({ onOpenCommandPalette }: MainPanelHeaderProps = {}) {
   const { t } = useTranslation();
   const { state } = useSidebar();
-  const primaryCollapsed = state === "collapsed";
   const { sessions, activeSessionId, secondPanelOpen } = useAppStore(
     useShallow((s) => ({
       sessions: s.sessions,
@@ -48,14 +46,9 @@ export function MainPanelHeader({ onOpenCommandPalette }: MainPanelHeaderProps =
       <div
         className={cn(
           styles.leading,
-          isDarwin && primaryCollapsed && styles.leadingTrafficLightInset,
+          isDarwin && state === "collapsed" && styles.leadingTrafficLightInset,
         )}
       >
-        {isDesktopChrome && primaryCollapsed ? (
-          <div className={styles.menubarSlot}>
-            <AppMenubar />
-          </div>
-        ) : null}
         <div className={cn("no-drag", styles.actions)}>
           <PrimaryPanelToggle
             className={shellHeaderControlClass}

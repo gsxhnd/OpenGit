@@ -2,7 +2,7 @@
   composes: header from "./shell-header.module.scss";
 }
 
-.menubarSlot {
+.logoMenuSlot {
   composes: menubarSlot from "./shell-header.module.scss";
 }
 

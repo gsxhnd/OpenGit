@@ -1,8 +1,8 @@
 /**
- * Primary panel title bar — macOS traffic-light inset when expanded; Win/Linux menubar.
- * Collapsed: narrow strip matching activity bar; chrome moves to MainPanelHeader.
+ * Primary panel title bar — macOS traffic-light inset when expanded; Win/Linux logo menu.
+ * Collapsed: narrow strip matching activity bar; no app menu.
  */
-import { AppMenubar } from "../controls/AppMenubar";
+import { AppLogoMenu } from "../controls/AppLogoMenu";
 import { useSidebar } from "@renderer/components/ui/sidebar";
 import { cn } from "@renderer/lib/utils";
 import { isDarwin, isDesktopChrome } from "@renderer/lib/shell-chrome";
@@ -21,8 +21,8 @@ export function PrimaryPanelHeader() {
       )}
     >
       {isDesktopChrome && !collapsed ? (
-        <div className={styles.menubarSlot}>
-          <AppMenubar />
+        <div className={styles.logoMenuSlot}>
+          <AppLogoMenu />
         </div>
       ) : null}
     </header>
