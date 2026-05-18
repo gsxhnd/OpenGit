@@ -20,3 +20,10 @@ export const shellWinControlWidth =
 /** Tailwind classes for header action buttons (command palette, panel toggle, etc.) */
 export const shellHeaderControlClass =
   shellControlSize === 28 ? "h-7 w-7" : "h-6 w-6";
+
+/** Shell header icon button colors (import shell-header.module.scss `.control` for full styles). */
+export const shellHeaderButtonClass =
+  "text-[color-mix(in_oklab,var(--color-shell-header-foreground)_68%,transparent)] hover:bg-[color-mix(in_oklab,var(--color-shell-header-foreground)_10%,transparent)] hover:text-[var(--color-shell-header-foreground)]";
+
+export const shellHeaderButtonActiveClass =
+  "bg-[color-mix(in_oklab,var(--color-shell-header-foreground)_12%,transparent)] text-[var(--color-shell-header-foreground)]";

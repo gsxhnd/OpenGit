@@ -19,7 +19,7 @@ import {
   ContextMenuShortcut,
   ContextMenuTrigger,
 } from '@renderer/components/ui/context-menu'
-import { ShellTooltip } from '@renderer/components/common/ShellTooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import styles from './SessionTabs.module.scss'
 
 export function SessionTabs() {
@@ -69,24 +69,36 @@ export function SessionTabs() {
         const active = isWorkbenchTabActive(tab, location.pathname)
         const tabBody = (
           <div key={tab.id} className={active ? styles.tabActive : styles.tab}>
-            <ShellTooltip content={tab.title} side="bottom" delay={350}>
-              <Button variant="ghost" className={styles.tabTrigger} onClick={() => navigate(tab.routePath)}>
-                <span className={styles.tabTitle}>{tab.title}</span>
-                <span className={styles.tabStatus} data-state={tab.status} aria-hidden />
-              </Button>
-            </ShellTooltip>
+            <Tooltip>
+              <TooltipTrigger
+                delay={350}
+                render={
+                  <Button variant="ghost" className={styles.tabTrigger} onClick={() => navigate(tab.routePath)}>
+                    <span className={styles.tabTitle}>{tab.title}</span>
+                    <span className={styles.tabStatus} data-state={tab.status} aria-hidden />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">{tab.title}</TooltipContent>
+            </Tooltip>
             {tab.closable ? (
-              <ShellTooltip content={t('workbench.closeSessionTab')} side="bottom" delay={350}>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  className={styles.closeBtn}
-                  onClick={() => { void closeRemoteSession(tab.connectionId) }}
-                  aria-label={t('workbench.closeSessionTab')}
-                >
-                  <X size={12} />
-                </Button>
-              </ShellTooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  delay={350}
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className={styles.closeBtn}
+                      onClick={() => { void closeRemoteSession(tab.connectionId) }}
+                      aria-label={t('workbench.closeSessionTab')}
+                    >
+                      <X size={12} />
+                    </Button>
+                  }
+                />
+                <TooltipContent side="bottom">{t('workbench.closeSessionTab')}</TooltipContent>
+              </Tooltip>
             ) : null}
           </div>
         )

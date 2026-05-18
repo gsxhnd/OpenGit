@@ -7,7 +7,7 @@ import { TooltipProvider } from './components/ui/tooltip'
 import {} from "@dnd-kit/helpers"
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <TooltipProvider delay={350} closeDelay={80}>
+  <TooltipProvider delay={400} closeDelay={0}>
     <HashRouter>
       <App />
     </HashRouter>

@@ -7,12 +7,13 @@ import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { PrimaryPanelToggle } from "../controls/PrimaryPanelToggle";
 import { SecondPanelToggle } from "../controls/SecondPanelToggle";
-import { ShellTooltip } from "@renderer/components/common/ShellTooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@renderer/components/ui/tooltip";
 import { Button } from "@renderer/components/ui/button";
 import { useSidebar } from "@renderer/components/ui/sidebar";
 import {
   isDarwin,
   isDesktopChrome,
+  shellHeaderButtonClass,
   shellHeaderControlClass,
   shellIconSize,
 } from "@renderer/lib/shell-chrome";
@@ -62,21 +63,22 @@ export function MainPanelHeader({ onOpenCommandPalette }: MainPanelHeaderProps =
         </div>
         {onOpenCommandPalette ? (
           <div className={cn("no-drag", styles.commandPaletteTrigger)}>
-            <ShellTooltip
-              content={t("workbench.status.commandPalette")}
-              side="bottom"
-              delay={400}
-            >
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className={`text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)] ${shellHeaderControlClass}`}
-                onClick={onOpenCommandPalette}
-                aria-label={t("workbench.status.commandPalette")}
-              >
-                <Search size={shellIconSize} strokeWidth={1.5} />
-              </Button>
-            </ShellTooltip>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className={cn(shellHeaderButtonClass, shellHeaderControlClass)}
+                    onClick={onOpenCommandPalette}
+                    aria-label={t("workbench.status.commandPalette")}
+                  >
+                    <Search size={shellIconSize} strokeWidth={1.5} />
+                  </Button>
+                }
+              />
+              <TooltipContent side="bottom">{t("workbench.status.commandPalette")}</TooltipContent>
+            </Tooltip>
           </div>
         ) : null}
       </div>

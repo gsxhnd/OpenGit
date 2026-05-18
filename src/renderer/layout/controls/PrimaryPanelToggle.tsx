@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@renderer/lib/utils";
 import { Button } from "@renderer/components/ui/button";
 import { useSidebar } from "@renderer/components/ui/sidebar";
-import { ShellTooltip } from "@renderer/components/common/ShellTooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@renderer/components/ui/tooltip";
+import { shellHeaderButtonActiveClass, shellHeaderButtonClass } from "@renderer/lib/shell-chrome";
 
 interface PrimaryPanelToggleProps {
   className?: string;
@@ -18,35 +19,31 @@ export function PrimaryPanelToggle({
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
 
+  const label = collapsed
+    ? t("workbench.expandSidebar")
+    : t("workbench.collapseSidebar");
+
   return (
-    <ShellTooltip
-      content={
-        collapsed
-          ? t("workbench.expandSidebar")
-          : t("workbench.collapseSidebar")
-      }
-      side="bottom"
-      delay={400}
-    >
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        className={cn(
-          "text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]",
-          !collapsed &&
-            "bg-[var(--color-secondary)] text-[var(--color-foreground)]",
-          className,
-        )}
-        onClick={toggleSidebar}
-        aria-pressed={!collapsed}
-        aria-label={
-          collapsed
-            ? t("workbench.expandSidebar")
-            : t("workbench.collapseSidebar")
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className={cn(
+              shellHeaderButtonClass,
+              !collapsed && shellHeaderButtonActiveClass,
+              className,
+            )}
+            onClick={toggleSidebar}
+            aria-pressed={!collapsed}
+            aria-label={label}
+          >
+            <PanelLeft size={iconSize} strokeWidth={1.5} />
+          </Button>
         }
-      >
-        <PanelLeft size={iconSize} strokeWidth={1.5} />
-      </Button>
-    </ShellTooltip>
+      />
+      <TooltipContent side="bottom">{label}</TooltipContent>
+    </Tooltip>
   );
 }

@@ -8,7 +8,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@renderer/store'
 import { Button } from '@renderer/components/ui/button'
 import { NotificationPopover } from '@renderer/components/notification/NotificationPopover'
-import { ShellTooltip } from '@renderer/components/common/ShellTooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 import styles from './StatusBar.module.scss'
 
 export function StatusBar() {
@@ -18,12 +18,17 @@ export function StatusBar() {
 
   return (
     <footer className={styles.statusBar} aria-label="Status Bar">
-      <ShellTooltip content={t('workbench.status.commandPalette')} side="top" delay={400}>
-        <Button variant="ghost" size="xs" className={styles.item} onClick={toggleCommandPalette} aria-label={t('workbench.status.commandPalette')}>
-          <Search size={12} />
-          <span>Ctrl+Shift+P</span>
-        </Button>
-      </ShellTooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button variant="ghost" size="xs" className={styles.item} onClick={toggleCommandPalette} aria-label={t('workbench.status.commandPalette')}>
+              <Search size={12} />
+              <span>Ctrl+Shift+P</span>
+            </Button>
+          }
+        />
+        <TooltipContent side="top">{t('workbench.status.commandPalette')}</TooltipContent>
+      </Tooltip>
 
       <span className={styles.sep} aria-hidden />
 

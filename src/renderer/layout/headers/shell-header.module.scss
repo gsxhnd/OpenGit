@@ -10,11 +10,26 @@
   box-sizing: border-box;
   background: var(--color-shell-header);
   color: var(--color-shell-header-foreground);
+  border-bottom: 1px solid color-mix(in oklab, var(--color-shell-header-foreground) 8%, transparent);
 }
 
-/* macOS: transparent header for traffic-light inset */
-:global([data-platform="darwin"]) .header {
-  background: transparent;
+/* Header icon buttons — shared across panel title bars */
+.control {
+  flex-shrink: 0;
+  color: color-mix(in oklab, var(--color-shell-header-foreground) 68%, transparent);
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    background: color-mix(in oklab, var(--color-shell-header-foreground) 10%, transparent);
+    color: var(--color-shell-header-foreground);
+  }
+}
+
+.controlActive {
+  background: color-mix(in oklab, var(--color-shell-header-foreground) 12%, transparent);
+  color: var(--color-shell-header-foreground);
 }
 
 .menubarSlot {

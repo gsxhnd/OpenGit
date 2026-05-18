@@ -10,7 +10,7 @@ import {
   useSidebar,
 } from '@renderer/components/ui/sidebar'
 import { Button } from '@renderer/components/ui/button'
-import { ShellTooltip } from '@renderer/components/common/ShellTooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
 
 interface ActivityBarItem {
   to: string
@@ -64,6 +64,7 @@ export function ActivityBar() {
                 size="sm"
                 className="size-7! p-1.5!"
                 tooltip={tooltip}
+                tooltipAlways
               >
                 <Icon className="size-[15px]!" />
               </SidebarMenuButton>
@@ -79,21 +80,22 @@ export function ActivityBar() {
 
       {/* Settings button pinned to bottom */}
       <div className="flex shrink-0 justify-center pb-1.5">
-        <ShellTooltip
-          content={`${t('nav.settings')} (⌘,)`}
-          side="right"
-          delay={400}
-        >
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="size-7 text-[var(--color-muted-foreground)] hover:text-[var(--color-foreground)]"
-            onClick={() => setSettingsOpen(true)}
-            aria-label={t('nav.settings')}
-          >
-            <Settings size={15} />
-          </Button>
-        </ShellTooltip>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="size-7 text-[var(--color-muted-foreground)] hover:bg-[var(--color-sidebar-accent)] hover:text-[var(--color-sidebar-foreground)]"
+                onClick={() => setSettingsOpen(true)}
+                aria-label={t('nav.settings')}
+              >
+                <Settings size={15} />
+              </Button>
+            }
+          />
+          <TooltipContent side="right">{`${t('nav.settings')} (⌘,)`}</TooltipContent>
+        </Tooltip>
       </div>
     </nav>
   )

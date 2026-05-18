@@ -19,7 +19,7 @@ import {
   PopoverTrigger,
 } from "../ui/popover";
 import { ScrollArea } from "../ui/scroll-area";
-import { ShellTooltip } from "../common/ShellTooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import styles from "./NotificationPopover.module.scss";
 
 function formatNotificationTime(
@@ -115,23 +115,24 @@ export function NotificationPopover() {
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      <ShellTooltip
-        content={t("workbench.notifications.open")}
-        side="top"
-        delay={400}
-      >
-        <PopoverTrigger
-          className={styles.trigger}
-          aria-label={t("workbench.notifications.open")}
-        >
-          <Bell size={12} />
-          {unreadCount > 0 ? (
-            <span className={styles.badge} aria-hidden>
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
-          ) : null}
-        </PopoverTrigger>
-      </ShellTooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <PopoverTrigger
+              className={styles.trigger}
+              aria-label={t("workbench.notifications.open")}
+            >
+              <Bell size={12} />
+              {unreadCount > 0 ? (
+                <span className={styles.badge} aria-hidden>
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              ) : null}
+            </PopoverTrigger>
+          }
+        />
+        <TooltipContent side="top">{t("workbench.notifications.open")}</TooltipContent>
+      </Tooltip>
 
       <PopoverContent
         side="top"

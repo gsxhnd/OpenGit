@@ -4,7 +4,8 @@ import { cn } from "@renderer/lib/utils";
 import { useShallow } from 'zustand/react/shallow';
 import { useAppStore } from "@renderer/store";
 import { Button } from "@renderer/components/ui/button";
-import { ShellTooltip } from "@renderer/components/common/ShellTooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@renderer/components/ui/tooltip";
+import { shellHeaderButtonActiveClass, shellHeaderButtonClass } from "@renderer/lib/shell-chrome";
 
 interface SecondPanelToggleProps {
   className?: string;
@@ -21,22 +22,26 @@ export function SecondPanelToggle({
   );
 
   return (
-    <ShellTooltip content={t("workbench.secondPanelToggleHint")} side="bottom" delay={400}>
-      <Button
-        variant="ghost"
-        size="icon-sm"
-        className={cn(
-          "text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]",
-          secondPanelOpen &&
-            "bg-[var(--color-secondary)] text-[var(--color-foreground)]",
-          className,
-        )}
-        onClick={() => toggleSecondPanel()}
-        aria-pressed={secondPanelOpen}
-        aria-label={t("workbench.secondPanelToggle")}
-      >
-        <PanelRight size={iconSize} strokeWidth={1.5} />
-      </Button>
-    </ShellTooltip>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className={cn(
+              shellHeaderButtonClass,
+              secondPanelOpen && shellHeaderButtonActiveClass,
+              className,
+            )}
+            onClick={() => toggleSecondPanel()}
+            aria-pressed={secondPanelOpen}
+            aria-label={t("workbench.secondPanelToggle")}
+          >
+            <PanelRight size={iconSize} strokeWidth={1.5} />
+          </Button>
+        }
+      />
+      <TooltipContent side="bottom">{t("workbench.secondPanelToggleHint")}</TooltipContent>
+    </Tooltip>
   );
 }

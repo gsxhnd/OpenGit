@@ -505,12 +505,15 @@ function SidebarMenuButton({
   variant = "default",
   size = "default",
   tooltip,
+  tooltipAlways = false,
   className,
   ...props
 }: useRender.ComponentProps<"button"> &
   React.ComponentProps<"button"> & {
     isActive?: boolean
     tooltip?: string | React.ComponentProps<typeof TooltipContent>
+    /** Show tooltip even when the sidebar is expanded (e.g. Activity Bar icons). */
+    tooltipAlways?: boolean
   } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const { isMobile, state } = useSidebar()
   const comp = useRender({
@@ -546,8 +549,8 @@ function SidebarMenuButton({
       <TooltipContent
         side="right"
         align="center"
-        hidden={state !== "collapsed" || isMobile}
         {...tooltip}
+        hidden={tooltipAlways ? false : state !== "collapsed" || isMobile}
       />
     </Tooltip>
   )
