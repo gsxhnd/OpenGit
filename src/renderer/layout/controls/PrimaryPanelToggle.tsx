@@ -1,6 +1,7 @@
 import { PanelLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@renderer/lib/utils";
+import { Button } from "@renderer/components/ui/button";
 import { useSidebar } from "@renderer/components/ui/sidebar";
 import { ShellTooltip } from "@renderer/components/common/ShellTooltip";
 
@@ -19,14 +20,19 @@ export function PrimaryPanelToggle({
 
   return (
     <ShellTooltip
-      content={collapsed ? t("workbench.expandSidebar") : t("workbench.collapseSidebar")}
+      content={
+        collapsed
+          ? t("workbench.expandSidebar")
+          : t("workbench.collapseSidebar")
+      }
       side="bottom"
       delay={400}
     >
-      <button
-        type="button"
+      <Button
+        variant="ghost"
+        size="icon-sm"
         className={cn(
-          "flex items-center justify-center rounded-md text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]",
+          "text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)]",
           !collapsed &&
             "bg-[var(--color-secondary)] text-[var(--color-foreground)]",
           className,
@@ -34,11 +40,13 @@ export function PrimaryPanelToggle({
         onClick={toggleSidebar}
         aria-pressed={!collapsed}
         aria-label={
-          collapsed ? t("workbench.expandSidebar") : t("workbench.collapseSidebar")
+          collapsed
+            ? t("workbench.expandSidebar")
+            : t("workbench.collapseSidebar")
         }
       >
         <PanelLeft size={iconSize} strokeWidth={1.5} />
-      </button>
+      </Button>
     </ShellTooltip>
   );
 }

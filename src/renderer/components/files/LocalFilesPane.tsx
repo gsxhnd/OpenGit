@@ -120,8 +120,9 @@ export function LocalFilesPane({
         ) : (
           state.localEntries.map((entry) => (
             <div key={entry.path} className={styles.fileRow}>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 className={styles.fileNameBtn}
                 onClick={() =>
                   entry.isDirectory
@@ -134,21 +135,22 @@ export function LocalFilesPane({
                   {entry.isDirectory ? "📁" : "📄"}
                 </span>
                 <span className={styles.fileName}>{entry.name}</span>
-              </button>
+              </Button>
               <span className={styles.fileMeta}>
                 {formatSize(entry.size)}
               </span>
               <span className={styles.fileMeta}>
                 {formatDate(entry.mtimeMs)}
               </span>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="icon-xs"
                 className={styles.deleteBtn}
                 onClick={() => onDelete(entry)}
                 title={t("workbench.delete")}
               >
                 ✕
-              </button>
+              </Button>
             </div>
           ))
         )}

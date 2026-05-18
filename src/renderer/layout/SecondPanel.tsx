@@ -7,6 +7,7 @@ import { Bug, FileUp, Server } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useShallow } from "zustand/react/shallow";
 import { useAppStore } from "@renderer/store";
+import { Button } from "@renderer/components/ui/button";
 import styles from "./SecondPanel.module.scss";
 
 type SecondPanelTab = "properties" | "transfers" | "diagnostics";
@@ -88,16 +89,17 @@ export function SecondPanel() {
     <>
       <nav className={styles.tabBar} aria-label="Second panel tabs">
         {TAB_ITEMS.map(({ key, icon: Icon, labelKey }) => (
-          <button
+          <Button
             key={key}
-            type="button"
+            variant="ghost"
+            size="sm"
             className={activeTab === key ? styles.tabActive : styles.tab}
             onClick={() => setActiveTab(key)}
             aria-selected={activeTab === key}
           >
             <Icon size={14} />
             <span>{t(labelKey)}</span>
-          </button>
+          </Button>
         ))}
       </nav>
       <div className={styles.body}>

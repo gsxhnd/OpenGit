@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { X, SquareX, Trash2 } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@renderer/store'
+import { Button } from '@renderer/components/ui/button'
 import { buildWorkbenchSessionTabs, isWorkbenchTabActive } from '@renderer/lib/workbenchSessionTabs'
 import {
   ContextMenu,
@@ -69,21 +70,22 @@ export function SessionTabs() {
         const tabBody = (
           <div key={tab.id} className={active ? styles.tabActive : styles.tab}>
             <ShellTooltip content={tab.title} side="bottom" delay={350}>
-              <button type="button" className={styles.tabTrigger} onClick={() => navigate(tab.routePath)}>
+              <Button variant="ghost" className={styles.tabTrigger} onClick={() => navigate(tab.routePath)}>
                 <span className={styles.tabTitle}>{tab.title}</span>
                 <span className={styles.tabStatus} data-state={tab.status} aria-hidden />
-              </button>
+              </Button>
             </ShellTooltip>
             {tab.closable ? (
               <ShellTooltip content={t('workbench.closeSessionTab')} side="bottom" delay={350}>
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
                   className={styles.closeBtn}
                   onClick={() => { void closeRemoteSession(tab.connectionId) }}
                   aria-label={t('workbench.closeSessionTab')}
                 >
                   <X size={12} />
-                </button>
+                </Button>
               </ShellTooltip>
             ) : null}
           </div>

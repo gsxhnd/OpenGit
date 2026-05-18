@@ -1,5 +1,7 @@
 import type { SettingsSection } from "./constants";
 import type { LucideIcon } from "lucide-react";
+import { Button } from "@renderer/components/ui/button";
+import { cn } from "@renderer/lib/utils";
 import styles from "../../views/SettingsView.module.scss";
 
 export interface NavEntry {
@@ -25,12 +27,13 @@ export function SettingsNav({
     <nav className={styles.sidebar} aria-label="Settings sections">
       <div className={styles.sidebarHeading}>{heading}</div>
       {navEntries.map(({ id, label, Icon }) => (
-        <button
+        <Button
           key={id}
-          type="button"
-          className={
-            id === activeSection ? styles.navItemActive : styles.navItem
-          }
+          variant="ghost"
+          className={cn(
+            id === activeSection ? styles.navItemActive : styles.navItem,
+            "h-auto min-h-9 w-full justify-start rounded-[9px]",
+          )}
           onClick={() => onSectionChange(id)}
           aria-current={id === activeSection ? "page" : undefined}
         >
@@ -38,7 +41,7 @@ export function SettingsNav({
             <Icon />
           </span>
           <span className="truncate">{label}</span>
-        </button>
+        </Button>
       ))}
     </nav>
   );

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { Search, Server, Terminal } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@renderer/store'
+import { Button } from '@renderer/components/ui/button'
 import { NotificationPopover } from '@renderer/components/notification/NotificationPopover'
 import { ShellTooltip } from '@renderer/components/common/ShellTooltip'
 import styles from './StatusBar.module.scss'
@@ -18,10 +19,10 @@ export function StatusBar() {
   return (
     <footer className={styles.statusBar} aria-label="Status Bar">
       <ShellTooltip content={t('workbench.status.commandPalette')} side="top" delay={400}>
-        <button type="button" className={styles.item} onClick={toggleCommandPalette} aria-label={t('workbench.status.commandPalette')}>
+        <Button variant="ghost" size="xs" className={styles.item} onClick={toggleCommandPalette} aria-label={t('workbench.status.commandPalette')}>
           <Search size={12} />
           <span>Ctrl+Shift+P</span>
-        </button>
+        </Button>
       </ShellTooltip>
 
       <span className={styles.sep} aria-hidden />

@@ -84,25 +84,27 @@ export function SftpPane({
         </Button>
       </div>
       <div className={styles.breadcrumb}>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="xs"
           className={styles.breadcrumbItem}
           onClick={() => onNavigate("/")}
         >
           /
-        </button>
+        </Button>
         {parts.map((part, index) => {
           const path = "/" + parts.slice(0, index + 1).join("/");
           return (
             <span key={path}>
               <span className={styles.breadcrumbSep}>/</span>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="xs"
                 className={styles.breadcrumbItem}
                 onClick={() => onNavigate(path)}
               >
                 {part}
-              </button>
+              </Button>
             </span>
           );
         })}

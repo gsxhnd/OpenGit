@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Folder, LayoutDashboard, MonitorPlay, Plug, Search, Server, TerminalSquare } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@renderer/store'
+import { Button } from '@renderer/components/ui/button'
 import { useSshConnect } from '@renderer/hooks/connection/useSshConnect'
 import styles from './PrimarySidebar.module.scss'
 
@@ -70,10 +71,10 @@ export function PrimarySidebar() {
       </div>
       <div className={styles.group}>
         <div className={styles.groupTitle}>{t('welcome.quickConnect')}</div>
-        <button type="button" className={styles.action} onClick={() => navigate('/local-terminal')}>
+        <Button variant="ghost" size="sm" className={styles.action} onClick={() => navigate('/local-terminal')}>
           <TerminalSquare size={14} />
           {t('welcome.localTerminal')}
-        </button>
+        </Button>
       </div>
     </>
   )
@@ -87,16 +88,17 @@ export function PrimarySidebar() {
           <div className={styles.empty}>{t('workbench.noSavedConnections')}</div>
         ) : (
           hosts.map((host) => (
-            <button
+            <Button
               key={host.id}
-              type="button"
+              variant="ghost"
+              size="sm"
               className={styles.action}
               disabled={connecting}
               onClick={() => { void connectSaved(host) }}
             >
               <Server size={14} />
               <span className={styles.truncate}>{host.label}</span>
-            </button>
+            </Button>
           ))
         )}
       </div>

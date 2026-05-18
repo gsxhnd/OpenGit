@@ -9,6 +9,7 @@ import { AppMenubar } from "../controls/AppMenubar";
 import { PrimaryPanelToggle } from "../controls/PrimaryPanelToggle";
 import { SecondPanelToggle } from "../controls/SecondPanelToggle";
 import { ShellTooltip } from "@renderer/components/common/ShellTooltip";
+import { Button } from "@renderer/components/ui/button";
 import { useSidebar } from "@renderer/components/ui/sidebar";
 import {
   isDarwin,
@@ -73,14 +74,15 @@ export function MainPanelHeader({ onOpenCommandPalette }: MainPanelHeaderProps =
               side="bottom"
               delay={400}
             >
-              <button
-                type="button"
-                className={`flex items-center justify-center rounded-md text-[var(--color-muted-foreground)] transition-colors hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)] ${shellHeaderControlClass}`}
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className={`text-[var(--color-muted-foreground)] hover:bg-[var(--color-secondary)] hover:text-[var(--color-foreground)] ${shellHeaderControlClass}`}
                 onClick={onOpenCommandPalette}
                 aria-label={t("workbench.status.commandPalette")}
               >
                 <Search size={shellIconSize} strokeWidth={1.5} />
-              </button>
+              </Button>
             </ShellTooltip>
           </div>
         ) : null}
