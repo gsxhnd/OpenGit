@@ -4,15 +4,17 @@ import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@renderer/store'
 import { useShallow } from 'zustand/react/shallow'
 import type { HostProfile, SshConnectPayload } from '@shared/types'
+import { useRecentConnections } from './use-recent-connections'
 
 export function useSshConnect() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { addSession, addToast } = useAppStore(useShallow((s) => ({ addSession: s.addSession, addToast: s.addToast })))
+  const { recordRecent } = useRecentConnections()
   const [connecting, setConnecting] = useState(false)
 
   const doConnect = useCallback(
-    async (payload: SshConnectPayload, meta: { hostLabel: string }) => {
+    async (payload: SshConnectPayload, meta: { hostLabel: string; hostProfileId?: string }) => {
       setConnecting(true)
       try {
         const { connectionId, fingerprint, isNewHost } = await window.api.sshConnect(payload)
@@ -23,6 +25,13 @@ export function useSshConnect() {
           host: payload.host,
           port: payload.port,
           fingerprint,
+        })
+        recordRecent({
+          hostLabel: meta.hostLabel,
+          host: payload.host,
+          port: payload.port,
+          username: payload.username,
+          hostProfileId: meta.hostProfileId,
         })
         if (isNewHost) {
           addToast(t('welcome.newHostKey', { fingerprint }), 'info')
@@ -36,7 +45,7 @@ export function useSshConnect() {
         setConnecting(false)
       }
     },
-    [addSession, addToast, navigate, t],
+    [addSession, addToast, navigate, recordRecent, t],
   )
 
   const connectSaved = useCallback(
@@ -62,7 +71,7 @@ export function useSshConnect() {
           passphrase: host.passphrase,
           expectedFingerprint: host.trustedFingerprint,
         },
-        { hostLabel: host.label },
+        { hostLabel: host.label, hostProfileId: host.id },
       )
     },
     [addToast, doConnect, t],

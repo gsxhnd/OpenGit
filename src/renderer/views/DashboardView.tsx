@@ -1,35 +1,54 @@
-import { useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
-import { motion } from "motion/react";
-import { TerminalSquare } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { useAppStore } from "../store";
-import { useShallow } from "zustand/react/shallow";
-import { useSshConnect } from "../hooks/connection/useSshConnect";
-import { ActiveSessionsPanel } from "../components/dashboard/ActiveSessionsPanel";
-import { SavedHostsPreview } from "../components/dashboard/SavedHostsPreview";
-import { QuickConnectSection } from "../components/dashboard/QuickConnectSection";
-import styles from "./DashboardView.module.scss";
+import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router'
+import { motion } from 'motion/react'
+import { useAppStore } from '../store'
+import { useShallow } from 'zustand/react/shallow'
+import { useSshConnect } from '../hooks/connection/useSshConnect'
+import { useRecentConnections } from '../hooks/connection/use-recent-connections'
+import { DashboardStatsPanel } from '../components/dashboard/DashboardStatsPanel'
+import { RecentConnectionsPanel } from '../components/dashboard/RecentConnectionsPanel'
+import styles from './DashboardView.module.scss'
 
 export function DashboardView() {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const { loadSettings, addToast, settings, sessions } = useAppStore(
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const { loadSettings, settings, sessions } = useAppStore(
     useShallow((s) => ({
       loadSettings: s.loadSettings,
-      addToast: s.addToast,
       settings: s.settings,
       sessions: s.sessions,
     })),
-  );
-  const { connecting, doConnect, connectSaved } = useSshConnect();
+  )
+  const { recents } = useRecentConnections()
+  const { connecting, connectSaved } = useSshConnect()
+  const [knownHostsCount, setKnownHostsCount] = useState(0)
 
   useEffect(() => {
-    void loadSettings();
-  }, [loadSettings]);
+    void loadSettings()
+  }, [loadSettings])
 
-  const hosts = settings?.hosts ?? [];
+  useEffect(() => {
+    let cancelled = false
+    void window.api.knownHostsList().then((hosts) => {
+      if (!cancelled) setKnownHostsCount(hosts.length)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const savedHosts = settings?.hosts ?? []
+
+  const stats = useMemo(
+    () => ({
+      savedHosts: savedHosts.length,
+      activeSessions: sessions.length,
+      knownHosts: knownHostsCount,
+      recentConnections: recents.length,
+    }),
+    [savedHosts.length, sessions.length, knownHostsCount, recents.length],
+  )
 
   return (
     <motion.div
@@ -38,43 +57,19 @@ export function DashboardView() {
       className={styles.container}
     >
       <header className={styles.header}>
-        <h1 className={styles.title}>{t("workbench.dashboard")}</h1>
-        <p className={styles.subtitle}>{t("welcome.subtitle")}</p>
+        <h1 className={styles.title}>{t('workbench.dashboard')}</h1>
+        <p className={styles.subtitle}>{t('dashboard.subtitle')}</p>
       </header>
 
-      <div className={styles.actions}>
-        <Button variant="secondary" onClick={() => navigate("/local-terminal")}>
-          <TerminalSquare size={14} className="mr-1" />
-          {t("welcome.localTerminal")}
-        </Button>
-        <Button variant="outline" onClick={() => navigate("/connections")}>
-          {t("workbench.connections")}
-        </Button>
-      </div>
+      <DashboardStatsPanel stats={stats} />
 
-      <ActiveSessionsPanel
-        sessions={sessions}
-        onOpenSession={(id) => navigate(`/session/${id}`)}
-        t={t}
-        styles={styles}
-      />
-
-      <SavedHostsPreview
-        hosts={hosts}
+      <RecentConnectionsPanel
+        recents={recents}
+        savedHosts={savedHosts}
         connecting={connecting}
-        onConnect={(h) => void connectSaved(h)}
-        onViewAll={() => navigate("/connections")}
-        t={t}
-        styles={styles}
-      />
-
-      <QuickConnectSection
-        connecting={connecting}
-        onConnect={(payload, meta) => void doConnect(payload, meta)}
-        addToast={addToast}
-        t={t}
-        styles={styles}
+        onConnect={(host) => void connectSaved(host)}
+        onViewConnections={() => navigate('/connections')}
       />
     </motion.div>
-  );
+  )
 }
