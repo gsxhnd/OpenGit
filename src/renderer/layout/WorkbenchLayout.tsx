@@ -1,7 +1,7 @@
 /**
  * Main workbench layout — 3-column panel architecture with horizontal resize.
  */
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Outlet, useLocation } from "react-router";
 import { usePanelRef } from "react-resizable-panels";
 import { useShallow } from "zustand/react/shallow";
@@ -45,13 +45,16 @@ export function WorkbenchLayout() {
   const collapsed = state === "collapsed";
   const showSessionTabs = location.pathname !== "/" && location.pathname !== "/connections";
   const primaryPanelRef = usePanelRef();
+  const secondPanelRef = usePanelRef();
 
   const defaultLayout = useMemo(
     () => loadWorkbenchPanelLayout() ?? DEFAULT_WORKBENCH_LAYOUT,
     [],
   );
 
-  useEffect(() => {
+  // Keep primary panel collapse in sync with sidebar visibility. Re-run when the
+  // second panel opens/closes — layout redistribution can auto-collapse primary.
+  useLayoutEffect(() => {
     const panel = primaryPanelRef.current;
     if (!panel) return;
     if (collapsed) {
@@ -59,7 +62,19 @@ export function WorkbenchLayout() {
     } else if (panel.isCollapsed()) {
       panel.expand();
     }
-  }, [collapsed, primaryPanelRef]);
+  }, [collapsed, secondPanelOpen, primaryPanelRef]);
+
+  // Always mount the second panel; collapse instead of unmounting to avoid
+  // react-resizable-panels redistributing layout and collapsing primary.
+  useLayoutEffect(() => {
+    const panel = secondPanelRef.current;
+    if (!panel) return;
+    if (secondPanelOpen) {
+      if (panel.isCollapsed()) panel.expand();
+    } else if (!panel.isCollapsed()) {
+      panel.collapse();
+    }
+  }, [secondPanelOpen, secondPanelRef]);
 
   const sidebarRestored = useRef(false);
 
@@ -124,25 +139,27 @@ export function WorkbenchLayout() {
           </PanelContainer>
         </ResizablePanel>
 
-        {secondPanelOpen ? (
-          <>
-            <ResizableHandle className={styles.resizeHandle} />
-            <ResizablePanel
-              id={WORKBENCH_PANEL_IDS.second}
-              minSize={SECOND_PANEL_MIN_PX}
-              maxSize="55%"
-              defaultSize={
-                defaultLayout[WORKBENCH_PANEL_IDS.second] ??
-                `${SECOND_PANEL_DEFAULT_PX}px`
-              }
-              className={styles.secondPanel}
-            >
-              <div className={styles.secondPanelBody}>
-                <SecondPanel />
-              </div>
-            </ResizablePanel>
-          </>
-        ) : null}
+        <ResizableHandle
+          className={styles.resizeHandle}
+          disabled={!secondPanelOpen}
+        />
+        <ResizablePanel
+          id={WORKBENCH_PANEL_IDS.second}
+          panelRef={secondPanelRef}
+          collapsible
+          collapsedSize="0px"
+          minSize={SECOND_PANEL_MIN_PX}
+          maxSize="55%"
+          defaultSize={
+            defaultLayout[WORKBENCH_PANEL_IDS.second] ??
+            `${SECOND_PANEL_DEFAULT_PX}px`
+          }
+          className={styles.secondPanel}
+        >
+          <div className={styles.secondPanelBody}>
+            {secondPanelOpen ? <SecondPanel /> : null}
+          </div>
+        </ResizablePanel>
       </ResizablePanelGroup>
 
       <StatusBar />
