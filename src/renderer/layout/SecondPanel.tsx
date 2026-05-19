@@ -1,6 +1,6 @@
 /**
  * Second panel body — properties, transfers, diagnostics tabs.
- * Header is rendered by WorkbenchLayout (SecondPanelHeader).
+ * Title bar is unified in WorkbenchTitleBar (WorkbenchLayout).
  */
 import { useState } from "react";
 import { Bug, FileUp, Server } from "lucide-react";

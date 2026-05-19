@@ -9,60 +9,81 @@
   border: none;
   padding: 0;
   margin: 0;
-  background: transparent;
+  background: color-mix(in oklab, var(--color-background) 18%, transparent);
   cursor: default;
 }
 
 .panel {
+  --palette-radius: 6px;
+  --palette-item-height: 26px;
+
   position: fixed;
   top: 40px;
   left: 50%;
   transform: translateX(-50%);
-  width: min(600px, calc(100vw - 2rem));
+  width: min(var(--command-center-width), calc(100vw - 2rem));
   z-index: 201;
 
   background: var(--color-widget);
   border: 1px solid var(--color-widget-border);
-  border-radius: 6px;
+  border-radius: var(--palette-radius);
   box-shadow:
-    0 4px 16px color-mix(in oklab, var(--color-foreground) 12%, transparent),
-    0 0 0 1px var(--color-widget-border);
+    0 0 0 1px color-mix(in oklab, var(--color-foreground) 4%, transparent),
+    0 12px 28px color-mix(in oklab, var(--color-background) 55%, transparent);
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
+.panelAnchored {
+  z-index: 300;
+  border-top: none;
+  border-radius: 0 0 var(--palette-radius) var(--palette-radius);
+  box-shadow:
+    0 0 0 1px var(--color-widget-border),
+    0 10px 24px color-mix(in oklab, var(--color-background) 50%, transparent);
+}
+
 .inputRow {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  min-height: 28px;
   padding: 0 10px;
-  border-bottom: 1px solid var(--color-widget-border);
   flex-shrink: 0;
+  background: color-mix(in oklab, var(--color-foreground) 3%, var(--color-widget));
+}
+
+.panelAnchored .inputRow {
+  border-bottom: 1px solid var(--color-widget-border);
 }
 
 .inputPrefix {
   flex-shrink: 0;
+  width: 14px;
   font-size: 13px;
   line-height: 1;
-  color: var(--color-muted-foreground);
+  text-align: center;
+  color: color-mix(in oklab, var(--color-muted-foreground) 90%, transparent);
   font-family: var(--font-mono);
   user-select: none;
 }
 
 .input {
   flex: 1;
-  height: 34px;
+  min-width: 0;
+  height: 28px;
   background: transparent;
   border: none;
   outline: none;
   font-size: 13px;
+  line-height: 28px;
   color: var(--color-foreground);
-  caret-color: var(--color-foreground);
+  caret-color: var(--color-primary);
 
   &::placeholder {
     color: var(--color-muted-foreground);
-    opacity: 0.85;
+    opacity: 0.72;
   }
 }
 
@@ -70,41 +91,56 @@
   flex-shrink: 0;
 }
 
+.listHeader {
+  padding: 6px 12px 4px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--color-muted-foreground) 88%, transparent);
+  user-select: none;
+}
+
 .list {
-  max-height: min(440px, calc(100vh - 120px));
+  max-height: min(380px, calc(100vh - 10rem));
   overflow-y: auto;
-  padding: 2px 0;
+  padding: 4px;
 
   scrollbar-width: thin;
   scrollbar-color: var(--color-scrollbar-thumb) transparent;
 
   &::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
   }
 
   &::-webkit-scrollbar-thumb {
     background: var(--color-scrollbar-thumb);
-    border: 3px solid transparent;
+    border: 2px solid transparent;
     background-clip: padding-box;
-    border-radius: 5px;
+    border-radius: 4px;
   }
 }
 
 .empty {
-  padding: 14px 12px;
+  padding: 20px 12px;
   font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
   color: var(--color-muted-foreground);
 }
 
 .item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 22px;
-  padding: 3px 10px;
-  cursor: pointer;
+  gap: 10px;
+  min-height: var(--palette-item-height);
+  padding: 0 8px;
+  margin: 1px 0;
+  border-radius: 4px;
+  cursor: default;
   user-select: none;
   color: var(--color-foreground);
+  transition: background 0.08s ease;
 
   &:hover {
     background: var(--color-list-hover);
@@ -112,47 +148,74 @@
 }
 
 .itemActive {
-  background: var(--color-list-active) !important;
+  background: var(--color-list-active);
   color: var(--color-list-active-foreground);
 
+  &:hover {
+    background: var(--color-list-active);
+  }
+
+  .itemDescription {
+    color: color-mix(in oklab, var(--color-list-active-foreground) 72%, transparent);
+  }
+
   .keybindingKey {
-    color: var(--color-list-active-foreground);
-    background: color-mix(in oklab, var(--color-list-active-foreground) 12%, transparent);
-    border-color: color-mix(in oklab, var(--color-list-active-foreground) 22%, transparent);
+    color: color-mix(in oklab, var(--color-list-active-foreground) 88%, transparent);
+    background: color-mix(in oklab, var(--color-list-active-foreground) 14%, transparent);
+    border-color: color-mix(in oklab, var(--color-list-active-foreground) 24%, transparent);
+    box-shadow: none;
   }
 
   .keybindingSep {
-    color: var(--color-list-active-foreground);
-    opacity: 0.7;
+    color: color-mix(in oklab, var(--color-list-active-foreground) 65%, transparent);
   }
 
   .match {
-    color: var(--color-list-active-foreground);
+    color: inherit;
+    background: color-mix(in oklab, var(--color-list-active-foreground) 22%, transparent);
   }
 }
 
-.itemLabel {
+.itemMain {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+}
+
+.itemLabel {
   font-size: 13px;
-  line-height: 22px;
+  line-height: 18px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.itemDescription {
+  font-size: 11px;
+  line-height: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-muted-foreground);
+}
+
 .match {
-  color: var(--color-primary);
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  color: inherit;
+  font-weight: inherit;
+  text-decoration: none;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--color-primary) 32%, transparent);
 }
 
 .keybinding {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
+  opacity: 0.92;
 }
 
 .keybindingPart {
@@ -161,24 +224,54 @@
 }
 
 .keybindingSep {
-  margin: 0 2px;
-  font-size: 10px;
+  margin: 0 1px;
+  font-size: 9px;
   color: var(--color-muted-foreground);
+  opacity: 0.75;
 }
 
 .keybindingKey {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px;
-  height: 18px;
+  min-width: 16px;
+  height: 16px;
   padding: 0 4px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1;
   color: var(--color-muted-foreground);
   background: var(--color-keybinding-bg);
   border: 1px solid var(--color-keybinding-border);
   border-radius: 3px;
-  border-bottom-width: 2px;
+  box-shadow: 0 1px 0 color-mix(in oklab, var(--color-foreground) 6%, transparent);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 5px 10px;
+  border-top: 1px solid color-mix(in oklab, var(--color-widget-border) 80%, transparent);
+  font-size: 11px;
+  line-height: 1;
+  color: color-mix(in oklab, var(--color-muted-foreground) 82%, transparent);
+  user-select: none;
+  background: color-mix(in oklab, var(--color-foreground) 2.5%, var(--color-widget));
+}
+
+.footerKey {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--color-foreground) 8%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-foreground) 10%, transparent);
 }

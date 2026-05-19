@@ -17,10 +17,8 @@ import { PanelContainer } from "./PanelContainer";
 import { PrimarySidebar } from "./PrimarySidebar";
 import { SessionTabs } from "./SessionTabs";
 import { StatusBar } from "./StatusBar";
-import { MainPanelHeader } from "./headers/MainPanelHeader";
-import { PrimaryPanelHeader } from "./headers/PrimaryPanelHeader";
+import { WorkbenchTitleBar } from "./headers/WorkbenchTitleBar";
 import { SecondPanel } from "./SecondPanel";
-import { SecondPanelHeader } from "./headers/SecondPanelHeader";
 import {
   ACTIVITY_BAR_WIDTH_PX,
   DEFAULT_WORKBENCH_LAYOUT,
@@ -35,10 +33,9 @@ import styles from "./WorkbenchLayout.module.scss";
 
 export function WorkbenchLayout() {
   const location = useLocation();
-  const { secondPanelOpen, toggleCommandPalette, setSecondPanelOpen, settings, updateSettings } = useAppStore(
+  const { secondPanelOpen, setSecondPanelOpen, settings, updateSettings } = useAppStore(
     useShallow((s) => ({
       secondPanelOpen: s.secondPanelOpen,
-      toggleCommandPalette: s.toggleCommandPalette,
       setSecondPanelOpen: s.setSecondPanelOpen,
       settings: s.settings,
       updateSettings: s.updateSettings,
@@ -87,6 +84,7 @@ export function WorkbenchLayout() {
 
   return (
     <div className={styles.container}>
+      <WorkbenchTitleBar />
       <ResizablePanelGroup
         id="workbench-panels"
         className={styles.panelRow}
@@ -103,7 +101,6 @@ export function WorkbenchLayout() {
           defaultSize={defaultLayout[WORKBENCH_PANEL_IDS.primary]}
           className={styles.primaryPanel}
         >
-          <PrimaryPanelHeader />
           <div className={styles.primaryPanelBody}>
             <ActivityBar />
             {!collapsed ? <PrimarySidebar /> : null}
@@ -121,7 +118,6 @@ export function WorkbenchLayout() {
           defaultSize={defaultLayout[WORKBENCH_PANEL_IDS.main]}
           className={styles.mainPanel}
         >
-          <MainPanelHeader onOpenCommandPalette={() => toggleCommandPalette()} />
           {showSessionTabs ? <SessionTabs /> : null}
           <PanelContainer>
             <Outlet />
@@ -141,7 +137,6 @@ export function WorkbenchLayout() {
               }
               className={styles.secondPanel}
             >
-              <SecondPanelHeader />
               <div className={styles.secondPanelBody}>
                 <SecondPanel />
               </div>

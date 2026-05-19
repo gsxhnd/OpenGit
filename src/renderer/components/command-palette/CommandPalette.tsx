@@ -4,15 +4,17 @@
  * Visual and interaction model aligned with VS Code quick input (command mode):
  * top-center panel, `>` input prefix, flat command list, fuzzy filter, keybindings on the right.
  */
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'motion/react'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@renderer/store'
 import { fuzzyMatch } from '@renderer/lib/fuzzy-filter'
+import { cn } from '@renderer/lib/utils'
 import { useCommandRegistry } from './use-command-registry'
 import { useCommandRecents } from './use-command-recents'
+import { useCommandCenterAnchor } from './use-command-center-anchor'
 import type { ScoredPaletteCommand } from './types'
 import styles from './CommandPalette.module.scss'
 
@@ -99,6 +101,7 @@ export function CommandPalette() {
   const { recordRecent, recentRank } = useCommandRecents()
 
   const close = useCallback(() => setCommandPaletteOpen(false), [setCommandPaletteOpen])
+  const anchorRect = useCommandCenterAnchor(commandPaletteOpen)
   const commands = useCommandRegistry(close)
 
   const [search, setSearch] = useState('')
@@ -112,6 +115,7 @@ export function CommandPalette() {
   )
 
   const visible = filtered.slice(0, MAX_VISIBLE)
+  const showRecentHeader = !search.trim() && visible.length > 0
 
   useEffect(() => {
     setSelectedIndex(0)
@@ -164,6 +168,15 @@ export function CommandPalette() {
 
   if (typeof document === 'undefined') return null
 
+  const panelStyle: CSSProperties | undefined = anchorRect
+    ? {
+        top: anchorRect.bottom - 1,
+        left: anchorRect.left,
+        width: anchorRect.width,
+        transform: 'none',
+      }
+    : undefined
+
   return createPortal(
     <AnimatePresence>
       {commandPaletteOpen && (
@@ -183,17 +196,18 @@ export function CommandPalette() {
 
           <motion.div
             key="panel"
-            initial={{ opacity: 0, y: -4 }}
+            initial={{ opacity: 0, y: -2 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.1, ease: 'easeOut' }}
-            className={styles.panel}
+            exit={{ opacity: 0, y: -2 }}
+            transition={{ duration: 0.12, ease: [0.16, 1, 0.3, 1] }}
+            className={cn(styles.panel, anchorRect && styles.panelAnchored)}
+            style={panelStyle}
             onKeyDown={handleKeyDown}
             role="dialog"
             aria-modal="true"
             aria-label={t('commands.searchPlaceholder')}
           >
-            <motion.div layout className={styles.inputRow}>
+            <div className={styles.inputRow}>
               <span className={styles.inputPrefix} aria-hidden>
                 &gt;
               </span>
@@ -213,9 +227,12 @@ export function CommandPalette() {
                 }
                 aria-autocomplete="list"
               />
-            </motion.div>
+            </div>
 
-            <motion.div layout className={styles.listWrap}>
+            <div className={styles.listWrap}>
+              {showRecentHeader ? (
+                <div className={styles.listHeader}>{t('commands.recentlyUsed')}</div>
+              ) : null}
               <div
                 id="command-palette-list"
                 ref={listRef}
@@ -223,9 +240,9 @@ export function CommandPalette() {
                 role="listbox"
               >
                 {visible.length === 0 ? (
-                  <motion.div className={styles.empty} role="status" layout>
+                  <div className={styles.empty} role="status">
                     {t('commands.noMatchingCommands')}
-                  </motion.div>
+                  </div>
                 ) : (
                   visible.map((item, index) => {
                     const isSelected = index === selectedIndex
@@ -237,13 +254,18 @@ export function CommandPalette() {
                         data-index={index}
                         role="option"
                         aria-selected={isSelected}
-                        className={`${styles.item} ${isSelected ? styles.itemActive : ''}`}
+                        className={cn(styles.item, isSelected && styles.itemActive)}
                         onClick={() => runCommand(item)}
                         onMouseEnter={() => setSelectedIndex(index)}
                       >
-                        <span className={styles.itemLabel}>
-                          <FuzzyHighlight label={command.label} matches={matches} />
-                        </span>
+                        <div className={styles.itemMain}>
+                          <span className={styles.itemLabel}>
+                            <FuzzyHighlight label={command.label} matches={matches} />
+                          </span>
+                          {command.description ? (
+                            <span className={styles.itemDescription}>{command.description}</span>
+                          ) : null}
+                        </div>
                         {command.keybinding ? (
                           <KeybindingLabel value={command.keybinding} />
                         ) : null}
@@ -252,7 +274,20 @@ export function CommandPalette() {
                   })
                 )}
               </div>
-            </motion.div>
+            </div>
+
+            <div className={styles.footer}>
+              <span>
+                <kbd className={styles.footerKey}>↑</kbd>
+                <kbd className={styles.footerKey}>↓</kbd> {t('commands.footerHint')}
+              </span>
+              <span>
+                <kbd className={styles.footerKey}>↵</kbd> {t('commands.footerSelect')}
+              </span>
+              <span>
+                <kbd className={styles.footerKey}>esc</kbd> {t('commands.footerClose')}
+              </span>
+            </div>
           </motion.div>
         </>
       )}

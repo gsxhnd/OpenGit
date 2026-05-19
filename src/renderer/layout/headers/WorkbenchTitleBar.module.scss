@@ -1,0 +1,118 @@
+.header {
+  composes: header from "./shell-header.module.scss";
+  position: relative;
+  width: 100%;
+}
+
+.leading,
+.trailing {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+}
+
+.leading {
+  justify-content: flex-start;
+}
+
+.trailing {
+  justify-content: flex-end;
+}
+
+.trafficLightInset {
+  padding-left: var(--shell-traffic-light-padding);
+}
+
+.menubarSlot {
+  composes: menubarSlot from "./shell-header.module.scss";
+}
+
+/* True window-center (VS Code titlebar-center), independent of asymmetric side chrome */
+.titleBlock {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(var(--command-center-width), calc(100vw - 12rem));
+  max-width: var(--command-center-width);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.commandCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  pointer-events: auto;
+  padding: 0 0.75rem;
+  margin: 0;
+  border: 1px solid color-mix(in oklab, var(--color-shell-header-foreground) 14%, transparent);
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--color-shell-header-foreground) 7%, transparent);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+
+  &:hover {
+    background: color-mix(in oklab, var(--color-shell-header-foreground) 11%, transparent);
+    border-color: color-mix(in oklab, var(--color-shell-header-foreground) 22%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 1px solid color-mix(in oklab, var(--color-primary) 80%, transparent);
+    outline-offset: 1px;
+  }
+
+  &[data-active] {
+    border-bottom-color: transparent;
+    border-radius: 6px 6px 0 0;
+    background: var(--color-widget);
+    border-color: var(--color-widget-border);
+    box-shadow: none;
+    color: var(--color-foreground);
+
+    &:hover {
+      background: var(--color-widget);
+    }
+  }
+}
+
+.commandCenterText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1;
+  color: color-mix(in oklab, var(--color-shell-header-foreground) 88%, transparent);
+  user-select: none;
+
+  .commandCenter[data-active] & {
+    color: var(--color-muted-foreground);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.125rem;
+  -webkit-app-region: no-drag;
+}
+
+.leading .actions {
+  padding-left: 0.25rem;
+}
+
+.trailing .actions {
+  padding-right: 0.25rem;
+}

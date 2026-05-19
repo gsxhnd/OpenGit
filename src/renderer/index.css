@@ -168,6 +168,8 @@ body,
 /* Activity bar — icon-only rail width (narrower than shadcn sidebar icon mode) */
 :root {
   --activity-bar-width: 36px;
+  /* VS Code–aligned command center / quick input width */
+  --command-center-width: 600px;
 }
 
 /* Shell panel header metrics — synced with src/shared/shell-chrome.ts */
