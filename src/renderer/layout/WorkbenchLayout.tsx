@@ -10,7 +10,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@renderer/components/ui/resizable";
-import { useSidebar } from "@renderer/components/ui/sidebar";
 import { useAppStore } from "@renderer/store";
 import { ActivityBar } from "./ActivityBar";
 import { PanelContainer } from "./PanelContainer";
@@ -33,16 +32,15 @@ import styles from "./WorkbenchLayout.module.scss";
 
 export function WorkbenchLayout() {
   const location = useLocation();
-  const { secondPanelOpen, setSecondPanelOpen, settings, updateSettings } = useAppStore(
+  const { primaryPanelOpen, secondPanelOpen, setSecondPanelOpen, settings, updateSettings } = useAppStore(
     useShallow((s) => ({
+      primaryPanelOpen: s.primaryPanelOpen,
       secondPanelOpen: s.secondPanelOpen,
       setSecondPanelOpen: s.setSecondPanelOpen,
       settings: s.settings,
       updateSettings: s.updateSettings,
     })),
   );
-  const { state } = useSidebar();
-  const collapsed = state === "collapsed";
   const showSessionTabs = location.pathname !== "/" && location.pathname !== "/connections";
   const primaryPanelRef = usePanelRef();
   const secondPanelRef = usePanelRef();
@@ -57,12 +55,12 @@ export function WorkbenchLayout() {
   useLayoutEffect(() => {
     const panel = primaryPanelRef.current;
     if (!panel) return;
-    if (collapsed) {
+    if (!primaryPanelOpen) {
       if (!panel.isCollapsed()) panel.collapse();
     } else if (panel.isCollapsed()) {
       panel.expand();
     }
-  }, [collapsed, secondPanelOpen, primaryPanelRef]);
+  }, [primaryPanelOpen, secondPanelOpen, primaryPanelRef]);
 
   // Always mount the second panel; collapse instead of unmounting to avoid
   // react-resizable-panels redistributing layout and collapsing primary.
@@ -76,22 +74,22 @@ export function WorkbenchLayout() {
     }
   }, [secondPanelOpen, secondPanelRef]);
 
-  const sidebarRestored = useRef(false);
+  const panelLayoutRestored = useRef(false);
 
   useEffect(() => {
-    if (!sidebarRestored.current && settings?.sidebar) {
-      sidebarRestored.current = true;
-      setSecondPanelOpen(settings.sidebar.secondOpen);
+    if (!panelLayoutRestored.current && settings?.panelLayout) {
+      panelLayoutRestored.current = true;
+      setSecondPanelOpen(settings.panelLayout.secondPanelOpen);
     }
   }, [settings, setSecondPanelOpen]);
 
   useEffect(() => {
-    if (sidebarRestored.current) {
+    if (panelLayoutRestored.current) {
       const s = useAppStore.getState().settings;
       if (s) {
         void updateSettings({
           ...s,
-          sidebar: { ...s.sidebar, secondOpen: secondPanelOpen },
+          panelLayout: { ...s.panelLayout, secondPanelOpen },
         });
       }
     }
@@ -118,13 +116,13 @@ export function WorkbenchLayout() {
         >
           <div className={styles.primaryPanelBody}>
             <ActivityBar />
-            {!collapsed ? <PrimarySidebar /> : null}
+            {primaryPanelOpen ? <PrimarySidebar /> : null}
           </div>
         </ResizablePanel>
 
         <ResizableHandle
           className={styles.resizeHandle}
-          disabled={collapsed}
+          disabled={!primaryPanelOpen}
         />
 
         <ResizablePanel

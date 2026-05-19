@@ -89,9 +89,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
     wordWrap: "on",
     minimap: true,
   },
-  sidebar: {
-    primaryExpanded: true,
-    secondOpen: false,
+  panelLayout: {
+    primaryPanelOpen: true,
+    secondPanelOpen: false,
   },
 };
 
@@ -153,9 +153,9 @@ function migrateSettings(s: AppSettings): AppSettings {
     s.editor = { ...DEFAULT_SETTINGS.editor };
   }
 
-  // 确保sidebar配置存在 | Ensure sidebar config exists
-  if (!s.sidebar) {
-    s.sidebar = { ...DEFAULT_SETTINGS.sidebar };
+  // 确保panelLayout配置存在 | Ensure panelLayout config exists
+  if (!s.panelLayout) {
+    s.panelLayout = { ...DEFAULT_SETTINGS.panelLayout };
   }
 
   return s;

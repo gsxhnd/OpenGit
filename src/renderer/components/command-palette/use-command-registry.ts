@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useShallow } from 'zustand/react/shallow'
 import { useAppStore } from '@renderer/store'
-import { useSidebar } from '@renderer/components/ui/sidebar'
 import type { PaletteCommand } from './types'
 
 function formatKeybinding(keys: string): string {
@@ -17,15 +16,15 @@ function formatKeybinding(keys: string): string {
 export function useCommandRegistry(onClose: () => void): PaletteCommand[] {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { removeSession, sessions, toggleSecondPanel, setSettingsOpen } = useAppStore(
+  const { removeSession, sessions, toggleSecondPanel, togglePrimaryPanel, setSettingsOpen } = useAppStore(
     useShallow((s) => ({
       removeSession: s.removeSession,
       sessions: s.sessions,
       toggleSecondPanel: s.toggleSecondPanel,
+      togglePrimaryPanel: s.togglePrimaryPanel,
       setSettingsOpen: s.setSettingsOpen,
     })),
   )
-  const { toggleSidebar } = useSidebar()
 
   return useMemo(() => {
     const close = onClose
@@ -70,7 +69,7 @@ export function useCommandRegistry(onClose: () => void): PaletteCommand[] {
         id: 'workbench.action.toggleSidebarVisibility',
         label: t('commands.toggleSidebar'),
         action: () => {
-          toggleSidebar()
+          togglePrimaryPanel()
           close()
         },
         keybinding: formatKeybinding('Ctrl+B'),
@@ -97,5 +96,5 @@ export function useCommandRegistry(onClose: () => void): PaletteCommand[] {
         },
       },
     ]
-  }, [navigate, onClose, removeSession, sessions, t, toggleSecondPanel, toggleSidebar, setSettingsOpen])
+  }, [navigate, onClose, removeSession, sessions, t, toggleSecondPanel, togglePrimaryPanel, setSettingsOpen])
 }

@@ -2,7 +2,7 @@
  * App root — shared providers, global shortcuts, and route-level layouts.
  * Settings is no longer a route — it opens as a Dialog (SettingsDialog).
  */
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "./store";
@@ -20,16 +20,16 @@ import { platform } from "@renderer/lib/shell-chrome";
 import styles from "./App.module.scss";
 
 function AppContent() {
-  const { loadSettings, language, settings, updateSettings } = useAppStore(useShallow((s) => ({
+  const { loadSettings, language, settings, updateSettings, primaryPanelOpen, setPrimaryPanelOpen } = useAppStore(useShallow((s) => ({
     loadSettings: s.loadSettings,
     language: s.language,
     settings: s.settings,
     updateSettings: s.updateSettings,
+    primaryPanelOpen: s.primaryPanelOpen,
+    setPrimaryPanelOpen: s.setPrimaryPanelOpen,
   })));
   const location = useLocation();
   const { i18n } = useTranslation();
-
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useAppKeyboardShortcuts();
   useTheme();
@@ -40,11 +40,11 @@ function AppContent() {
       if (state.language && i18n.language !== state.language) {
         void i18n.changeLanguage(state.language);
       }
-      if (state.settings?.sidebar) {
-        setSidebarOpen(state.settings.sidebar.primaryExpanded);
+      if (state.settings?.panelLayout) {
+        setPrimaryPanelOpen(state.settings.panelLayout.primaryPanelOpen);
       }
     });
-  }, [loadSettings, i18n]);
+  }, [loadSettings, i18n, setPrimaryPanelOpen]);
 
   useEffect(() => {
     if (language && i18n.language !== language) {
@@ -61,19 +61,19 @@ function AppContent() {
     }
   }, [location.pathname]);
 
-  const handleSidebarChange = useCallback((open: boolean) => {
-    setSidebarOpen(open);
+  const handlePrimaryPanelChange = useCallback((open: boolean) => {
+    setPrimaryPanelOpen(open);
     const s = useAppStore.getState().settings;
     if (s) {
       void updateSettings({
         ...s,
-        sidebar: { ...s.sidebar, primaryExpanded: open },
+        panelLayout: { ...s.panelLayout, primaryPanelOpen: open },
       });
     }
-  }, [updateSettings]);
+  }, [setPrimaryPanelOpen, updateSettings]);
 
   return (
-    <SidebarProvider open={sidebarOpen} onOpenChange={handleSidebarChange} style={{ display: "contents" }}>
+    <SidebarProvider open={primaryPanelOpen} onOpenChange={handlePrimaryPanelChange} style={{ display: "contents" }}>
       <div className={styles.appContainer} data-platform={platform}>
         <Routes>
           <Route element={<WorkbenchLayout />}>

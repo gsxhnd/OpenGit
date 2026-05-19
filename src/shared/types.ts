@@ -53,9 +53,9 @@ export interface EditorSettings {
   minimap: boolean;
 }
 
-export interface SidebarConfig {
-  primaryExpanded: boolean;
-  secondOpen: boolean;
+export interface PanelLayoutConfig {
+  primaryPanelOpen: boolean;
+  secondPanelOpen: boolean;
 }
 
 export interface AppSettings {
@@ -65,7 +65,7 @@ export interface AppSettings {
   hosts: HostProfile[];
   terminal: TerminalSettings;
   editor: EditorSettings;
-  sidebar: SidebarConfig;
+  panelLayout: PanelLayoutConfig;
 }
 
 export type ToastKind = "success" | "error" | "info";

@@ -2,7 +2,7 @@ import { PanelLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@renderer/lib/utils";
 import { Button } from "@renderer/components/ui/button";
-import { useSidebar } from "@renderer/components/ui/sidebar";
+import { useAppStore } from "@renderer/store";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@renderer/components/ui/tooltip";
 import { shellHeaderButtonActiveClass, shellHeaderButtonClass } from "@renderer/lib/shell-chrome";
 
@@ -16,12 +16,12 @@ export function PrimaryPanelToggle({
   iconSize = 15,
 }: PrimaryPanelToggleProps) {
   const { t } = useTranslation();
-  const { state, toggleSidebar } = useSidebar();
-  const collapsed = state === "collapsed";
+  const primaryPanelOpen = useAppStore((s) => s.primaryPanelOpen);
+  const togglePrimaryPanel = useAppStore((s) => s.togglePrimaryPanel);
 
-  const label = collapsed
-    ? t("workbench.expandSidebar")
-    : t("workbench.collapseSidebar");
+  const label = primaryPanelOpen
+    ? t("workbench.collapseSidebar")
+    : t("workbench.expandSidebar");
 
   return (
     <Tooltip>
@@ -32,11 +32,11 @@ export function PrimaryPanelToggle({
             size="icon-sm"
             className={cn(
               shellHeaderButtonClass,
-              !collapsed && shellHeaderButtonActiveClass,
+              primaryPanelOpen && shellHeaderButtonActiveClass,
               className,
             )}
-            onClick={toggleSidebar}
-            aria-pressed={!collapsed}
+            onClick={togglePrimaryPanel}
+            aria-pressed={primaryPanelOpen}
             aria-label={label}
           >
             <PanelLeft size={iconSize} strokeWidth={1.5} />

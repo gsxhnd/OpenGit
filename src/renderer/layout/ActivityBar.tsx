@@ -2,12 +2,10 @@ import { NavLink, useLocation } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { Folder, LayoutDashboard, MonitorPlay, Plug, Settings } from 'lucide-react'
 import { useAppStore } from '@renderer/store'
-import { cn } from '@renderer/lib/utils'
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from '@renderer/components/ui/sidebar'
 import { Button } from '@renderer/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@renderer/components/ui/tooltip'
@@ -36,14 +34,14 @@ export function ActivityBar() {
   const location = useLocation()
   const sessions = useAppStore((s) => s.sessions)
   const setSettingsOpen = useAppStore((s) => s.setSettingsOpen)
-  const { state } = useSidebar()
+  const primaryPanelOpen = useAppStore((s) => s.primaryPanelOpen)
 
   return (
     <nav
       aria-label="Activity Bar"
       className="group flex shrink-0 flex-col items-center"
       style={{ width: 'var(--activity-bar-width)' }}
-      data-state={state}
+      data-state={primaryPanelOpen ? 'expanded' : 'collapsed'}
     >
       {/* Main nav items */}
       <SidebarMenu className="flex-1 gap-0.5 py-1.5 items-center">

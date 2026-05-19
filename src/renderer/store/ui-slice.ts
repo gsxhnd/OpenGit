@@ -1,10 +1,16 @@
 import type { AppStoreCreator, UiSlice } from "./types";
 
 export const createUiSlice: AppStoreCreator<UiSlice> = (set) => ({
+  primaryPanelOpen: true,
   secondPanelOpen: false,
   commandPaletteOpen: false,
   settingsOpen: false,
   addHostOpen: false,
+
+  setPrimaryPanelOpen: (open) => set({ primaryPanelOpen: open }),
+
+  togglePrimaryPanel: () =>
+    set((state) => ({ primaryPanelOpen: !state.primaryPanelOpen })),
 
   setSecondPanelOpen: (open) => set({ secondPanelOpen: open }),
 

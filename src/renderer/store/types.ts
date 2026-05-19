@@ -45,10 +45,13 @@ export interface NotificationSlice {
 }
 
 export interface UiSlice {
+  primaryPanelOpen: boolean;
   secondPanelOpen: boolean;
   commandPaletteOpen: boolean;
   settingsOpen: boolean;
   addHostOpen: boolean;
+  setPrimaryPanelOpen: (open: boolean) => void;
+  togglePrimaryPanel: () => void;
   setSecondPanelOpen: (open: boolean) => void;
   toggleSecondPanel: () => void;
   toggleCommandPalette: () => void;
